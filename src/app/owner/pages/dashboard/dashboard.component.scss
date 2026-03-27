@@ -1,0 +1,84 @@
+:host {
+  display: block;
+  padding: 30px;
+  background: #f1f5f9;
+  min-height: 100vh;
+}
+
+.owner-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #0f172a, #1e3a8a);
+  padding: 20px;
+}
+
+.owner-card {
+  width: 380px;
+  padding: 30px;
+  border-radius: 18px;
+  background: #ffffffee;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+
+  h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #1e3a8a;
+    font-weight: 600;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .value {
+      font-weight: 500;
+      color: #1e293b;
+
+      &.code {
+        color: #1e3a8a;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+mat-card {
+  margin-bottom: 25px;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+
+  h2,
+  h3 {
+    color: #1a2b4b;
+    margin-bottom: 15px;
+  }
+
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  button {
+    margin-bottom: 20px;
+  }
+
+  mat-list-item {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 0;
+  }
+}

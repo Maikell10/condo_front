@@ -1,0 +1,32 @@
+.home-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #1a2b4b, #3b82f6);
+  padding: 10px;
+}
+
+.home-card {
+  padding: 40px;
+  text-align: center;
+  min-width: 300px;
+  border-radius: 16px;
+  background: #ffffffdd;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+
+  h1 {
+    margin-bottom: 30px;
+    font-weight: 600;
+    color: #1a2b4b;
+  }
+
+  button {
+    width: 100%;
+    margin-bottom: 15px;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+}

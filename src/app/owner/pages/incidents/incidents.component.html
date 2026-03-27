@@ -1,0 +1,81 @@
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-semibold tracking-tight">Mis Incidencias</h1>
+            <p class="text-gray-500">Reportes realizados en tu apartamento</p>
+        </div>
+
+        <button mat-flat-button color="primary" class="flex items-center gap-2">
+            <mat-icon>add</mat-icon>
+            Reportar nueva incidencia
+        </button>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid gap-4 md:grid-cols-3">
+
+        <mat-card class="flex items-center gap-4 p-4">
+            <mat-icon class="text-red-500 text-3xl">error</mat-icon>
+            <div>
+                <div class="text-sm text-gray-500">Abiertas</div>
+                <div class="text-2xl font-semibold">{{ openCount }}</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="flex items-center gap-4 p-4">
+            <mat-icon class="text-amber-500 text-3xl">pending</mat-icon>
+            <div>
+                <div class="text-sm text-gray-500">En progreso</div>
+                <div class="text-2xl font-semibold">{{ inProgressCount }}</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="flex items-center gap-4 p-4">
+            <mat-icon class="text-green-500 text-3xl">check_circle</mat-icon>
+            <div>
+                <div class="text-sm text-gray-500">Cerradas</div>
+                <div class="text-2xl font-semibold">{{ closedCount }}</div>
+            </div>
+        </mat-card>
+
+    </div>
+
+    <!-- Lista de incidencias -->
+    <mat-card>
+        <mat-card-title>Listado de incidencias</mat-card-title>
+        <mat-card-subtitle>Historial completo</mat-card-subtitle>
+
+        <mat-card-content class="mt-4 space-y-3">
+
+            <div *ngFor="let i of incidents"
+                class="p-4 border rounded-lg hover:bg-gray-50 transition flex flex-col gap-2">
+
+                <div class="flex items-center justify-between">
+                    <div class="font-medium text-lg">{{ i.title }}</div>
+
+                    <mat-chip [ngClass]="{
+              'bg-red-100 text-red-700': i.status === 'OPEN',
+              'bg-amber-100 text-amber-700': i.status === 'IN_PROGRESS',
+              'bg-green-100 text-green-700': i.status === 'CLOSED'
+            }">
+                        {{ i.status === 'OPEN' ? 'Abierta' :
+                        i.status === 'IN_PROGRESS' ? 'En progreso' : 'Cerrada' }}
+                    </mat-chip>
+                </div>
+
+                <div class="text-sm text-gray-600">
+                    {{ i.description }}
+                </div>
+
+                <div class="text-xs text-gray-500">
+                    ID: {{ i.id }} · {{ i.createdAt }}
+                </div>
+
+            </div>
+
+        </mat-card-content>
+    </mat-card>
+
+</div>

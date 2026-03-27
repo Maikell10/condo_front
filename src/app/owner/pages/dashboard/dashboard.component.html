@@ -1,0 +1,116 @@
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-semibold tracking-tight">
+            Bienvenido, {{ ownerName }}
+        </h1>
+        <p class="text-gray-500">
+            {{ apartment }} · {{ building }}
+        </p>
+    </div>
+
+    <!-- KPIs -->
+    <div class="grid gap-4 md:grid-cols-3">
+
+        <!-- Balance del mes -->
+        <mat-card class="flex items-center gap-4 p-4">
+            <mat-icon class="text-amber-500 text-3xl">account_balance_wallet</mat-icon>
+            <div>
+                <div class="text-sm text-gray-500">Balance del mes</div>
+                <div class="text-2xl font-semibold">
+                    $ {{ balance.amount }}
+                </div>
+                <div class="text-xs" [ngClass]="balance.status === 'PENDING' ? 'text-red-600' : 'text-green-600'">
+                    {{ balance.status === 'PENDING' ? 'Pendiente' : 'Al día' }}
+                </div>
+            </div>
+        </mat-card>
+
+        <!-- Último pago -->
+        <mat-card class="flex items-center gap-4 p-4">
+            <mat-icon class="text-green-500 text-3xl">payments</mat-icon>
+            <div>
+                <div class="text-sm text-gray-500">Último pago</div>
+                <div class="text-2xl font-semibold">
+                    $ {{ lastPayment.amount }}
+                </div>
+                <div class="text-xs text-gray-500">
+                    {{ lastPayment.date }}
+                </div>
+            </div>
+        </mat-card>
+
+        <!-- Incidencias abiertas -->
+        <mat-card class="flex items-center gap-4 p-4">
+            <mat-icon class="text-red-500 text-3xl">report_problem</mat-icon>
+            <div>
+                <div class="text-sm text-gray-500">Incidencias abiertas</div>
+                <div class="text-2xl font-semibold">
+                    {{ incidents.length }}
+                </div>
+            </div>
+        </mat-card>
+
+    </div>
+
+    <!-- Grilla principal -->
+    <div class="grid gap-4 lg:grid-cols-3">
+
+        <!-- Incidencias -->
+        <mat-card class="lg:col-span-2">
+            <mat-card-title>Mis incidencias</mat-card-title>
+            <mat-card-subtitle>Reportes recientes</mat-card-subtitle>
+
+            <mat-card-content class="mt-4 space-y-3">
+                <div *ngFor="let i of incidents"
+                    class="p-3 rounded-lg border flex items-center justify-between hover:bg-gray-50 transition">
+
+                    <div>
+                        <div class="font-medium">{{ i.title }}</div>
+                        <div class="text-xs text-gray-500">ID: {{ i.id }} · {{ i.createdAt }}</div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span *ngIf="i.status === 'OPEN'" class="text-red-600 text-sm flex items-center gap-1">
+                            <mat-icon class="text-base">error</mat-icon> Abierta
+                        </span>
+
+                        <span *ngIf="i.status === 'IN_PROGRESS'" class="text-amber-600 text-sm flex items-center gap-1">
+                            <mat-icon class="text-base">pending</mat-icon> En progreso
+                        </span>
+
+                        <span *ngIf="i.status === 'CLOSED'" class="text-green-600 text-sm flex items-center gap-1">
+                            <mat-icon class="text-base">check_circle</mat-icon> Cerrada
+                        </span>
+                    </div>
+
+                </div>
+            </mat-card-content>
+        </mat-card>
+
+        <!-- Acciones rápidas -->
+        <mat-card>
+            <mat-card-title>Acciones rápidas</mat-card-title>
+
+            <mat-card-content class="mt-4 space-y-3">
+                <button mat-stroked-button color="primary" class="w-full flex items-center gap-2">
+                    <mat-icon>report</mat-icon>
+                    Reportar incidencia
+                </button>
+
+                <button mat-stroked-button color="accent" class="w-full flex items-center gap-2">
+                    <mat-icon>receipt_long</mat-icon>
+                    Ver historial de pagos
+                </button>
+
+                <button mat-stroked-button class="w-full flex items-center gap-2">
+                    <mat-icon>home</mat-icon>
+                    Información del apartamento
+                </button>
+            </mat-card-content>
+        </mat-card>
+
+    </div>
+
+</div>

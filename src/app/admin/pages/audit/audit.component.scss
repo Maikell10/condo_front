@@ -1,0 +1,28 @@
+:host {
+  display: block;
+  padding: 30px;
+  background: #f1f5f9;
+  min-height: 100vh;
+}
+
+mat-card {
+  margin-bottom: 25px;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+
+  h2,
+  h3 {
+    color: #1a2b4b;
+    margin-bottom: 15px;
+  }
+
+  button {
+    margin-bottom: 20px;
+  }
+
+  mat-list-item {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 0;
+  }
+}

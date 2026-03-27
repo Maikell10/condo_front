@@ -1,0 +1,21 @@
+<mat-card>
+    <h2>Acceso Propietario</h2>
+
+    <form (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width" style="width: 100%; margin-bottom: 1rem;">
+            <mat-label>Correo Electrónico</mat-label>
+            <input matInput type="email" [(ngModel)]="email" name="email" placeholder="ejemplo@correo.com" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width" style="width: 100%; margin-bottom: 1rem;">
+            <mat-label>Contraseña</mat-label>
+            <input matInput type="password" [(ngModel)]="password" name="password" required />
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit" [disabled]="isLoading" style="width: 100%;">
+            {{ isLoading ? 'Verificando...' : 'Entrar' }}
+        </button>
+
+        <p *ngIf="error" style="color: red; margin-top: 1rem; text-align: center;">{{ error }}</p>
+    </form>
+</mat-card>

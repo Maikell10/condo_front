@@ -1,0 +1,119 @@
+<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+
+    <div>
+        <h1 class="text-3xl font-black text-gray-900 tracking-tight italic uppercase">Auditoría del Sistema</h1>
+        <p class="text-gray-500 mt-1 font-medium">Registro forense de todas las operaciones realizadas en Latitud.</p>
+    </div>
+
+    <mat-card class="p-6 border-none shadow-sm rounded-2xl bg-white">
+        <form [formGroup]="filterForm" class="grid gap-4 md:grid-cols-4">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Buscar Usuario</mat-label>
+                <mat-icon matPrefix class="mr-2 text-gray-400">search</mat-icon>
+                <input matInput formControlName="user" placeholder="Nombre o email...">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Acción</mat-label>
+                <mat-select formControlName="action">
+                    <mat-option value="">Todas las acciones</mat-option>
+                    <mat-option value="LOGIN">LOGIN</mat-option>
+                    <mat-option value="CREATE">CREATE</mat-option>
+                    <mat-option value="UPDATE">UPDATE</mat-option>
+                    <mat-option value="DELETE">DELETE</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Módulo</mat-label>
+                <mat-select formControlName="module">
+                    <mat-option value="">Todos los módulos</mat-option>
+                    <mat-option value="AUTH">AUTH</mat-option>
+                    <mat-option value="PAYMENTS">PAGOS</mat-option>
+                    <mat-option value="INVOICES">FACTURAS</mat-option>
+                    <mat-option value="APARTMENTS">APARTAMENTOS</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Fecha de Evento</mat-label>
+                <input matInput type="date" formControlName="date">
+            </mat-form-field>
+        </form>
+    </mat-card>
+
+    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white">
+        <div class="overflow-x-auto">
+            <table mat-table [dataSource]="events()" class="w-full">
+
+                <ng-container matColumnDef="timestamp">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
+                        Fecha / Hora</th>
+                    <td mat-cell *matCellDef="let e" class="text-xs font-mono text-gray-400"> {{ e.timestamp }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="user">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Usuario
+                    </th>
+                    <td mat-cell *matCellDef="let e">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-gray-800 text-sm">{{ e.userName || 'Sistema' }}</span>
+                            <span class="text-[10px] text-gray-400">{{ e.userEmail || '--' }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="role">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Rol</th>
+                    <td mat-cell *matCellDef="let e">
+                        <span class="px-2 py-0.5 rounded text-[9px] font-black uppercase" [ngClass]="{
+                                'bg-blue-100 text-blue-700': e.role === 'SUPER_ADMIN',
+                                'bg-purple-100 text-purple-700': e.role === 'BUILDING_ADMIN',
+                                'bg-emerald-100 text-emerald-700': e.role === 'OWNER'
+                              }">
+                            {{ e.role || 'SYSTEM' }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="action">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Acción
+                    </th>
+                    <td mat-cell *matCellDef="let e">
+                        <span class="font-black text-xs" [ngClass]="{
+                            'text-rose-600': e.action.includes('DELETE'),
+                            'text-amber-600': e.action.includes('UPDATE'),
+                            'text-emerald-600': e.action.includes('CREATE'),
+                            'text-indigo-600': e.action === 'LOGIN'
+                        }">{{ e.action }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="module">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Módulo
+                    </th>
+                    <td mat-cell *matCellDef="let e" class="text-gray-500 text-xs font-bold uppercase tracking-tighter">
+                        {{ e.module }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="payload">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Detalles
+                    </th>
+                    <td mat-cell *matCellDef="let e" class="py-4">
+                        <div *ngIf="e.payload"
+                            class="bg-gray-50 p-2 rounded-lg text-[10px] font-mono text-gray-600 max-w-xs truncate hover:max-w-none transition-all cursor-help">
+                            {{ e.payload | json }}
+                        </div>
+                        <span *ngIf="!e.payload" class="text-gray-300 italic text-xs">Sin datos extra</span>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                    class="hover:bg-gray-50/50 transition-colors"></tr>
+            </table>
+        </div>
+        <mat-paginator [length]="events().length" [pageSize]="10" class="border-t"></mat-paginator>
+    </mat-card>
+</div>

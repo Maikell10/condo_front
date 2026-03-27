@@ -1,0 +1,17 @@
+<div class="home-container">
+    <mat-card class="home-card">
+        <h1>Acceso al Sistema de Condominios</h1>
+
+        <button mat-raised-button color="primary" (click)="goTo('/auth/admin')">
+            Super Administrador
+        </button>
+
+        <button mat-raised-button color="accent" (click)="goTo('/auth/building-admin')">
+            Administrador de Edificio
+        </button>
+
+        <button mat-raised-button color="warn" (click)="goTo('/auth/owner')">
+            Propietario
+        </button>
+    </mat-card>
+</div>

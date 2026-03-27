@@ -1,0 +1,44 @@
+<div class="p-6 w-[420px] flex flex-col gap-5">
+
+    <h2 class="text-xl font-semibold">Nuevo contrato</h2>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Proveedor</mat-label>
+        <input matInput [(ngModel)]="provider" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Servicio</mat-label>
+        <input matInput [(ngModel)]="service" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Monto mensual</mat-label>
+        <input matInput type="number" [(ngModel)]="monthlyCost" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Fecha inicio</mat-label>
+        <input matInput [matDatepicker]="picker1" [(ngModel)]="startDate" />
+        <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
+        <mat-datepicker #picker1></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Fecha fin</mat-label>
+        <input matInput [matDatepicker]="picker2" [(ngModel)]="endDate" />
+        <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
+        <mat-datepicker #picker2></mat-datepicker>
+    </mat-form-field>
+
+    <div class="flex flex-col">
+        <label class="text-sm text-gray-600 mb-1">Archivo del contrato</label>
+        <input type="file" (change)="onFileSelected($event)" />
+    </div>
+
+    <div class="flex justify-end gap-3 pt-2">
+        <button mat-button (click)="close()">Cancelar</button>
+        <button mat-flat-button color="primary" (click)="save()">Guardar</button>
+    </div>
+
+</div>

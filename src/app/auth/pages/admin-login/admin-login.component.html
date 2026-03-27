@@ -1,0 +1,26 @@
+<mat-card class="p-6 w-full max-w-md mx-auto space-y-4 shadow-lg rounded-xl">
+
+    <h2 class="text-xl font-semibold mb-2 text-center text-gray-800">Login Admin Global</h2>
+
+    <form (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Correo Electrónico</mat-label>
+            <input matInput [(ngModel)]="email" name="email" type="email" placeholder="admin@condomanager.com"
+                required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Contraseña</mat-label>
+            <input matInput [(ngModel)]="password" name="password" type="password" required />
+        </mat-form-field>
+
+        <button mat-flat-button color="primary" type="submit" class="w-full py-6 text-base" [disabled]="isLoading">
+            {{ isLoading ? 'Validando...' : 'Entrar al Sistema' }}
+        </button>
+
+        <p *ngIf="error" class="text-red-600 text-sm text-center bg-red-50 p-2 rounded-md">{{ error }}</p>
+
+    </form>
+
+</mat-card>

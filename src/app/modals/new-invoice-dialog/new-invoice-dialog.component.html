@@ -1,0 +1,41 @@
+<div class="p-6 w-[420px] flex flex-col gap-5">
+
+    <h2 class="text-xl font-semibold">Nueva factura</h2>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Proveedor</mat-label>
+        <input matInput [(ngModel)]="provider" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Monto</mat-label>
+        <input matInput type="number" [(ngModel)]="amount" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Fecha</mat-label>
+        <input matInput [matDatepicker]="picker" [(ngModel)]="date" />
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Tipo</mat-label>
+        <mat-select [(ngModel)]="type">
+            <mat-option value="Servicio">Servicio</mat-option>
+            <mat-option value="Gasto fijo">Gasto fijo</mat-option>
+            <mat-option value="Extraordinario">Extraordinario</mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <div class="flex flex-col">
+        <label class="text-sm text-gray-600 mb-1">Archivo adjunto</label>
+        <input type="file" (change)="onFileSelected($event)" />
+    </div>
+
+    <div class="flex justify-end gap-3 pt-2">
+        <button mat-button (click)="close()">Cancelar</button>
+        <button mat-flat-button color="primary" (click)="save()">Guardar</button>
+    </div>
+
+</div>

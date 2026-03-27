@@ -1,0 +1,95 @@
+<button class="md:hidden fixed top-4 left-4 z-50 p-2 bg-indigo-600 text-white rounded-md shadow-md"
+    (click)="toggleMenu()">
+    <mat-icon>menu</mat-icon>
+</button>
+
+<div *ngIf="isMobileMenuOpen()" class="md:hidden fixed inset-0 bg-black/50 z-40 transition-opacity"
+    (click)="closeMenu()">
+</div>
+
+<aside
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r h-screen flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+    [ngClass]="isMobileMenuOpen() ? 'translate-x-0' : '-translate-x-full'">
+
+    <div class="p-4 flex items-center gap-2 border-b mt-12 md:mt-0">
+        <mat-icon class="text-indigo-600">apartment</mat-icon>
+        <span class="font-semibold text-lg text-gray-800">Condo Manager</span>
+    </div>
+
+    <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+
+        <ng-container *ngIf="role() === 'SUPER_ADMIN'">
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Administración Global
+            </div>
+            <a routerLink="/admin" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                [routerLinkActiveOptions]="{exact: true}"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>dashboard</mat-icon> Dashboard
+            </a>
+            <a routerLink="/admin/buildings" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>location_city</mat-icon> Edificios
+            </a>
+            <a routerLink="/admin/users" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>groups</mat-icon> Usuarios
+            </a>
+            <a routerLink="/admin/audit" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>history</mat-icon> Auditoría
+            </a>
+        </ng-container>
+
+        <ng-container *ngIf="role() === 'BUILDING_ADMIN'">
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Gestión de Edificio
+            </div>
+            <a routerLink="/building-admin" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                [routerLinkActiveOptions]="{exact: true}"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>dashboard</mat-icon> Dashboard
+            </a>
+            <a routerLink="/building-admin/apartments" (click)="closeMenu()"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>meeting_room</mat-icon> Apartamentos
+            </a>
+            <a routerLink="/building-admin/payments" (click)="closeMenu()"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>payments</mat-icon> Validar Pagos
+            </a>
+            <a routerLink="/building-admin/invoices" (click)="closeMenu()"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>receipt_long</mat-icon> Facturas
+            </a>
+            <a routerLink="/building-admin/contracts" (click)="closeMenu()"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>description</mat-icon> Contratos
+            </a>
+        </ng-container>
+
+        <ng-container *ngIf="role() === 'OWNER'">
+            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Mi Residencia</div>
+            <a routerLink="/owner" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                [routerLinkActiveOptions]="{exact: true}"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>dashboard</mat-icon> Mi Panel
+            </a>
+            <a routerLink="/owner/payments" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>receipt_long</mat-icon> Mis Pagos
+            </a>
+            <a routerLink="/owner/incidents" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>report_problem</mat-icon> Incidencias
+            </a>
+        </ng-container>
+
+    </nav>
+
+    <button class="p-4 flex items-center gap-2 text-red-600 hover:bg-red-50 border-t transition" (click)="logout()">
+        <mat-icon>logout</mat-icon> Cerrar sesión
+    </button>
+</aside>

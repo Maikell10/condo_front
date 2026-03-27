@@ -1,0 +1,123 @@
+<div class="p-6 space-y-8 max-w-7xl mx-auto pb-12">
+
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight italic">
+                {{ buildingInfo().name }}
+            </h1>
+            <p class="text-sm text-gray-500 font-medium">
+                Código: <span class="font-mono text-indigo-600 font-bold">{{ buildingInfo().code }}</span> · Panel de
+                Control Administrativo
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+            <button mat-flat-button color="primary" class="rounded-xl px-6 h-12 font-bold shadow-lg">
+                <mat-icon class="mr-2">campaign</mat-icon> Nuevo Aviso
+            </button>
+            <button mat-stroked-button class="rounded-xl px-6 h-12 font-bold border-2">
+                <mat-icon class="mr-2">analytics</mat-icon> Reporte Mensual
+            </button>
+        </div>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-4">
+        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
+            <div class="p-3 bg-blue-50 text-blue-500 rounded-2xl"><mat-icon class="text-3xl">domain</mat-icon></div>
+            <div>
+                <div class="text-[10px] uppercase font-black text-gray-400 tracking-widest">Unidades</div>
+                <div class="text-2xl font-black text-gray-800">{{ kpis().totalApartments }}</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
+            <div class="p-3 bg-emerald-50 text-emerald-500 rounded-2xl"><mat-icon
+                    class="text-3xl">person_pin_circle</mat-icon></div>
+            <div>
+                <div class="text-[10px] uppercase font-black text-gray-400 tracking-widest">Ocupados</div>
+                <div class="text-2xl font-black text-gray-800">{{ kpis().occupied }}</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
+            <div class="p-3 bg-rose-50 text-rose-500 rounded-2xl"><mat-icon class="text-3xl">priority_high</mat-icon>
+            </div>
+            <div>
+                <div class="text-[10px] uppercase font-black text-gray-400 tracking-widest">Morosidad</div>
+                <div class="text-2xl font-black text-gray-800">{{ kpis().delinquent }}</div>
+                <div class="text-[10px] font-bold text-rose-500">{{ delinquentRate }}% del edificio</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
+            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                <mat-icon class="text-3xl">account_balance_wallet</mat-icon>
+            </div>
+            <div>
+                <div class="text-[10px] uppercase font-black text-gray-400 tracking-widest">Ingresos Mes</div>
+                <div class="text-2xl font-black text-gray-800">
+                    ${{ kpis().monthIncome | number:'1.2-2' }}
+                </div>
+            </div>
+        </mat-card>
+    </div>
+
+    <div class="grid gap-6 lg:grid-cols-3">
+
+        <mat-card class="lg:col-span-2 border-none shadow-xl rounded-3xl overflow-hidden bg-white">
+            <div class="p-6 border-b border-gray-50 flex justify-between items-center">
+                <h3 class="font-black text-gray-800 m-0 uppercase text-sm tracking-tighter">Foco de Cobranza (Morosidad
+                    Alta)</h3>
+                <button mat-button color="primary" class="text-xs font-bold">Ver todos</button>
+            </div>
+
+            <mat-card-content class="p-4">
+                <div class="space-y-3">
+                    <div *ngFor="let apt of apartments()"
+                        class="flex items-center justify-between p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 transition-all cursor-pointer group">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="h-12 w-12 rounded-xl bg-gray-100 flex items-center justify-center font-black text-gray-400 group-hover:bg-indigo-100 group-hover:text-indigo-600">
+                                {{ apt.number }}
+                            </div>
+                            <div>
+                                <div class="font-bold text-gray-800">{{ apt.ownerName || 'Sin Propietario' }}</div>
+                                <div class="text-[10px] text-gray-400 uppercase font-bold tracking-tighter">Último aviso
+                                    enviado: Ayer</div>
+                            </div>
+                        </div>
+
+                        <div class="text-right">
+                            <div class="text-lg font-black text-rose-600">${{ apt.balance | number:'1.2-2' }}</div>
+                            <div class="text-[9px] uppercase font-bold text-gray-300">Saldo Pendiente</div>
+                        </div>
+                    </div>
+                </div>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card class="border-none shadow-xl rounded-3xl bg-white p-6 flex flex-col justify-between">
+            <div>
+                <h3 class="font-black text-gray-400 uppercase text-[10px] tracking-widest mb-6">Eficiencia de
+                    Recaudación</h3>
+                <div class="space-y-6">
+                    <div class="flex justify-between items-end">
+                        <span class="text-xs font-bold text-gray-600">Marzo 2026</span>
+                        <span class="text-2xl font-black text-emerald-600">88%</span>
+                    </div>
+
+                    <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                        <div class="bg-emerald-500 h-full w-[88%]"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-400 italic">Meta del mes: $15,000.00. Faltan $2,570.00 por
+                        verificar.</p>
+                </div>
+            </div>
+
+            <button mat-flat-button color="primary" class="w-full rounded-xl h-14 font-black mt-8 shadow-md">
+                VALIDAR PAGOS PENDIENTES
+            </button>
+        </mat-card>
+
+    </div>
+</div>

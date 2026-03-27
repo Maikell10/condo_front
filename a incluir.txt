@@ -1,0 +1,37 @@
+-En admin edificio agregar un pdf con la ley de propiedad horizontal
+-añadir escanear facturas del mes
+-añadir contratos
+
+-añadir junta de condominio (donde este la contabilidad y haga la entrega contable al cambiar de junta)
+
+monto disponible en pago
+
+
+
+fase 12
+A) Conectar esto a un backend real (Node, Nest, Firebase, Supabase)
+B) Crear UI premium con Angular Material (tablas, diálogos, cards animadas)
+C) Crear flujo de pagos, deudas, recibos
+D) Crear módulo de notificaciones (WhatsApp, email)
+E) Crear roles avanzados y auditoría
+
+
+🔥 A) Conectar backend real (NestJS, Node, Firebase, Supabase)
+🎨 B) Crear UI premium con Angular Material + Tailwind
+🧾 C) Crear módulo de pagos, deudas, recibos
+📢 D) Notificaciones (WhatsApp, email)
+🔐 E) Roles avanzados + auditorí
+
+
+- Crear el layout completo para cada rol
+- Diseñar dashboards premium con animaciones
+- Implementar el AuthService con roles
+- Integrar el header con datos reales del usuario
+- Crear un menú lateral responsive tipo Material 3
+
+✔ Animaciones premium (fade, slide, stagger)
+
+🔹 Mock services para edificios, apartamentos, pagos, incidencias
+
+
+¿Te gustaría que diseñemos primero la tabla de recibos pendientes usando Angular Material, o prefieres que armemos el formulario reactivo para reportar la transferencia bancaria con validaciones modernas?

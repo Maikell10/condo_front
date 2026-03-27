@@ -1,0 +1,63 @@
+<header class="h-16 bg-white border-b border-gray-200 px-4 lg:px-6 flex items-center justify-between sticky top-0 z-40">
+
+    <div class="flex items-center gap-3">
+        <button mat-icon-button class="lg:hidden text-gray-500" (click)="toggleSidebar.emit()">
+            <mat-icon>menu</mat-icon>
+        </button>
+
+        <div class="hidden lg:flex items-center gap-2 text-indigo-700">
+            <mat-icon>apartment</mat-icon>
+            <span class="text-xl font-bold tracking-tight">Condo Manager</span>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-4">
+
+        <button mat-icon-button class="text-gray-500 hover:text-indigo-600 transition-colors">
+            <mat-icon matBadge="3" matBadgeColor="warn" matBadgeSize="small">notifications</mat-icon>
+        </button>
+
+        <div class="h-8 w-px bg-gray-200 mx-1"></div>
+
+        <button
+            class="flex items-center gap-3 p-1 pl-3 rounded-full hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-200"
+            [matMenuTriggerFor]="userMenu">
+
+            <div class="flex flex-col items-end hidden sm:flex">
+                <span class="text-sm font-semibold text-gray-700">{{ user()?.name || 'Usuario' }}</span>
+                <span class="text-xs text-gray-500">
+                    {{ user()?.role === 'OWNER' ? 'Propietario' : (user()?.role === 'SUPER_ADMIN' ? 'Super Admin' :
+                    'Admin Edificio') }}
+                </span>
+            </div>
+
+            <div
+                class="h-10 w-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold shadow-sm border border-indigo-200">
+                {{ getInitials(user()?.name) }}
+            </div>
+
+            <mat-icon class="text-gray-400 text-sm hidden sm:block">arrow_drop_down</mat-icon>
+        </button>
+
+        <mat-menu #userMenu="matMenu" class="min-w-[200px]">
+            <div class="px-4 py-3 border-b border-gray-100 sm:hidden">
+                <p class="text-sm font-semibold text-gray-800">{{ user()?.name || 'Usuario' }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ user()?.email }}</p>
+            </div>
+
+            <button mat-menu-item>
+                <mat-icon class="text-gray-500">person</mat-icon>
+                <span>Mi Perfil</span>
+            </button>
+            <button mat-menu-item>
+                <mat-icon class="text-gray-500">settings</mat-icon>
+                <span>Configuración</span>
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="logout()" class="text-red-600 hover:bg-red-50">
+                <mat-icon class="text-red-600">logout</mat-icon>
+                <span>Cerrar Sesión</span>
+            </button>
+        </mat-menu>
+    </div>
+</header>

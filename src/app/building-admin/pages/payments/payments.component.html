@@ -1,0 +1,95 @@
+<div class="space-y-6 max-w-6xl mx-auto pb-10">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Validación de Pagos</h1>
+            <p class="text-gray-500">Gestión de recaudación de Residencias Indiana</p>
+        </div>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-3">
+        <mat-card class="p-6 border-l-4 border-green-500 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-green-50 rounded-full text-green-600"><mat-icon>check_circle</mat-icon></div>
+                <div>
+                    <div class="text-sm text-gray-500 font-medium">Pagos Verificados</div>
+                    <div class="text-2xl font-bold">{{ paidCount() }}</div>
+                </div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-l-4 border-amber-500 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-amber-50 rounded-full text-amber-600"><mat-icon>hourglass_top</mat-icon></div>
+                <div>
+                    <div class="text-sm text-gray-500 font-medium">Pendientes de Revisar</div>
+                    <div class="text-2xl font-bold text-amber-600">{{ pendingCount() }}</div>
+                </div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-l-4 border-indigo-500 shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-indigo-50 rounded-full text-indigo-600"><mat-icon>payments</mat-icon></div>
+                <div>
+                    <div class="text-sm text-gray-500 font-medium">Recaudación Total</div>
+                    <div class="text-2xl font-bold text-indigo-700">${{ totalCollected() | number:'1.2-2' }}</div>
+                </div>
+            </div>
+        </mat-card>
+    </div>
+
+    <mat-card class="rounded-xl shadow-md border border-gray-100 overflow-hidden">
+        <table mat-table [dataSource]="payments()" class="w-full">
+
+            <ng-container matColumnDef="apartment">
+                <th mat-header-cell *matHeaderCellDef>Apto</th>
+                <td mat-cell *matCellDef="let p" class="font-bold text-gray-700">{{ p.apartment }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="owner">
+                <th mat-header-cell *matHeaderCellDef>Propietario</th>
+                <td mat-cell *matCellDef="let p">{{ p.ownerName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef>Monto</th>
+                <td mat-cell *matCellDef="let p" class="font-semibold text-indigo-600">${{ p.amount }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Fecha Reporte</th>
+                <td mat-cell *matCellDef="let p" class="text-gray-500">{{ p.date }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <td mat-cell *matCellDef="let p">
+                    <span
+                        [ngClass]="p.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'"
+                        class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                        {{ p.status === 'APPROVED' ? 'Verificado' : 'Por Revisar' }}
+                    </span>
+                </td>
+            </ng-container>
+
+            <ng-container matColumnDef="method">
+                <th mat-header-cell *matHeaderCellDef>Referencia</th>
+                <td mat-cell *matCellDef="let p" class="text-xs font-mono text-gray-400">{{ p.reference }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="text-right">Acción</th>
+                <td mat-cell *matCellDef="let p" class="text-right">
+                    <button *ngIf="p.status === 'PENDING_APPROVAL'" mat-mini-fab color="primary" (click)="approve(p.id)"
+                        matTooltip="Aprobar Pago">
+                        <mat-icon>check</mat-icon>
+                    </button>
+                    <span *ngIf="p.status === 'APPROVED'" class="text-green-500"><mat-icon>verified</mat-icon></span>
+                </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="hover:bg-gray-50"></tr>
+        </table>
+    </mat-card>
+</div>

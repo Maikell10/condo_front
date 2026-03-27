@@ -1,0 +1,128 @@
+<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Gestión de Apartamentos</h1>
+            <p class="text-gray-500 mt-1">Administra propietarios, alícuotas y estados de cuenta.</p>
+        </div>
+
+        <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl shadow-lg font-bold"
+            (click)="openAddApartmentModal()">
+            <mat-icon class="mr-1">add_business</mat-icon>
+            Nuevo Apartamento
+        </button>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-3">
+        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
+            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><mat-icon>domain</mat-icon></div>
+            <div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">Total Unidades</div>
+                <div class="text-2xl font-black text-gray-800">{{ total() }}</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
+            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><mat-icon>verified</mat-icon></div>
+            <div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">Solventes</div>
+                <div class="text-2xl font-black text-gray-800">{{ upToDate() }}</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
+            <div class="p-3 bg-red-50 text-red-600 rounded-xl"><mat-icon>priority_high</mat-icon></div>
+            <div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">En Mora</div>
+                <div class="text-2xl font-black text-gray-800">{{ delinquent() }}</div>
+            </div>
+        </mat-card>
+    </div>
+
+    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white">
+        <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100">
+            <h3 class="font-bold text-gray-700 m-0">Listado de Unidades</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table mat-table [dataSource]="apartments()" class="w-full">
+
+                <ng-container matColumnDef="number">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
+                        Apartamento</th>
+                    <td mat-cell *matCellDef="let a" class="font-bold text-gray-900"> {{ a.number }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="owner">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">
+                        Propietario</th>
+                    <td mat-cell *matCellDef="let a">
+                        <div class="flex items-center gap-2">
+                            <span *ngIf="a.ownerName" class="text-gray-700 font-medium">{{ a.ownerName }}</span>
+                            <span *ngIf="!a.ownerName" class="text-gray-300 italic text-xs">Sin asignar</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="alicuota">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Alícuota
+                    </th>
+                    <td mat-cell *matCellDef="let a">
+                        <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-mono font-bold text-xs">
+                            {{ (a.alicuota * 100) | number:'1.2-4' }}%
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Estado
+                    </th>
+                    <td mat-cell *matCellDef="let a">
+                        <span [ngClass]="a.balance > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
+                            class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
+                            {{ a.balance > 0 ? 'Moroso' : 'Al día' }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="balance">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Saldo
+                        Pendiente</th>
+                    <td mat-cell *matCellDef="let a" class="font-black"
+                        [ngClass]="a.balance > 0 ? 'text-red-600' : 'text-emerald-600'">
+                        ${{ a.balance | number:'1.2-2' }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="text-right pr-6 font-bold text-gray-500 uppercase text-[11px]">Acciones</th>
+                    <td mat-cell *matCellDef="let a" class="text-right pr-4">
+
+                        <button mat-icon-button (click)="openLinkOwnerModal(a)" matTooltip="Vincular Propietario"
+                            class="text-gray-400 hover:text-indigo-600 transition-colors">
+                            <mat-icon>person_add_alt</mat-icon>
+                        </button>
+
+                        <button mat-icon-button (click)="editAlicuota(a)" matTooltip="Ajustar Alícuota"
+                            class="text-gray-400 hover:text-emerald-600 transition-colors">
+                            <mat-icon>percent</mat-icon>
+                        </button>
+
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                    class="hover:bg-gray-50/50 transition-colors"></tr>
+            </table>
+
+            <div *ngIf="apartments().length === 0"
+                class="py-20 flex flex-col items-center justify-center text-gray-400">
+                <mat-icon class="text-6xl mb-4 opacity-10">apartment</mat-icon>
+                <p class="text-sm font-medium italic">No se encontraron apartamentos registrados.</p>
+            </div>
+        </div>
+    </mat-card>
+
+</div>
