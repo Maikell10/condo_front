@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { User, UserRole } from '../models/user';
+import { API_URL_BASE } from '../constants';
 
 // Interfaz para tipar la respuesta de nuestro backend Node.js
 export interface AuthResponse {
@@ -20,7 +21,7 @@ export class AuthService {
 
     private readonly STORAGE_KEY = 'condominio_current_user';
     private readonly TOKEN_KEY = 'condominio_token';
-    private readonly API_URL = 'https://condoback.vercel.app/api/auth'; // Tu backend
+    private readonly API_URL = API_URL_BASE + '/api/auth'; // Tu backend
 
     // Mantenemos el Observable para compatibilidad con código viejo
     private userSubject = new BehaviorSubject<User | null>(null);

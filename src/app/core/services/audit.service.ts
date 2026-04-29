@@ -2,13 +2,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL_BASE } from '../constants';
 
 @Injectable({
     providedIn: 'root'
 })
 export class AuditService {
     private http = inject(HttpClient);
-    private readonly API_URL = 'https://condoback.vercel.app/api/audit';
+    private readonly API_URL = API_URL_BASE + '/api/audit';
 
     /**
      * Obtiene los logs de auditoría aplicando los filtros seleccionados.

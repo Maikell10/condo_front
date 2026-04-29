@@ -2,11 +2,11 @@
 
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-            <h1 class="text-3xl font-black text-gray-900 tracking-tight italic">Edificios test</h1>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight italic">Edificios</h1>
             <p class="text-gray-500 mt-1">Control global de los condominios registrados en el sistema.</p>
         </div>
 
-        <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl font-bold shadow-lg">
+        <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl font-bold shadow-lg" (click)="openDialog()">
             <mat-icon class="mr-2">domain_add</mat-icon>
             Nuevo Edificio
         </button>
@@ -81,12 +81,22 @@
                 <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef class="text-right pr-6"></th>
                     <td mat-cell *matCellDef="let b" class="text-right pr-4">
+
+                        <button mat-icon-button class="text-blue-400 hover:text-blue-600 transition-colors mr-1"
+                            [matTooltip]="b.adminEmail ? 'Cambiar Administrador' : 'Asignar Administrador'"
+                            (click)="openAssignAdmin(b)">
+                            <mat-icon>{{ b.adminEmail ? 'manage_accounts' : 'person_add' }}</mat-icon>
+                        </button>
+
                         <button mat-icon-button (click)="toggleStatus(b)"
                             [matTooltip]="b.status === 'ACTIVE' ? 'Suspender edificio' : 'Activar edificio'"
                             [ngClass]="b.status === 'ACTIVE' ? 'text-rose-400' : 'text-emerald-400'">
                             <mat-icon>{{ b.status === 'ACTIVE' ? 'block' : 'check_circle' }}</mat-icon>
                         </button>
-                        <button mat-icon-button class="text-gray-300"><mat-icon>edit</mat-icon></button>
+                        <button mat-icon-button class="text-gray-300 hover:text-indigo-500 transition-colors"
+                            (click)="openDialog(b)">
+                            <mat-icon>edit</mat-icon>
+                        </button>
                     </td>
                 </ng-container>
 

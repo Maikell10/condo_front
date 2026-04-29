@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL_BASE } from '../constants';
 
 // Exportamos la interfaz desde aquí para tenerla centralizada
 export interface Receipt {
@@ -22,7 +23,7 @@ interface ApiResponse {
 })
 export class ReceiptService {
     private http = inject(HttpClient);
-    private readonly API_URL = 'https://condoback.vercel.app/api/receipts';
+    private readonly API_URL = API_URL_BASE + '/api/receipts';
 
     getPendingReceipts(): Observable<ApiResponse> {
         return this.http.get<ApiResponse>(`${this.API_URL}/pending`);

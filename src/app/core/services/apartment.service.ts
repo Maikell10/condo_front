@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { API_URL_BASE } from '../constants';
 
 export interface Apartment {
     id: string;
@@ -13,7 +14,7 @@ export interface Apartment {
 @Injectable({ providedIn: 'root' })
 export class ApartmentService {
     private http = inject(HttpClient);
-    private readonly API_URL = 'https://condoback.vercel.app/api/apartments';
+    private readonly API_URL = API_URL_BASE + '/api/apartments';
 
     getApartments(buildingId: number): Observable<{ data: any[] }> {
         return this.http.get<{ data: any[] }>(`${this.API_URL}/building/${buildingId}`);
@@ -25,7 +26,7 @@ export class ApartmentService {
 
     // Busca usuarios por nombre o correo para el modal de vinculación
     searchUsers(term: string): Observable<{ data: any[] }> {
-        return this.http.get<{ data: any[] }>(`https://condoback.vercel.app/api/users/search?term=${term}`);
+        return this.http.get<{ data: any[] }>(`${API_URL_BASE}/api/users/search?term=${term}`);
     }
 
     // Vincula el usuario al apartamento

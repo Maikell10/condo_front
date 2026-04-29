@@ -6,7 +6,7 @@
             <p class="text-gray-500 mt-1">Gestión centralizada de accesos y roles del ecosistema Latitud.</p>
         </div>
 
-        <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl font-bold shadow-lg">
+        <button (click)="openDialog()" mat-flat-button color="primary" class="h-14 px-6 rounded-xl font-bold shadow-lg">
             <mat-icon class="mr-2">person_add</mat-icon>
             Registrar Nuevo Usuario
         </button>
@@ -97,7 +97,9 @@
                             [ngClass]="u.status === 'ACTIVE' ? 'text-rose-400' : 'text-emerald-400'">
                             <mat-icon>{{ u.status === 'ACTIVE' ? 'person_off' : 'person_add' }}</mat-icon>
                         </button>
-                        <button mat-icon-button class="text-gray-300"><mat-icon>edit</mat-icon></button>
+                        <button (click)="openDialog(u)" mat-icon-button class="text-gray-300">
+                            <mat-icon>edit</mat-icon>
+                        </button>
                     </td>
                 </ng-container>
 

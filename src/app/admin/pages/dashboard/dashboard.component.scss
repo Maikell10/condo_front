@@ -1,33 +1,37 @@
 :host {
   display: block;
   padding: 30px;
-  background: #f1f5f9;
+  background: #f8fafc; /* Un gris muy sutil, casi blanco, estilo Tailwind slate-50 */
   min-height: 100vh;
 }
 
-mat-card {
-  margin-bottom: 25px;
-  padding: 25px;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+/* Modificamos el estilo base de Mat-Card para que sea Premium */
+::ng-deep .premium-card {
+  border-radius: 24px !important;
+  border: none !important;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08) !important;
+  background: white;
+  padding: 24px;
 
-  h2,
-  h3 {
-    color: #1a2b4b;
-    margin-bottom: 15px;
+  /* Quitamos el padding por defecto de material en el content para mayor control */
+  .mat-mdc-card-content {
+    padding: 0;
+  }
+}
+
+/* Ocultamos los bordes de la tabla para un look más limpio */
+::ng-deep .mat-mdc-table {
+  background: transparent !important;
+
+  .mat-mdc-header-cell {
+    border-bottom: 1px solid #f1f5f9;
   }
 
-  mat-form-field {
-    width: 100%;
-    margin-bottom: 15px;
+  .mat-mdc-cell {
+    border-bottom: 1px solid #f1f5f9;
   }
 
-  button {
-    margin-bottom: 20px;
-  }
-
-  mat-list-item {
-    border-bottom: 1px solid #e2e8f0;
-    padding: 10px 0;
+  .mat-mdc-row:last-child .mat-mdc-cell {
+    border-bottom: none;
   }
 }

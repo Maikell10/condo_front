@@ -1,13 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL_BASE } from '../constants';
 
 @Injectable({
     providedIn: 'root'
 })
 export class PaymentService {
     private http = inject(HttpClient);
-    private readonly API_URL = 'https://condoback.vercel.app/api/payments';
+    private readonly API_URL = API_URL_BASE + '/api/payments';
 
     reportPayment(paymentData: any): Observable<any> {
         return this.http.post(this.API_URL, paymentData);

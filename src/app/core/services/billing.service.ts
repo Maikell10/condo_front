@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL_BASE } from '../constants';
 
 // Interfaz para la respuesta de la generación
 interface BillingResponse {
@@ -12,7 +13,7 @@ interface BillingResponse {
 })
 export class BillingService {
     private http = inject(HttpClient);
-    private readonly API_URL = 'https://condoback.vercel.app/api/billing';
+    private readonly API_URL = API_URL_BASE + '/api/billing';
 
     /**
  * Dispara el proceso de facturación mensual (Cierre de mes)
@@ -43,7 +44,7 @@ export class BillingService {
 
     getConcepts(): Observable<{ data: any[] }> {
         // Usaremos la ruta que definimos en concept.routes.js
-        return this.http.get<{ data: any[] }>(`https://condoback.vercel.app/api/concepts`);
+        return this.http.get<{ data: any[] }>(`${API_URL_BASE}/api/concepts`);
     }
 
     deleteExpense(id: number): Observable<any> {
