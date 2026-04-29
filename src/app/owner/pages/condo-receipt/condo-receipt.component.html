@@ -1,0 +1,92 @@
+<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+
+    <div
+        class="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div>
+            <div class="flex items-center gap-2 text-indigo-600 mb-1">
+                <mat-icon class="scale-75">receipt</mat-icon>
+                <span class="text-xs font-bold uppercase tracking-wider">Detalle Mensual</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-black text-gray-900 tracking-tight m-0">Recibo 03-2026</h1>
+                <span
+                    class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-bold border border-indigo-100">
+                    Alícuota: 17,9500000 %
+                </span>
+            </div>
+            <p class="text-gray-500 mt-2 text-sm">Desglose de gastos comunes y tu cuota correspondiente.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <mat-form-field appearance="outline" class="w-40 hide-subscript">
+                <mat-label>Período</mat-label>
+                <mat-select [value]="'03-2026'">
+                    <mat-option value="03-2026">03 - 2026</mat-option>
+                    <mat-option value="02-2026">02 - 2026</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" class="h-[52px] px-6 rounded-xl font-bold shadow-md">
+                <mat-icon class="mr-2">print</mat-icon>
+                Imprimir
+            </button>
+        </div>
+    </div>
+
+    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white premium-card">
+        <div class="overflow-x-auto">
+            <table mat-table [dataSource]="receiptData()" class="w-full">
+
+                <ng-container matColumnDef="code">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="font-bold text-gray-500 uppercase text-[11px] py-4 w-20">Código</th>
+                    <td mat-cell *matCellDef="let row" class="font-mono text-gray-400 text-xs">
+                        {{ row.isTotal ? '' : row.code }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="description">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">
+                        Descripción</th>
+                    <td mat-cell *matCellDef="let row" [ngClass]="{
+                                'font-black text-gray-800 text-right pr-6': row.isTotal, 
+                                'font-medium text-gray-700': !row.isTotal,
+                                'text-indigo-900 text-sm': row.isFinal
+                            }">
+                        {{ row.description }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="totalAmount">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="font-bold text-gray-500 uppercase text-[11px] text-right">Monto Base</th>
+                    <td mat-cell *matCellDef="let row" class="text-right font-medium"
+                        [ngClass]="{'font-black text-gray-800': row.isTotal, 'text-gray-500': !row.isTotal,'opacity-0': row.isFinal}">
+                        {{ row.totalAmount ? (row.totalAmount | currency:'Bs. ':'symbol':'1.2-2') : '' }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="share">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="font-bold text-gray-500 uppercase text-[11px] text-right pr-6">Cuota Parte</th>
+                    <td mat-cell *matCellDef="let row" class="text-right pr-6 font-bold" [ngClass]="{
+                                'text-gray-900': row.isTotal && !row.isFinal, 
+                                'text-gray-700': !row.isTotal,
+                                'text-indigo-600 text-xl': row.isFinal
+                            }">
+                        {{ row.share ? (row.share | currency:'Bs. ':'symbol':'1.2-2') : '' }}
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50/50"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" [ngClass]="{
+                            'bg-gray-100/60 border-t border-gray-200': row.isTotal && !row.isFinal, 
+                            'bg-indigo-50/50 border-t-2 border-indigo-200': row.isFinal,
+                            'hover:bg-gray-50/50 transition-colors': !row.isTotal
+                        }">
+                </tr>
+            </table>
+        </div>
+    </mat-card>
+
+</div>

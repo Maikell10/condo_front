@@ -1,0 +1,67 @@
+<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+
+    <div
+        class="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div>
+            <div class="flex items-center gap-2 text-indigo-600 mb-1">
+                <mat-icon class="scale-75">account_balance</mat-icon>
+                <span class="text-xs font-bold uppercase tracking-wider">Transparencia Financiera</span>
+            </div>
+            <h1 class="text-2xl font-black text-gray-900 tracking-tight m-0">Gastos del Edificio</h1>
+            <p class="text-gray-500 mt-1 text-sm">Relación de gastos comunes y fondos de reserva del período.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <mat-form-field appearance="outline" class="w-40 hide-subscript">
+                <mat-label>Período</mat-label>
+                <mat-select [value]="'04-2026'">
+                    <mat-option value="04-2026">Abril 2026</mat-option>
+                    <mat-option value="03-2026">Marzo 2026</mat-option>
+                    <mat-option value="02-2026">Febrero 2026</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <button mat-flat-button color="primary" class="h-[52px] px-6 rounded-xl font-bold shadow-md">
+                <mat-icon class="mr-2">print</mat-icon>
+                Imprimir
+            </button>
+        </div>
+    </div>
+
+    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white premium-card">
+        <div class="overflow-x-auto">
+            <table mat-table [dataSource]="expenses()" class="w-full">
+
+                <ng-container matColumnDef="code">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="font-bold text-gray-500 uppercase text-[11px] py-4 w-24">Código</th>
+                    <td mat-cell *matCellDef="let row" class="font-mono text-gray-400 text-xs"> {{ row.code }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="description">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">
+                        Descripción</th>
+                    <td mat-cell *matCellDef="let row"
+                        [ngClass]="{'font-black text-indigo-900': row.isTotal, 'font-medium text-gray-700': !row.isTotal}">
+                        {{ row.description }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="amount">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="font-bold text-gray-500 uppercase text-[11px] text-right pr-6">Monto</th>
+                    <td mat-cell *matCellDef="let row" class="text-right pr-6"
+                        [ngClass]="{'font-black text-indigo-900': row.isTotal, 'text-gray-700': !row.isTotal}">
+                        {{ row.amount ? (row.amount | currency:'Bs. ':'symbol':'1.2-2') : '' }}
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50/50"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                    [ngClass]="{'bg-indigo-50/30': row.isTotal, 'hover:bg-gray-50/50 transition-colors': !row.isTotal}">
+                </tr>
+            </table>
+        </div>
+    </mat-card>
+
+</div>

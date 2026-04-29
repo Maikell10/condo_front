@@ -1,116 +1,162 @@
-<div class="space-y-6">
+<div class="space-y-6 max-w-[1200px] mx-auto pb-12">
 
-    <!-- Header -->
-    <div>
-        <h1 class="text-2xl font-semibold tracking-tight">
-            Bienvenido, {{ ownerName }}
-        </h1>
-        <p class="text-gray-500">
-            {{ apartment }} · {{ building }}
-        </p>
+    <div class="relative overflow-hidden rounded-3xl shadow-xl p-8 text-white"
+        [ngClass]="financialStatus().status === 'DEBT' ? 'bg-gradient-to-r from-rose-900 to-red-800' : 'bg-gradient-to-r from-emerald-900 to-green-800'">
+
+        <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-5 rounded-full blur-2xl"></div>
+
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <p class="text-white/80 font-medium mb-1">Bienvenido, {{ owner().name }}</p>
+                <h1 class="text-3xl md:text-4xl font-black tracking-tight mb-2">
+                    {{ owner().building }} · Unidad {{ owner().unit }}
+                </h1>
+                <div class="flex items-center gap-2 mt-4">
+                    <span
+                        class="px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
+                        Alícuota: {{ owner().aliquot }}%
+                    </span>
+                </div>
+            </div>
+
+            <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl text-center min-w-[250px]">
+                <p class="text-white/80 text-sm font-bold uppercase tracking-wider mb-1">
+                    {{ financialStatus().status === 'DEBT' ? 'Saldo Pendiente' : 'Saldo a Favor' }}
+                </p>
+                <div class="text-4xl font-black mb-2">
+                    {{ financialStatus().currentDebt | currency:'Bs. ':'symbol':'1.2-2' }}
+                </div>
+                <button mat-flat-button color="accent" class="w-full rounded-xl font-bold mt-2"
+                    *ngIf="financialStatus().status === 'DEBT'">
+                    Reportar Pago
+                </button>
+                <p *ngIf="financialStatus().status === 'UP_TO_DATE'"
+                    class="text-sm font-medium text-emerald-200 flex items-center justify-center gap-1 mt-2">
+                    <mat-icon class="scale-75">check_circle</mat-icon> Estás al día
+                </p>
+            </div>
+        </div>
     </div>
 
-    <!-- KPIs -->
-    <div class="grid gap-4 md:grid-cols-3">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <!-- Balance del mes -->
-        <mat-card class="flex items-center gap-4 p-4">
-            <mat-icon class="text-amber-500 text-3xl">account_balance_wallet</mat-icon>
-            <div>
-                <div class="text-sm text-gray-500">Balance del mes</div>
-                <div class="text-2xl font-semibold">
-                    $ {{ balance.amount }}
-                </div>
-                <div class="text-xs" [ngClass]="balance.status === 'PENDING' ? 'text-red-600' : 'text-green-600'">
-                    {{ balance.status === 'PENDING' ? 'Pendiente' : 'Al día' }}
-                </div>
-            </div>
-        </mat-card>
+        <div class="lg:col-span-2 space-y-6">
 
-        <!-- Último pago -->
-        <mat-card class="flex items-center gap-4 p-4">
-            <mat-icon class="text-green-500 text-3xl">payments</mat-icon>
-            <div>
-                <div class="text-sm text-gray-500">Último pago</div>
-                <div class="text-2xl font-semibold">
-                    $ {{ lastPayment.amount }}
-                </div>
-                <div class="text-xs text-gray-500">
-                    {{ lastPayment.date }}
-                </div>
-            </div>
-        </mat-card>
-
-        <!-- Incidencias abiertas -->
-        <mat-card class="flex items-center gap-4 p-4">
-            <mat-icon class="text-red-500 text-3xl">report_problem</mat-icon>
-            <div>
-                <div class="text-sm text-gray-500">Incidencias abiertas</div>
-                <div class="text-2xl font-semibold">
-                    {{ incidents.length }}
-                </div>
-            </div>
-        </mat-card>
-
-    </div>
-
-    <!-- Grilla principal -->
-    <div class="grid gap-4 lg:grid-cols-3">
-
-        <!-- Incidencias -->
-        <mat-card class="lg:col-span-2">
-            <mat-card-title>Mis incidencias</mat-card-title>
-            <mat-card-subtitle>Reportes recientes</mat-card-subtitle>
-
-            <mat-card-content class="mt-4 space-y-3">
-                <div *ngFor="let i of incidents"
-                    class="p-3 rounded-lg border flex items-center justify-between hover:bg-gray-50 transition">
-
-                    <div>
-                        <div class="font-medium">{{ i.title }}</div>
-                        <div class="text-xs text-gray-500">ID: {{ i.id }} · {{ i.createdAt }}</div>
+            <mat-card class="premium-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><mat-icon>receipt_long</mat-icon></div>
+                        <div>
+                            <h2 class="text-lg font-black text-gray-800 m-0">Recibo Actual</h2>
+                            <p class="text-sm text-gray-500">{{ financialStatus().currentMonth }}</p>
+                        </div>
                     </div>
+                    <button mat-stroked-button routerLink="/owner/condo-receipt" class="rounded-lg border-gray-200">
+                        Ver Detalle Completo
+                    </button>
+                </div>
 
-                    <div class="flex items-center gap-2">
-                        <span *ngIf="i.status === 'OPEN'" class="text-red-600 text-sm flex items-center gap-1">
-                            <mat-icon class="text-base">error</mat-icon> Abierta
-                        </span>
+                <mat-divider class="mb-4"></mat-divider>
 
-                        <span *ngIf="i.status === 'IN_PROGRESS'" class="text-amber-600 text-sm flex items-center gap-1">
-                            <mat-icon class="text-base">pending</mat-icon> En progreso
-                        </span>
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div class="flex items-center gap-3">
+                        <mat-icon class="text-emerald-500">verified</mat-icon>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold uppercase">Último Pago Registrado</p>
+                            <p class="font-medium text-gray-900">{{ lastPayment().amount | currency:'Bs. ' }} <span
+                                    class="text-gray-400 font-normal">el {{ lastPayment().date }}</span></p>
+                        </div>
+                    </div>
+                    <mat-chip class="bg-emerald-100 text-emerald-700 font-bold">Verificado</mat-chip>
+                </div>
+            </mat-card>
 
-                        <span *ngIf="i.status === 'CLOSED'" class="text-green-600 text-sm flex items-center gap-1">
-                            <mat-icon class="text-base">check_circle</mat-icon> Cerrada
+            <mat-card class="premium-card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-black text-gray-800 m-0">Mis Incidencias</h2>
+                    <button mat-button color="primary" routerLink="/owner/incidents">Ver Todas</button>
+                </div>
+
+                <div class="space-y-3">
+                    <div *ngFor="let inc of incidents()"
+                        class="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center"
+                                [ngClass]="inc.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-500' : 'bg-gray-100 text-gray-400'">
+                                <mat-icon class="scale-75">{{ inc.status === 'IN_PROGRESS' ? 'build' : 'check'
+                                    }}</mat-icon>
+                            </div>
+                            <div>
+                                <p class="font-bold text-gray-800 text-sm">{{ inc.title }}</p>
+                                <p class="text-xs text-gray-500">{{ inc.id }} · {{ inc.date }}</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-black uppercase px-2 py-1 rounded-full"
+                            [ngClass]="inc.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'">
+                            {{ inc.status === 'IN_PROGRESS' ? 'En Progreso' : 'Cerrado' }}
                         </span>
                     </div>
-
                 </div>
-            </mat-card-content>
-        </mat-card>
+            </mat-card>
 
-        <!-- Acciones rápidas -->
-        <mat-card>
-            <mat-card-title>Acciones rápidas</mat-card-title>
+        </div>
 
-            <mat-card-content class="mt-4 space-y-3">
-                <button mat-stroked-button color="primary" class="w-full flex items-center gap-2">
-                    <mat-icon>report</mat-icon>
-                    Reportar incidencia
-                </button>
+        <div class="space-y-6">
 
-                <button mat-stroked-button color="accent" class="w-full flex items-center gap-2">
-                    <mat-icon>receipt_long</mat-icon>
-                    Ver historial de pagos
-                </button>
+            <mat-card class="premium-card">
+                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Acciones Rápidas</h2>
 
-                <button mat-stroked-button class="w-full flex items-center gap-2">
-                    <mat-icon>home</mat-icon>
-                    Información del apartamento
-                </button>
-            </mat-card-content>
-        </mat-card>
+                <div class="grid grid-cols-2 gap-3">
+                    <button routerLink="/owner/condo-receipt"
+                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-700 transition-colors">
+                        <mat-icon>receipt</mat-icon>
+                        <span class="text-xs font-bold text-center">Mi Recibo</span>
+                    </button>
 
+                    <button routerLink="/owner/paid-receipts"
+                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-700 transition-colors">
+                        <mat-icon>history</mat-icon>
+                        <span class="text-xs font-bold text-center">Historial</span>
+                    </button>
+
+                    <button routerLink="/owner/aliquots"
+                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-700 transition-colors">
+                        <mat-icon>pie_chart</mat-icon>
+                        <span class="text-xs font-bold text-center">Alícuotas</span>
+                    </button>
+
+                    <button routerLink="/owner/incidents"
+                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-700 transition-colors text-gray-600">
+                        <mat-icon>campaign</mat-icon>
+                        <span class="text-xs font-bold text-center">Reportar</span>
+                    </button>
+                </div>
+            </mat-card>
+
+            <mat-card class="premium-card">
+                <div class="flex items-center gap-2 mb-4">
+                    <mat-icon class="text-indigo-600">notifications_active</mat-icon>
+                    <h2 class="text-sm font-bold text-indigo-500 uppercase tracking-wider m-0">Avisos del Edificio</h2>
+                </div>
+
+                <div class="space-y-3">
+                    <div *ngFor="let msg of announcements()"
+                        class="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors">
+
+                        <mat-icon class="scale-75 mt-0.5"
+                            [ngClass]="msg.type === 'warning' ? 'text-amber-500' : 'text-blue-500'">
+                            {{ msg.type === 'warning' ? 'warning' : 'info' }}
+                        </mat-icon>
+
+                        <div>
+                            <p class="font-bold text-sm text-gray-600">{{ msg.title }}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Programado para: <span class="font-medium">{{
+                                    msg.date }}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </mat-card>
+
+        </div>
     </div>
-
 </div>

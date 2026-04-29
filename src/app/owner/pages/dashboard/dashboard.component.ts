@@ -1,60 +1,60 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
-import { AuthService } from '../../../core/services/auth.service';
-import { ApartmentService } from '../../../core/services/apartment.service';
 import { MatIconModule } from '@angular/material/icon';
-import { NgClass, NgFor, NgIf } from '@angular/common';
-
-interface Incident {
-  id: string;
-  title: string;
-  status: 'OPEN' | 'IN_PROGRESS' | 'CLOSED';
-  createdAt: string;
-}
-
-interface Payment {
-  id: string;
-  amount: number;
-  date: string;
-  status: 'PAID' | 'PENDING';
-}
+import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-owner-dashboard',
   standalone: true,
-  imports: [MatCardModule, MatIconModule, NgFor, NgIf, NgClass],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatIconModule,
+    MatButtonModule,
+    MatChipsModule,
+    MatDividerModule
+  ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {
-  ownerName = 'Juan Pérez';
-  ownerCode = 'APT-0001-UNICO';
-  apartment = 'Apto 12A';
-  building = 'Residencias El Mirador';
 
-  balance = {
-    month: 'Enero 2026',
-    amount: 45,
-    status: 'PENDING'
-  };
+  // Datos del Propietario
+  owner = signal({
+    name: 'Benito Sciamanna',
+    unit: 'PH',
+    building: 'Residencias Indiana',
+    aliquot: 17.950000
+  });
 
-  lastPayment: Payment = {
-    id: 'P-001',
-    amount: 60,
-    date: '2025-12-28',
-    status: 'PAID'
-  };
+  // Estado Financiero
+  financialStatus = signal({
+    currentDebt: 83062.15,
+    status: 'DEBT', // Puede ser 'UP_TO_DATE' o 'DEBT'
+    pendingReceipts: 1,
+    currentMonth: 'Marzo 2026'
+  });
 
-  incidents: Incident[] = [
-    { id: 'I-001', title: 'Fuga de agua en baño', status: 'IN_PROGRESS', createdAt: '2026-01-10' },
-    { id: 'I-002', title: 'Luces del pasillo dañadas', status: 'OPEN', createdAt: '2026-01-15' }
-  ];
+  // Último Pago
+  lastPayment = signal({
+    amount: 80194.39,
+    date: '28 Feb 2026',
+    method: 'Transferencia',
+    status: 'VERIFIED'
+  });
 
-  constructor(
-    private auth: AuthService,
-    private apartmentService: ApartmentService
-  ) {
+  // Incidencias Recientes
+  incidents = signal([
+    { id: 'INC-042', title: 'Fuga de agua en pasillo', status: 'IN_PROGRESS', date: 'Hace 2 días' },
+    { id: 'INC-039', title: 'Falla en ascensor par', status: 'CLOSED', date: 'Hace 1 semana' }
+  ]);
 
-  }
-
+  // Avisos de la Administración
+  announcements = signal([
+    { title: 'Mantenimiento de Tanque', date: '15 Abr', type: 'warning' },
+    { title: 'Asamblea Ordinaria', date: '20 Abr', type: 'info' }
+  ]);
 }

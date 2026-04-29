@@ -72,11 +72,39 @@
 
         <ng-container *ngIf="role() === 'OWNER'">
             <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Mi Residencia</div>
+
             <a routerLink="/owner" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 [routerLinkActiveOptions]="{exact: true}"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>dashboard</mat-icon> Mi Panel
             </a>
+
+            <a routerLink="/owner/pending-receipts" (click)="closeMenu()"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>warning_amber</mat-icon> Recibos Pendientes
+            </a>
+            <a routerLink="/owner/pending-detailed" (click)="closeMenu()"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>format_list_bulleted</mat-icon> Pendientes Detallado
+            </a>
+            <a routerLink="/owner/building-expenses" (click)="closeMenu()"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>account_balance</mat-icon> Gastos Edificio
+            </a>
+
+            <a routerLink="/owner/condo-receipt" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>receipt</mat-icon> Recibo de Condominio
+            </a>
+
+            <a routerLink="/owner/paid-receipts" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>verified</mat-icon> Recibos Pagados
+            </a>
+
             <a routerLink="/owner/payments" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>receipt_long</mat-icon> Mis Pagos
@@ -84,6 +112,11 @@
             <a routerLink="/owner/incidents" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>report_problem</mat-icon> Incidencias
+            </a>
+
+            <a routerLink="/owner/aliquots" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>pie_chart</mat-icon> Alícuotas
             </a>
         </ng-container>
 
