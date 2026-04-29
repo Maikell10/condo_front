@@ -12,7 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
   standalone: true,
   imports: [CommonModule, MatCardModule, MatTableModule, MatIconModule, MatButtonModule, MatSelectModule, MatFormFieldModule],
   templateUrl: './building-expenses.component.html',
-  styles: './building-expenses.component.scss'
+  styleUrl: './building-expenses.component.scss'
 })
 export class BuildingExpensesComponent {
   displayedColumns: string[] = ['code', 'description', 'amount'];
