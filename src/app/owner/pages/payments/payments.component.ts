@@ -1,4 +1,5 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -18,6 +19,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { ReceiptService, Receipt } from '../../../core/services/receipt.service';
 import { PaymentService } from '../../../core/services/payment.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ApartmentService } from '../../../core/services/apartment.service';
 
 export interface Movement {
   fecha: string;
@@ -42,6 +44,7 @@ export class PaymentsComponent implements OnInit {
   private receiptService = inject(ReceiptService);
   private paymentService = inject(PaymentService);
   private authService = inject(AuthService);
+  private apartmentService = inject(ApartmentService);
 
   // --- SIGNALS ---
   receipts = signal<Receipt[]>([]);
@@ -49,16 +52,7 @@ export class PaymentsComponent implements OnInit {
   movements = signal<Movement[]>([]);
   totalDebt = signal<number>(0);
   totalSelected = signal<number>(0);
-
-  // --- TABLAS ---
-  selection = new SelectionModel<Receipt>(true, []);
-  displayedColumns: string[] = ['select', 'fecha', 'monto', 'pagado', 'deuda', 'saldo'];
-  displayedColumnsMovements: string[] = ['fecha', 'detalle', 'monto', 'status'];
-
-  banks = signal([
-    { id: '1', name: 'MERCANTIL (01050039751039366716)' },
-    { id: '2', name: 'BANESCO (01340000000000000000)' }
-  ]);
+  banks = signal<any[]>([]);
 
   paymentForm: FormGroup = this.fb.group({
     bankAccount: ['', Validators.required],
@@ -69,8 +63,28 @@ export class PaymentsComponent implements OnInit {
     email: ['', [Validators.required, Validators.email]],
   });
 
+  selectedBankId = toSignal(this.paymentForm.get('bankAccount')!.valueChanges, { initialValue: null });
+
+  selectedBankDetails = computed(() => {
+    console.log('Recalculando banco. ID actual:', this.selectedBankId()); // ¡Ahora sí verás esto al cambiar!
+
+    const id = this.selectedBankId();
+    if (!id) return null;
+
+    // Aseguramos que la comparación de IDs sea del mismo tipo (ej. string === string o number === number)
+    return this.banks().find(b => b.id === id || b.id === Number(id) || String(b.id) === String(id));
+  });
+
+  // --- TABLAS ---
+  selection = new SelectionModel<Receipt>(true, []);
+  displayedColumns: string[] = ['select', 'fecha', 'monto', 'pagado', 'deuda', 'saldo'];
+  displayedColumnsMovements: string[] = ['fecha', 'detalle', 'monto', 'status'];
+
+
+
   ngOnInit() {
     this.refreshData();
+    this.loadBuildingBanks();
     const user = this.authService.userSignal();
     if (user) this.paymentForm.patchValue({ email: user.email });
   }
@@ -78,6 +92,19 @@ export class PaymentsComponent implements OnInit {
   refreshData() {
     this.loadPendingReceipts();
     this.loadRecentPayments();
+  }
+
+  loadBuildingBanks() {
+    const buildingId = this.authService.userSignal()?.buildingId;
+    if (buildingId) {
+      this.apartmentService.getBankAccounts(Number(buildingId)).subscribe({
+        next: (res) => {
+          // Guardamos los datos reales de la BD
+          this.banks.set(res.data);
+        },
+        error: (err) => console.error("Error al cargar bancos", err)
+      });
+    }
   }
 
   loadPendingReceipts() {

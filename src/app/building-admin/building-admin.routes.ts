@@ -9,6 +9,11 @@ export const BUILDING_ADMIN_ROUTES: Routes = [
             import('./pages/apartments/apartments.component').then(m => m.ApartmentsComponent)
     },
     {
+        path: 'bank-accounts',
+        loadComponent: () =>
+            import('./pages/bank-accounts/bank-accounts.component').then(m => m.BankAccountsComponent)
+    },
+    {
         path: 'payments',
         loadComponent: () =>
             import('./pages/payments/payments.component').then(m => m.PaymentsComponent)

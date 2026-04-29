@@ -1,4 +1,4 @@
 
-git commit -m "feat: configuracion para produccion en vercel"
+git commit -m "correccion error estilo"
 
 git push origin main

@@ -1,10 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-owner-dashboard',
@@ -21,13 +22,26 @@ import { MatDividerModule } from '@angular/material/divider';
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent {
+  private auth = inject(AuthService);
+
+  // Leemos el usuario usando la Señal moderna
+  user = this.auth.userSignal;
 
   // Datos del Propietario
-  owner = signal({
-    name: 'Benito Sciamanna',
-    unit: 'PH',
-    building: 'Residencias Indiana',
-    aliquot: 17.950000
+  owner = computed(() => {
+    const u: any = this.user();
+    if (!u) return null;
+
+    // Ajusta estas propiedades (firstName, lastName, buildingName, etc.) 
+    // según como vengan exactamente de tu base de datos / token JWT.
+    const fullName = u.name || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Propietario';
+
+    return {
+      name: fullName,
+      building: u.buildingName || 'Residencias',
+      unit: u.apartmentNumber || u.unit || 'N/A',
+      aliquot: u.alicuota || u.aliquot || 0
+    };
   });
 
   // Estado Financiero

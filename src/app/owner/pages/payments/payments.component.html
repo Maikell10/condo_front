@@ -125,15 +125,69 @@
                     <mat-card-content class="p-6">
                         <form [formGroup]="paymentForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <mat-form-field appearance="outline" class="w-full">
-                                    <mat-label>Cuenta Bancaria Destino</mat-label>
-                                    <mat-select formControlName="bankAccount">
-                                        @for (bank of banks(); track bank.id) {
-                                        <mat-option [value]="bank.id">{{ bank.name }}</mat-option>
-                                        }
-                                    </mat-select>
-                                </mat-form-field>
-                                <div class="border rounded-md p-3 border-gray-300 bg-gray-50/50 flex items-center">
+                                <div class="space-y-4">
+                                    <mat-form-field appearance="outline" class="w-full">
+                                        <mat-label>Cuenta Bancaria Destino</mat-label>
+                                        <mat-select formControlName="bankAccount">
+                                            @for (bank of banks(); track bank.id) {
+                                            <mat-option [value]="bank.id">{{ bank.bank_name }}</mat-option>
+                                            }
+                                        </mat-select>
+                                    </mat-form-field>
+
+                                    <div *ngIf="selectedBankDetails()"
+                                        class="p-4 rounded-xl border-2 border-indigo-100 bg-gradient-to-br from-indigo-50/50 to-white shadow-sm transition-all">
+
+                                        <div class="flex items-start gap-3">
+                                            <div class="p-2 bg-indigo-600 text-white rounded-lg">
+                                                <mat-icon class="scale-75">account_balance</mat-icon>
+                                            </div>
+                                            <div class="flex-1">
+                                                <div class="flex justify-between items-start">
+                                                    <p
+                                                        class="text-[10px] font-black text-indigo-900 uppercase tracking-widest m-0">
+                                                        Datos para Transferencia</p>
+                                                    <span
+                                                        class="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded uppercase">
+                                                        {{ selectedBankDetails().account_type }}
+                                                    </span>
+                                                </div>
+
+                                                <h4 class="text-sm font-black text-gray-900 mt-1 mb-0">{{
+                                                    selectedBankDetails().bank_name }}</h4>
+
+                                                <div
+                                                    class="flex items-center gap-2 mt-2 bg-white p-2 rounded-lg border border-gray-100">
+                                                    <span
+                                                        class="text-xs font-mono font-black text-gray-700 select-all tracking-tighter">
+                                                        {{ selectedBankDetails().account_number }}
+                                                    </span>
+                                                    <mat-icon
+                                                        class="text-[14px] w-[14px] h-[14px] text-gray-400">content_copy</mat-icon>
+                                                </div>
+
+                                                <div
+                                                    class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-indigo-100/50">
+                                                    <div>
+                                                        <p class="text-[9px] font-bold text-gray-400 uppercase m-0">
+                                                            Titular</p>
+                                                        <p class="text-[11px] font-bold text-gray-700 truncate m-0">{{
+                                                            selectedBankDetails().holder_name }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-[9px] font-bold text-gray-400 uppercase m-0">
+                                                            Identificación</p>
+                                                        <p class="text-[11px] font-mono font-bold text-gray-700 m-0">{{
+                                                            selectedBankDetails().holder_id }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="border rounded-md p-3 border-gray-300 bg-gray-50/50 flex items-center h-[56px] self-start">
                                     <mat-radio-group formControlName="operationType" class="flex gap-4">
                                         <mat-radio-button value="same_bank" color="primary" class="text-sm">Mismo
                                             banco</mat-radio-button>

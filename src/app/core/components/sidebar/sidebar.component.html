@@ -58,6 +58,13 @@
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>payments</mat-icon> Validar Pagos
             </a>
+
+            <a routerLink="/building-admin/bank-accounts" (click)="closeMenu()"
+                routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>account_balance</mat-icon> Cuentas Bancarias
+            </a>
+
             <a routerLink="/building-admin/invoices" (click)="closeMenu()"
                 routerLinkActive="bg-indigo-50 text-indigo-700"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
@@ -77,6 +84,11 @@
                 [routerLinkActiveOptions]="{exact: true}"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>dashboard</mat-icon> Mi Panel
+            </a>
+
+            <a routerLink="/owner/payments" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>receipt_long</mat-icon> Mis Pagos
             </a>
 
             <a routerLink="/owner/pending-receipts" (click)="closeMenu()"
@@ -105,10 +117,6 @@
                 <mat-icon>verified</mat-icon> Recibos Pagados
             </a>
 
-            <a routerLink="/owner/payments" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
-                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
-                <mat-icon>receipt_long</mat-icon> Mis Pagos
-            </a>
             <a routerLink="/owner/incidents" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>report_problem</mat-icon> Incidencias

@@ -1,0 +1,62 @@
+<div class="p-6 space-y-8 max-w-7xl mx-auto pb-12">
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <h1 class="text-3xl font-black text-gray-900 tracking-tight italic">Cuentas Bancarias</h1>
+            <p class="text-sm text-gray-500 font-medium">Configura los métodos de pago para los propietarios del
+                edificio.</p>
+        </div>
+        <button mat-flat-button color="primary" class="rounded-xl px-6 h-12 font-bold shadow-lg" (click)="openDialog()">
+            <mat-icon class="mr-2">add_card</mat-icon> Nueva Cuenta
+        </button>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <mat-card *ngFor="let acc of accounts()"
+            class="premium-card group overflow-hidden border-t-4 border-t-indigo-600 p-3">
+            <div class="flex justify-between items-start mb-6">
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                    <mat-icon>account_balance</mat-icon>
+                </div>
+                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button mat-icon-button (click)="openDialog(acc)" class="text-gray-400 hover:text-indigo-600">
+                        <mat-icon class="scale-75">edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deleteAccount(acc.id)" class="text-gray-400 hover:text-rose-600">
+                        <mat-icon class="scale-75">delete</mat-icon>
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <div class="text-[10px] uppercase font-black text-gray-400 tracking-widest">{{ acc.bank_name }}
+                    </div>
+                    <div class="text-xl font-mono font-bold text-gray-800 tracking-tighter">{{ acc.account_number }}
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <div class="text-[9px] uppercase font-bold text-gray-400">Titular</div>
+                    <div class="text-xs font-bold text-gray-700 truncate">{{ acc.holder_name }}</div>
+                    <div class="text-[10px] text-gray-500 font-mono">{{ acc.holder_id }}</div>
+                </div>
+
+                <div class="flex justify-between items-center pt-2">
+                    <span class="px-2 py-1 bg-indigo-100 text-indigo-700 text-[9px] font-black rounded uppercase">
+                        {{ acc.account_type }}
+                    </span>
+                    <span class="text-[10px] font-bold"
+                        [ngClass]="acc.status === 'ACTIVE' ? 'text-emerald-500' : 'text-rose-500'">
+                        {{ acc.status === 'ACTIVE' ? 'ACTIVA' : 'INACTIVA' }}
+                    </span>
+                </div>
+            </div>
+        </mat-card>
+    </div>
+
+    <div *ngIf="accounts().length === 0" class="flex flex-col items-center justify-center py-20 text-gray-400">
+        <mat-icon class="text-6xl mb-4 opacity-20">payments</mat-icon>
+        <p class="font-medium">No hay cuentas bancarias registradas para este edificio.</p>
+    </div>
+</div>

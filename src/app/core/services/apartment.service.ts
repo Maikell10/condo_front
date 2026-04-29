@@ -38,6 +38,22 @@ export class ApartmentService {
         return this.http.post(`${this.API_URL}`, data);
     }
 
+    getBankAccounts(buildingId: number): Observable<{ data: any[] }> {
+        return this.http.get<{ data: any[] }>(`${this.API_URL}/buildings/${buildingId}/banks`);
+    }
+
+    createBankAccount(data: any): Observable<any> {
+        return this.http.post(`${this.API_URL}/buildings/banks`, data);
+    }
+
+    updateBankAccount(id: number, data: any): Observable<any> {
+        return this.http.put(`${this.API_URL}/buildings/${id}/banks`, data);
+    }
+
+    deleteBankAccount(id: number): Observable<any> {
+        return this.http.delete(`${this.API_URL}/buildings/${id}/banks`);
+    }
+
 
 
 

@@ -7,14 +7,14 @@
 
         <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-                <p class="text-white/80 font-medium mb-1">Bienvenido, {{ owner().name }}</p>
+                <p class="text-white/80 font-medium mb-1">Bienvenido, {{ owner()?.name }}</p>
                 <h1 class="text-3xl md:text-4xl font-black tracking-tight mb-2">
-                    {{ owner().building }} · Unidad {{ owner().unit }}
+                    {{ owner()?.building }} · Unidad {{ owner()?.unit }}
                 </h1>
                 <div class="flex items-center gap-2 mt-4">
                     <span
                         class="px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                        Alícuota: {{ owner().aliquot }}%
+                        Alícuota: {{ owner()?.aliquot }}%
                     </span>
                 </div>
             </div>
@@ -27,7 +27,7 @@
                     {{ financialStatus().currentDebt | currency:'Bs. ':'symbol':'1.2-2' }}
                 </div>
                 <button mat-flat-button color="accent" class="w-full rounded-xl font-bold mt-2"
-                    *ngIf="financialStatus().status === 'DEBT'">
+                    *ngIf="financialStatus().status === 'DEBT'" routerLink="/owner/pending-receipts">
                     Reportar Pago
                 </button>
                 <p *ngIf="financialStatus().status === 'UP_TO_DATE'"
