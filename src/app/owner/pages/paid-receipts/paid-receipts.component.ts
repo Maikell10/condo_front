@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { CommonModule, CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule, MatIconRegistry } from '@angular/material/icon'; // ImportMatIconRegistry para custom SVG
@@ -36,7 +36,6 @@ interface HardcodedCondoReceipt {
         MatSelectModule,
         MatFormFieldModule,
         CurrencyPipe, // Importante para formatear montos harcodeados
-        DatePipe,     // Importante para formatear fechas harcodeadas
         MatDialogModule
     ],
     template: `

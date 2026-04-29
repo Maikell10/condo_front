@@ -1,14 +1,14 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule, CurrencyPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 
 @Component({
-  selector: 'app-receipt-preview-dialog',
-  standalone: true,
-  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule, CurrencyPipe],
-  template: `
+    selector: 'app-receipt-preview-dialog',
+    standalone: true,
+    imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+    template: `
     <div class="flex items-center justify-between p-4 bg-gray-100 border-b print:hidden">
         <h2 class="text-lg font-bold text-gray-700 m-0">Vista Previa del Recibo</h2>
         <div class="flex gap-2">
@@ -160,7 +160,7 @@ import { MatIconModule } from '@angular/material/icon';
         </div>
     </mat-dialog-content>
   `,
-  styles: [`
+    styles: [`
     .receipt-a4 {
         width: 210mm; /* Formato A4 exacto */
         min-height: 297mm;
@@ -188,10 +188,10 @@ import { MatIconModule } from '@angular/material/icon';
   `]
 })
 export class ReceiptPreviewDialogComponent {
-  data = inject(MAT_DIALOG_DATA);
-  dialogRef = inject(MatDialogRef);
+    data = inject(MAT_DIALOG_DATA);
+    dialogRef = inject(MatDialogRef);
 
-  print() {
-    window.print(); // Abre el diálogo nativo de impresión del navegador
-  }
+    print() {
+        window.print(); // Abre el diálogo nativo de impresión del navegador
+    }
 }
