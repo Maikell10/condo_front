@@ -1,12 +1,20 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/services/auth.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
+import { LandingComponent } from './landing/landing/landing.component';
 
 export const routes: Routes = [
 
     // 👉 Home con los 3 tipos de login (SIN HEADER)
     {
         path: '',
+        loadComponent: () =>
+            // import('./home/home.component').then(m => m.HomeComponent)
+            import('./landing/landing/landing.component').then(m => m.LandingComponent)
+    },
+
+    {
+        path: 'login',
         loadComponent: () =>
             import('./home/home.component').then(m => m.HomeComponent)
     },
