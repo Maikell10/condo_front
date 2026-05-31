@@ -16,7 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
           
           <div class="flex items-center gap-2">
             <div class="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white shadow-md shadow-indigo-100 border border-slate-100">
-              <img src="/LOGO.jpg" alt="Logo Condominio A Un Clic" class="w-full h-full object-cover">
+              <img src="/LOGO_SN1.png" alt="Logo Condominio A Un Clic" class="w-full h-full object-cover">
             </div>
             <span class="text-xl font-black tracking-tight text-slate-800">Condominio<span class="text-indigo-600"> A Un Clic</span></span>
           </div>
@@ -49,6 +49,10 @@ import { MatIconModule } from '@angular/material/icon';
               <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
             </span>
             La evolución del condominio
+          </div>
+
+          <div class="w-50 h-50 rounded-xl overflow-hidden flex items-center justify-center bg-white shadow-md shadow-indigo-100 border border-slate-100 justify-self-center">
+              <img src="/LOGO.jpg" alt="Logo Condominio A Un Clic" class="w-full h-full object-full">
           </div>
           
           <h1 class="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight max-w-4xl mx-auto">

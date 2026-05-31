@@ -35,3 +35,7 @@ E) Crear roles avanzados y auditoría
 
 
 ¿Te gustaría que diseñemos primero la tabla de recibos pendientes usando Angular Material, o prefieres que armemos el formulario reactivo para reportar la transferencia bancaria con validaciones modernas?
+
+git add .
+git commit -m "update method cors"
+git push -u origin main

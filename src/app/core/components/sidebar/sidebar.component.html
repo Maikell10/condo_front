@@ -12,7 +12,11 @@
     [ngClass]="isMobileMenuOpen() ? 'translate-x-0' : '-translate-x-full'">
 
     <div class="p-4 flex items-center gap-2 border-b mt-12 md:mt-0">
-        <mat-icon class="text-indigo-600">apartment</mat-icon>
+        <!-- <mat-icon class="text-indigo-600">apartment</mat-icon> -->
+        <div
+            class="w-7 h-7 rounded-xl overflow-hidden flex items-center justify-center bg-white shadow-md shadow-indigo-100 border border-slate-100">
+            <img src="/LOGO_SN1.png" alt="Logo Condominio A Un Clic" class="w-full h-full object-cover">
+        </div>
         <span class="font-semibold text-lg text-gray-800">Condominio a un Clic</span>
     </div>
 
