@@ -17,3 +17,10 @@
     padding: 0;
   }
 }
+
+::ng-deep .mat-mdc-select-value {
+  color: white !important;
+}
+::ng-deep .mat-mdc-select-arrow {
+  color: #818cf8 !important; /* indigo-400 */
+}

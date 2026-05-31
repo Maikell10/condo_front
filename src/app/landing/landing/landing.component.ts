@@ -202,11 +202,11 @@ import { MatIconModule } from '@angular/material/icon';
                   <div class="space-y-6">
                     <div class="flex items-center gap-4">
                       <div class="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center"><mat-icon>email</mat-icon></div>
-                      <span class="font-medium">hola&#64;condominioaunclic.com</span>
+                      <span class="font-medium">condominioaunclic&#64;gmail.com</span>
                     </div>
                     <div class="flex items-center gap-4">
                       <div class="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center"><mat-icon>phone</mat-icon></div>
-                      <span class="font-medium">+58 (212) 555-0123</span>
+                      <span class="font-medium">+58 (424) 247-5572</span>
                     </div>
                     <div class="flex items-center gap-4">
                       <div class="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center"><mat-icon>location_on</mat-icon></div>

@@ -26,10 +26,9 @@ import { Router } from '@angular/router';
 })
 export class OwnerLoginComponent {
   // Reemplazamos ownerCode por email y password
-  email = '';
-  password = '';
-  error = '';
-  isLoading = false;
+  accessCode: string = '';
+  isLoading: boolean = false;
+  error: string = '';
 
   // Usamos inject() al estilo Angular moderno
   private auth = inject(AuthService);
@@ -37,31 +36,24 @@ export class OwnerLoginComponent {
 
   onSubmit() {
     // Validamos que no envíen el formulario vacío
-    if (!this.email || !this.password) {
-      this.error = 'Por favor ingresa tu correo y contraseña';
-      return;
-    }
+    if (!this.accessCode || this.accessCode.length !== 8) return;
 
     this.isLoading = true;
     this.error = '';
 
-    // Nos suscribimos al Observable del nuevo servicio
-    this.auth.login(this.email, this.password).subscribe({
-      next: (res) => {
-        this.isLoading = false;
+    // Asegurarnos de enviarlo en mayúsculas tal cual se generó
+    const payload = { accessCode: this.accessCode.toUpperCase() };
 
-        // Medida extra de seguridad: verificar que realmente sea un propietario
-        if (res.user.role === 'OWNER') {
-          this.router.navigate(['/owner']);
-        } else {
-          this.error = 'No tienes permisos de propietario para acceder aquí.';
-          this.auth.logout(); // Destruimos la sesión si intentó entrar un Admin por acá
-        }
+    // Nos suscribimos al Observable del nuevo servicio
+    this.auth.ownerLogin(payload).subscribe({
+      next: (res) => {
+        // Guardar token y redirigir
+        this.isLoading = false;
+        this.router.navigate(['/owner']);
       },
       error: (err) => {
         this.isLoading = false;
-        // Capturamos el mensaje que manda el backend Node.js (ej. "Credenciales inválidas")
-        this.error = err.error?.message || 'Error al conectar con el servidor';
+        this.error = err.error?.message || 'Código inválido o error de conexión.';
       }
     });
   }

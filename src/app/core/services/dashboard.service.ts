@@ -7,8 +7,13 @@ import { API_URL_BASE } from '../constants';
 export class DashboardService {
     private http = inject(HttpClient);
     private readonly API_URL = API_URL_BASE + '/api/dashboard';
+    private readonly API_URL_BUILDING = API_URL_BASE + '/api/building';
 
     getStats(buildingId: number): Observable<any> {
         return this.http.get(`${this.API_URL}/stats/${buildingId}`);
+    }
+
+    getBuildingsByComplex(buildingId: number): Observable<any> {
+        return this.http.get(`${this.API_URL_BUILDING}/managed-buildings`);
     }
 }

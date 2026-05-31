@@ -9,4 +9,5 @@ export interface User {
     buildingId?: string;
     apartmentId?: string;
     ownerCode?: string;
+    complexId?: number
 }
