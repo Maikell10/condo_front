@@ -5,30 +5,32 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSelectModule } from '@angular/material/select'; // <--- IMPORTANTE
+import { MatSelectModule } from '@angular/material/select';
 import { RouterModule } from '@angular/router';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-building-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatIconModule, MatButtonModule, MatSelectModule, DecimalPipe, RouterModule],
+  imports: [CommonModule, MatCardModule, MatIconModule, MatButtonModule, MatSelectModule, DecimalPipe, RouterModule, MatDividerModule],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss' // Asegúrate de tener este archivo
+  styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
   private auth = inject(AuthService);
 
-  // --- NUEVAS SEÑALES PARA EL CONJUNTO RESIDENCIAL ---
-  // Detecta si el admin maneja un conjunto (tiene complexId en su token)
   isComplex = computed(() => !!this.auth.userSignal()?.complexId);
-  buildingsList = signal<any[]>([]); // Lista de edificios en el conjunto
-  selectedBuildingId = signal<number | null>(null); // Edificio actualmente seleccionado
+  buildingsList = signal<any[]>([]);
+  selectedBuildingId = signal<number | 'ALL'>('ALL');
 
   // --- SEÑALES DEL DASHBOARD ---
   buildingInfo = signal({ name: 'Cargando...', code: '...' });
   kpis = signal({ totalApartments: 0, occupied: 0, delinquent: 0, monthIncome: 0 });
   apartments = signal<any[]>([]);
+
+  // 🔥 NUEVA SEÑAL PARA EFICIENCIA DE RECAUDACIÓN
+  collectionInfo = signal({ period: 'Cargando...', expected: 0, collected: 0, rate: 0, missing: 0 });
 
   delinquentRate = computed(() => {
     const { delinquent, occupied } = this.kpis();
@@ -41,43 +43,49 @@ export class DashboardComponent implements OnInit {
 
   initDashboard() {
     const user = this.auth.userSignal();
-    console.log('first', user)
 
     if (user?.complexId) {
-      // 1. ES UN CONJUNTO: Obtenemos todos sus edificios
-      // NOTA: Debes crear este método en tu dashboardService o buildingService en Angular
-      this.dashboardService.getBuildingsByComplex(user.complexId).subscribe({
+      // Usamos getManagedBuildings para estandarizar
+      this.dashboardService.getBuildingsByComplex().subscribe({
         next: (res: any) => {
           this.buildingsList.set(res.data);
-          if (res.data.length > 0) {
-            // Seleccionamos el primer edificio por defecto
-            this.selectedBuildingId.set(res.data[0].id);
-            this.loadStats(res.data[0].id);
-          }
+          this.selectedBuildingId.set('ALL'); // Arranca viendo la salud global
+          this.loadStats('ALL');
         }
       });
     } else if (user?.buildingId) {
-      // 2. EDIFICIO ÚNICO: Carga normal
+      this.selectedBuildingId.set(Number(user.buildingId));
       this.loadStats(Number(user.buildingId));
     }
   }
 
-  // Carga los KPIs según el ID que le pasemos
-  loadStats(buildingId: number) {
-    this.dashboardService.getStats(buildingId).subscribe({
-      next: (res) => {
+  loadStats(buildingId: number | 'ALL') {
+    const complexId = this.auth.userSignal()?.complexId;
+    // Si tienes un método específico para el dashboard con payload como en facturas, úsalo aquí.
+    // Asumiré que pasas la variable por URL query params si es ALL.
+    const urlParam = buildingId === 'ALL' ? `ALL?complexId=${complexId}` : `${buildingId}`;
+
+    // NOTA: Ajusta el método getStats en tu DashboardService para que reciba un string
+    this.dashboardService.getStats(urlParam).subscribe({
+      next: (res: any) => {
+        console.log(res)
         this.buildingInfo.set(res.building);
         this.kpis.set(res.kpis);
         this.apartments.set(res.featured);
+
+        // 🔥 Cargamos la data real de la base de datos
+        if (res.collection) {
+          this.collectionInfo.set(res.collection);
+        }
       },
-      error: (err) => console.error('Error al cargar dashboard del edificio', err)
+      error: (err) => console.error('Error al cargar dashboard', err)
     });
   }
 
-  // Método que se ejecuta al cambiar el selector
-  onBuildingChange(newBuildingId: number) {
+  onBuildingChange(newBuildingId: number | 'ALL') {
     this.selectedBuildingId.set(newBuildingId);
-    this.buildingInfo.set({ name: 'Cargando...', code: '...' }); // Efecto visual de recarga
+    this.buildingInfo.set({ name: 'Cargando...', code: '...' });
+    this.collectionInfo.set({ period: 'Cargando...', expected: 0, collected: 0, rate: 0, missing: 0 });
     this.loadStats(newBuildingId);
   }
 }

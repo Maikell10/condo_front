@@ -1,12 +1,15 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common'; // Añadido DecimalPipe
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select'; // <-- Importante para el selector
+import { MatTooltipModule } from '@angular/material/tooltip'; // <-- Para el tooltip de copiar
 import { ApartmentService } from '../../../core/services/apartment.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { DashboardService } from '../../../core/services/dashboard.service'; // <-- Servicio de edificios
 import { MatDialog } from '@angular/material/dialog';
 import { LinkOwnerModalComponent } from '../../modal/link-owner-modal.component';
 import { AddApartmentModalComponent } from '../../modal/add-apartment-modal.component';
@@ -14,41 +17,85 @@ import { AddApartmentModalComponent } from '../../modal/add-apartment-modal.comp
 @Component({
   selector: 'app-apartments',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatTableModule, MatIconModule, MatChipsModule, MatButtonModule],
+  imports: [
+    CommonModule,
+    MatCardModule,
+    MatTableModule,
+    MatIconModule,
+    MatChipsModule,
+    MatButtonModule,
+    MatSelectModule,
+    MatTooltipModule,
+    DecimalPipe
+  ],
   templateUrl: './apartments.component.html'
 })
 export class ApartmentsComponent implements OnInit {
   private apartmentService = inject(ApartmentService);
   private authService = inject(AuthService);
+  private dashboardService = inject(DashboardService);
   private dialog = inject(MatDialog);
 
-  apartments = signal<any[]>([]);
-  displayedColumns = ['number', 'owner', 'alicuota', 'status', 'balance', 'actions'];
+  // --- SEÑALES DEL CONJUNTO RESIDENCIAL ---
+  isComplex = computed(() => !!this.authService.userSignal()?.complexId);
+  buildingsList = signal<any[]>([]);
+  selectedBuildingId = signal<number | null>(null);
 
-  // KPIs dinámicos basados en la data real
+  apartments = signal<any[]>([]);
+
+  // 🔥 Añadimos 'accessCode' para ver el código de acceso en la tabla
+  displayedColumns = ['number', 'accessCode', 'owner', 'alicuota', 'status', 'balance', 'actions'];
+
+  // KPIs dinámicos
   total = computed(() => this.apartments().length);
   delinquent = computed(() => this.apartments().filter(a => a.balance > 0).length);
   upToDate = computed(() => this.apartments().filter(a => a.balance <= 0).length);
 
   ngOnInit() {
-    this.loadApartments();
+    this.initView();
   }
 
-  loadApartments() {
-    const buildingId = this.authService.userSignal()?.buildingId;
-    if (buildingId) {
-      this.apartmentService.getApartments(Number(buildingId)).subscribe({
-        next: (res) => this.apartments.set(res.data),
-        error: (err) => console.error(err)
+  initView() {
+    const user = this.authService.userSignal();
+
+    if (user?.complexId) {
+      // Si es un conjunto, cargamos la lista de edificios
+      this.dashboardService.getBuildingsByComplex().subscribe({
+        next: (res: any) => {
+          this.buildingsList.set(res.data);
+          if (res.data.length > 0) {
+            this.selectedBuildingId.set(res.data[0].id);
+            this.loadApartments(res.data[0].id);
+          }
+        }
       });
+    } else if (user?.buildingId) {
+      // Si es individual, cargamos directo
+      this.selectedBuildingId.set(Number(user.buildingId));
+      this.loadApartments(Number(user.buildingId));
     }
+  }
+
+  // Carga apartamentos dependiendo del edificio seleccionado
+  loadApartments(buildingId: number) {
+    this.apartmentService.getApartments(buildingId).subscribe({
+      next: (res) => this.apartments.set(res.data),
+      error: (err) => console.error(err)
+    });
+  }
+
+  // Se ejecuta al cambiar el selector
+  onBuildingChange(buildingId: number) {
+    this.selectedBuildingId.set(buildingId);
+    this.apartments.set([]); // Limpiamos visualmente mientras carga
+    this.loadApartments(buildingId);
   }
 
   editAlicuota(apt: any) {
     const newValue = prompt(`Nueva alícuota para ${apt.number} (como decimal, ej: 0.0512):`, apt.alicuota);
-    if (newValue !== null) {
+    if (newValue !== null && this.selectedBuildingId()) {
       this.apartmentService.updateAlicuota(apt.id, parseFloat(newValue)).subscribe(() => {
-        this.loadApartments();
+        this.loadApartments(this.selectedBuildingId()!);
       });
     }
   }
@@ -60,11 +107,11 @@ export class ApartmentsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(userId => {
-      if (userId) {
+      if (userId && this.selectedBuildingId()) {
         this.apartmentService.linkOwner(apt.id, userId).subscribe({
           next: () => {
             alert('Propietario vinculado con éxito');
-            this.loadApartments();
+            this.loadApartments(this.selectedBuildingId()!);
           },
           error: (err) => alert('Error: ' + err.error.message)
         });
@@ -72,7 +119,6 @@ export class ApartmentsComponent implements OnInit {
     });
   }
 
-  // Dentro de la clase ApartmentsComponent
   openAddApartmentModal() {
     const dialogRef = this.dialog.open(AddApartmentModalComponent, {
       width: '400px',
@@ -80,18 +126,27 @@ export class ApartmentsComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        const buildingId = this.authService.userSignal()?.buildingId; // Obtenemos el ID del edificio
-        const payload = { ...result, buildingId: Number(buildingId) };
+      if (result && this.selectedBuildingId()) {
+        // 🔥 Usamos el Edificio SELECCIONADO actualmente, no el del token
+        const payload = { ...result, buildingId: this.selectedBuildingId() };
 
         this.apartmentService.createApartment(payload).subscribe({
           next: () => {
             alert('Apartamento creado exitosamente');
-            this.loadApartments(); // Recargamos la tabla
+            this.loadApartments(this.selectedBuildingId()!);
           },
           error: (err) => alert(err.error?.message || 'Error al crear')
         });
       }
     });
+  }
+
+  // Método para copiar el código rápido
+  copyAccessCode(code: string) {
+    if (code) {
+      navigator.clipboard.writeText(code);
+      // Aquí podrías usar un SnackBar de Angular Material si lo prefieres
+      console.log('Código copiado:', code);
+    }
   }
 }

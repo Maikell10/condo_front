@@ -12,6 +12,10 @@ export class ContractService {
         return this.http.get<{ data: any[] }>(`${this.API_URL}/${buildingId}`);
     }
 
+    getComplexContracts(complexId: number): Observable<{ data: any[] }> {
+        return this.http.get<{ data: any[] }>(`${this.API_URL}/complex/${complexId}`);
+    }
+
     createContract(contract: any): Observable<any> {
         return this.http.post(`${this.API_URL}`, contract);
     }

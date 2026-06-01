@@ -28,11 +28,26 @@ export class BillingService {
      * Obtiene los gastos registrados para el edificio en el mes actual
      * (Para alimentar la tabla de la vista de Facturas)
      */
-    getBuildingExpenses(buildingId: number, month: number, year: number): Observable<{ data: any[] }> {
-        // Pasamos el mes y año como parámetros en la URL
-        return this.http.get<{ data: any[] }>(
-            `${this.API_URL}/expenses/${buildingId}?month=${month}&year=${year}`
-        );
+    getExpenses(payload: any, month: number, year: number): Observable<any> {
+
+        // Si estamos en la vista de Conjunto ("Todos los Edificios")
+        if (payload.isComplex) {
+            // Mandamos 'ALL' en la ruta y el complexId como parámetro de consulta
+            return this.http.get(`${this.API_URL}/expenses/ALL?complexId=${payload.complexId}&month=${month}&year=${year}`);
+        }
+        // Si estamos en la vista de Edificio Individual
+        else {
+            return this.http.get(`${this.API_URL}/expenses/${payload.buildingId}?month=${month}&year=${year}`);
+        }
+    }
+
+    // Obtiene los recibos / estados de cuenta
+    getStatements(payload: any): Observable<any> {
+        if (payload.isComplex) {
+            return this.http.get(`${this.API_URL}/statements/ALL?complexId=${payload.complexId}`);
+        } else {
+            return this.http.get(`${this.API_URL}/statements/${payload.buildingId}`);
+        }
     }
 
     /**
@@ -58,5 +73,10 @@ export class BillingService {
     // En billing.service.ts...
     getMonthlyReport(buildingId: number, month: number, year: number): Observable<any> {
         return this.http.get(`${this.API_URL}/report/${buildingId}?month=${month}&year=${year}`);
+    }
+
+    // Enviar el pago
+    registerAdminPayment(payload: any): Observable<any> {
+        return this.http.post(`${this.API_URL}/statements/pay`, payload);
     }
 }

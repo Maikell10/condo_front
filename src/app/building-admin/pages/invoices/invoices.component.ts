@@ -1,5 +1,3 @@
-// invoices.component.ts completo
-
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
@@ -7,68 +5,130 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSelectModule } from '@angular/material/select'; // 🔥 Añadido
+import { MatSelectModule } from '@angular/material/select';
+import { MatTabsModule } from '@angular/material/tabs';
 import { BillingService } from '../../../core/services/billing.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { DashboardService } from '../../../core/services/dashboard.service';
 import { AddExpenseModalComponent } from '../../modal/add-expense-modal/add-expense-modal.component';
-import { MatTabsModule } from '@angular/material/tabs';
 import { ReportViewModalComponent } from '../../modal/report-view-modal/report-view-modal.component';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-invoices',
   standalone: true,
   imports: [
     CommonModule, MatTableModule, MatCardModule, MatButtonModule,
-    MatIconModule, MatDialogModule, MatSelectModule, MatTabsModule
+    MatIconModule, MatDialogModule, MatSelectModule, MatTabsModule, MatDividerModule
   ],
   templateUrl: './invoices.component.html'
 })
 export class InvoicesComponent implements OnInit {
   private billingService = inject(BillingService);
   private authService = inject(AuthService);
+  private dashboardService = inject(DashboardService);
   private dialog = inject(MatDialog);
 
-  user = this.authService.userSignal;
-  invoices = signal<any[]>([]);
-  displayedColumns: string[] = ['code', 'provider', 'amount', 'date', 'type', 'actions'];
+  isComplex = computed(() => !!this.authService.userSignal()?.complexId);
+  buildingsList = signal<any[]>([]);
 
-  // 🔥 Gestión de Periodos
+  // 🔥 Ahora inicia en 'ALL'
+  selectedBuildingId = signal<number | 'ALL'>('ALL');
+  currentTabIndex = signal<number>(0);
+
+  invoices = signal<any[]>([]);
+
+  // 🔥 Columnas dinámicas: Muestra el edificio solo si estamos en vista 'ALL'
+  displayedColumns = computed(() => {
+    const baseCols = ['code', 'provider', 'amount', 'date', 'type', 'actions'];
+    if (this.isComplex() && this.selectedBuildingId() === 'ALL') {
+      return ['buildingName', ...baseCols];
+    }
+    return baseCols;
+  });
+
   currentDate = new Date();
-  // Por defecto, miramos el mes anterior (que es el que suele estar pendiente)
   selectedMonth = signal<number>(this.currentDate.getMonth() === 0 ? 12 : this.currentDate.getMonth());
   selectedYear = signal<number>(this.currentDate.getMonth() === 0 ? this.currentDate.getFullYear() - 1 : this.currentDate.getFullYear());
 
   totalMonth = computed(() => this.invoices().reduce((acc, inv) => acc + Number(inv.amount), 0));
-
   monthStatus = signal<string>('OPEN');
   canClosePeriod = signal<boolean>(false);
-
   closedPeriods = signal<any[]>([]);
 
   ngOnInit() {
-    this.loadExpenses();
+    this.initView();
   }
 
-  loadExpenses() {
-    const buildingId = this.user()?.buildingId;
-    if (buildingId) {
-      this.billingService.getBuildingExpenses(
-        Number(buildingId),
-        this.selectedMonth(),
-        this.selectedYear()
-      ).subscribe({
+  initView() {
+    const user = this.authService.userSignal();
+
+    if (user?.complexId) {
+      this.dashboardService.getBuildingsByComplex().subscribe({
         next: (res: any) => {
-          this.invoices.set(res.data);
-          this.monthStatus.set(res.status); // 🔥 'OPEN' o 'CLOSED'
-          this.canClosePeriod.set(res.canClose); // 🔥 Define si el botón se habilita
+          this.buildingsList.set(res.data);
+          this.selectedBuildingId.set('ALL'); // Comienza viendo todo
+          this.refreshCurrentView();
         }
       });
+    } else if (user?.buildingId) {
+      this.selectedBuildingId.set(Number(user.buildingId));
+      this.refreshCurrentView();
     }
   }
 
-  // Se ejecuta al cambiar de mes en el dropdown
+  onBuildingChange(buildingId: number | 'ALL') {
+    this.selectedBuildingId.set(buildingId);
+    this.invoices.set([]);
+    this.closedPeriods.set([]);
+    this.refreshCurrentView();
+  }
+
   onPeriodChange() {
-    this.loadExpenses();
+    this.refreshCurrentView();
+  }
+
+  onTabChange(index: number) {
+    this.currentTabIndex.set(index);
+    this.refreshCurrentView();
+  }
+
+  refreshCurrentView() {
+    if (this.currentTabIndex() === 0) {
+      this.loadExpenses();
+    } else {
+      this.loadHistory();
+    }
+  }
+
+  loadExpenses() {
+    const buildingId = this.selectedBuildingId();
+    // NOTA: Tu billingService debe poder manejar 'ALL' enviando el complexId al backend
+    const complexId = this.authService.userSignal()?.complexId;
+
+    const payload = buildingId === 'ALL'
+      ? { isComplex: true, complexId: complexId }
+      : { isComplex: false, buildingId: buildingId };
+
+    // Llama a tu servicio pasándole la info
+    this.billingService.getExpenses(payload, this.selectedMonth(), this.selectedYear()).subscribe({
+      next: (res: any) => {
+        this.invoices.set(res.data);
+        this.monthStatus.set(res.status);
+        this.canClosePeriod.set(res.canClose);
+      }
+    });
+  }
+
+  loadHistory() {
+    const buildingId = this.selectedBuildingId();
+    // Solo cargamos el histórico si hay UN edificio seleccionado. No se cierra el mes globalmente.
+    if (buildingId !== 'ALL') {
+      this.billingService.getClosedPeriods(buildingId).subscribe({
+        next: (res: any) => this.closedPeriods.set(res.data),
+        error: (err: any) => console.error(err)
+      });
+    }
   }
 
   openAddExpenseModal() {
@@ -79,25 +139,30 @@ export class InvoicesComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        const buildingId = this.user()?.buildingId;
-        const payload = { ...result, buildingId: Number(buildingId) };
+        // 🔥 Aquí enviamos 'ALL' o el ID numérico
+        const payload = {
+          ...result,
+          buildingId: this.selectedBuildingId(),
+          complexId: this.authService.userSignal()?.complexId
+        };
+
         this.billingService.addExpense(payload).subscribe({
-          next: () => {
-            alert('Gasto registrado con éxito.');
+          next: (res: any) => {
+            alert(res.message || 'Gasto registrado con éxito.');
             this.loadExpenses();
           },
-          error: (err) => alert('Error: ' + err.error?.message)
+          error: (err: any) => alert('Error: ' + err.error?.message)
         });
       }
     });
   }
 
   closeMonth() {
-    const buildingId = this.user()?.buildingId;
-    if (!buildingId) return;
+    const buildingId = this.selectedBuildingId();
+    if (buildingId === 'ALL' || !buildingId) return; // Validación de seguridad extra
 
     const payload = {
-      buildingId: Number(buildingId),
+      buildingId: buildingId,
       month: this.selectedMonth(),
       year: this.selectedYear()
     };
@@ -106,57 +171,32 @@ export class InvoicesComponent implements OnInit {
 
     if (confirm(confirmMsg)) {
       this.billingService.generateBilling(payload).subscribe({
-        next: (res) => {
+        next: (res: any) => {
           alert(res.message);
-          this.loadExpenses(); // Esto refrescará el status a 'CLOSED'
+          this.loadExpenses();
         },
-        error: (err) => alert('Error en facturación: ' + err.error?.message)
-      });
-    }
-  }
-
-  // Se llama cuando el usuario cambia a la pestaña de Histórico
-  loadHistory() {
-    const buildingId = this.user()?.buildingId;
-    if (buildingId) {
-      this.billingService.getClosedPeriods(Number(buildingId)).subscribe({
-        next: (res) => this.closedPeriods.set(res.data),
-        error: (err) => console.error('Error al cargar historial', err)
+        error: (err: any) => alert('Error en facturación: ' + err.error?.message)
       });
     }
   }
 
   deleteExpense(id: number) {
-    if (this.monthStatus() === 'CLOSED') {
-      alert('Este periodo está cerrado. No se permiten modificaciones.');
-      return;
-    }
-
     if (confirm('¿Estás seguro de eliminar este gasto?')) {
       this.billingService.deleteExpense(id).subscribe({
         next: () => {
           alert('Gasto eliminado');
-          this.loadExpenses(); // Recarga la tabla
-        },
-        error: (err) => alert(err.error?.message || 'Error al eliminar')
+          this.loadExpenses();
+        }
       });
-    }
-  }
-
-  // Función para cargar el historial cuando cambias de pestaña
-  onTabChange(index: number) {
-    if (index === 1) { // Si la pestaña es 'Histórico'
-      this.loadHistory();
     }
   }
 
   viewReport(period: any) {
-    const buildingId = this.user()?.buildingId;
-    this.billingService.getMonthlyReport(Number(buildingId), period.month, period.year).subscribe(res => {
-      this.dialog.open(ReportViewModalComponent, {
-        width: '800px',
-        data: res
+    const buildingId = this.selectedBuildingId();
+    if (buildingId !== 'ALL') {
+      this.billingService.getMonthlyReport(buildingId, period.month, period.year).subscribe((res: any) => {
+        this.dialog.open(ReportViewModalComponent, { width: '800px', data: res });
       });
-    });
+    }
   }
 }

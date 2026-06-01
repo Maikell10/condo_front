@@ -9,11 +9,11 @@ export class DashboardService {
     private readonly API_URL = API_URL_BASE + '/api/dashboard';
     private readonly API_URL_BUILDING = API_URL_BASE + '/api/building';
 
-    getStats(buildingId: number): Observable<any> {
-        return this.http.get(`${this.API_URL}/stats/${buildingId}`);
+    getStats(urlParam: any): Observable<any> {
+        return this.http.get(`${this.API_URL}/stats/${urlParam}`);
     }
 
-    getBuildingsByComplex(buildingId: number): Observable<any> {
+    getBuildingsByComplex(): Observable<any> {
         return this.http.get(`${this.API_URL_BUILDING}/managed-buildings`);
     }
 }

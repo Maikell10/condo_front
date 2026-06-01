@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { StatementsComponent } from './pages/statements/statements.component';
 
 export const BUILDING_ADMIN_ROUTES: Routes = [
     { path: '', component: DashboardComponent },
@@ -22,8 +23,13 @@ export const BUILDING_ADMIN_ROUTES: Routes = [
         path: 'invoices',
         loadComponent: () =>
             import('./pages/invoices/invoices.component').then(m => m.InvoicesComponent)
-    }
-    , {
+    },
+    {
+        path: 'statements',
+        loadComponent: () =>
+            import('./pages/statements/statements.component').then(m => m.StatementsComponent)
+    },
+    {
         path: 'contracts',
         loadComponent: () =>
             import('./pages/contracts/contracts.component').then(m => m.ContractsComponent)

@@ -42,6 +42,14 @@ export class ApartmentService {
         return this.http.get<{ data: any[] }>(`${this.API_URL}/buildings/${buildingId}/banks`);
     }
 
+    getBankAccountsAdmin(payload: any): Observable<any> {
+        if (payload.isComplex) {
+            return this.http.get(`${this.API_URL}/buildings/ALL/banks?complexId=${payload.complexId}`);
+        } else {
+            return this.http.get(`${this.API_URL}/buildings/${payload.buildingId}/banks`);
+        }
+    }
+
     createBankAccount(data: any): Observable<any> {
         return this.http.post(`${this.API_URL}/buildings/banks`, data);
     }
@@ -54,6 +62,10 @@ export class ApartmentService {
         return this.http.delete(`${this.API_URL}/buildings/${id}/banks`);
     }
 
+
+    // getManagedBuildings(): Observable<any> {
+    //     return this.http.get<{ data: any[] }>(`${this.API_URL}/buildings/managed-buildings`);
+    // }
 
 
 
