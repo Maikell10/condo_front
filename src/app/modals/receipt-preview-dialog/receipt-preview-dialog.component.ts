@@ -148,10 +148,10 @@ import { MatIconModule } from '@angular/material/icon';
                 </div>
             </div>
 
-            <div class="bg-[#0d3b66] text-white text-center text-[10px] py-2 mt-auto">
+            <!-- <div class="bg-[#0d3b66] text-white text-center text-[10px] py-2 mt-auto">
                 Av. José A. Páez. Centro Profesional El Paraíso. Piso 2. Ofic. 208. Urb. El Paraíso. Telf. (0212) 461-4347/451-6751/915-6101<br>
                 Web: www.condomanager.com. E-mails: admin&#64;condomanager.com
-            </div>
+            </div> -->
             
             <div class="absolute right-[-140px] top-[40%] transform -rotate-90 origin-left text-[9px] w-[400px]">
                 - El pago de este recibo NO implica solvencia. - Los cheques devueltos tendrán un recargo. Este recibo debe ser pagado en los siete (7) días consecutivos a su emisión.

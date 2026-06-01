@@ -24,7 +24,7 @@
                     {{ financialStatus().status === 'DEBT' ? 'Saldo Pendiente' : 'Saldo a Favor' }}
                 </p>
                 <div class="text-4xl font-black mb-2">
-                    {{ financialStatus().currentDebt | currency:'Bs. ':'symbol':'1.2-2' }}
+                    {{ financialStatus().currentDebt | currency:'$':'symbol':'1.2-2' }}
                 </div>
                 <button mat-flat-button color="accent" class="w-full rounded-xl font-bold mt-2"
                     *ngIf="financialStatus().status === 'DEBT'" routerLink="/owner/pending-receipts">
@@ -63,15 +63,15 @@
                         <mat-icon class="text-emerald-500">verified</mat-icon>
                         <div>
                             <p class="text-xs text-gray-500 font-bold uppercase">Último Pago Registrado</p>
-                            <p class="font-medium text-gray-900">{{ lastPayment().amount | currency:'Bs. ' }} <span
-                                    class="text-gray-400 font-normal">el {{ lastPayment().date }}</span></p>
+                            <p class="font-medium text-gray-900">{{ lastPayment().amount | currency:'$':'symbol':'1.2-2'
+                                }} <span class="text-gray-400 font-normal">el {{ lastPayment().date }}</span></p>
                         </div>
                     </div>
                     <mat-chip class="bg-emerald-100 text-emerald-700 font-bold">Verificado</mat-chip>
                 </div>
             </mat-card>
 
-            <mat-card class="premium-card">
+            <!-- <mat-card class="premium-card">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-black text-gray-800 m-0">Mis Incidencias</h2>
                     <button mat-button color="primary" routerLink="/owner/incidents">Ver Todas</button>
@@ -97,7 +97,7 @@
                         </span>
                     </div>
                 </div>
-            </mat-card>
+            </mat-card> -->
 
         </div>
 
@@ -133,7 +133,7 @@
                 </div>
             </mat-card>
 
-            <mat-card class="premium-card">
+            <!-- <mat-card class="premium-card">
                 <div class="flex items-center gap-2 mb-4">
                     <mat-icon class="text-indigo-600">notifications_active</mat-icon>
                     <h2 class="text-sm font-bold text-indigo-500 uppercase tracking-wider m-0">Avisos del Edificio</h2>
@@ -155,7 +155,7 @@
                         </div>
                     </div>
                 </div>
-            </mat-card>
+            </mat-card> -->
 
         </div>
     </div>

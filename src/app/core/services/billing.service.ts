@@ -79,4 +79,32 @@ export class BillingService {
     registerAdminPayment(payload: any): Observable<any> {
         return this.http.post(`${this.API_URL}/statements/pay`, payload);
     }
+
+    getPendingSummary(buildingId: number): Observable<any> {
+        return this.http.get(`${this.API_URL}/building/${buildingId}/pending-summary`);
+    }
+
+    getPendingDetailed(buildingId: number): Observable<any> {
+        return this.http.get(`${this.API_URL}/building/${buildingId}/pending-detailed`);
+    }
+
+    getAvailableExpensePeriods(buildingId: number): Observable<any> {
+        return this.http.get(`${this.API_URL}/building/${buildingId}/expense-periods`);
+    }
+
+    getExpensesByPeriod(buildingId: number, month: number, year: number): Observable<any> {
+        return this.http.get(`${this.API_URL}/building/${buildingId}/expenses-by-period?month=${month}&year=${year}`);
+    }
+
+    getOwnerReceiptPeriods(): Observable<any> {
+        return this.http.get(`${this.API_URL}/owner/receipt-periods`);
+    }
+
+    getOwnerReceiptDetail(apartmentId: number, month: number, year: number): Observable<any> {
+        return this.http.get(`${this.API_URL}/owner/receipt-detail/${apartmentId}?month=${month}&year=${year}`);
+    }
+
+    getPaidReceipts(): Observable<any> {
+        return this.http.get(`${this.API_URL}/owner/paid-receipts`);
+    }
 }

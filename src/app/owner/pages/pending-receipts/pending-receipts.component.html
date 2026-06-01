@@ -1,1 +1,72 @@
-<p>pending-receipts works!</p>
+<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12 print:p-0 print:m-0">
+
+    <div
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 print:shadow-none print:border-none print:p-0">
+        <div>
+            <div class="flex items-center gap-2 text-rose-500 mb-1">
+                <mat-icon class="scale-75">warning_amber</mat-icon>
+                <span class="text-xs font-bold uppercase tracking-wider">Estado de Morosidad</span>
+            </div>
+            <h1 class="text-2xl font-black text-gray-900 tracking-tight m-0">Recibos Pendientes</h1>
+            <p class="text-gray-500 mt-1 text-sm">Resumen global de la deuda por apartamento.</p>
+        </div>
+
+        <button mat-flat-button color="primary" class="h-12 px-6 rounded-xl font-bold shadow-md print:hidden"
+            (click)="printSummary()">
+            <mat-icon class="mr-2">print</mat-icon> Imprimir Resumen
+        </button>
+    </div>
+
+    <mat-card
+        class="overflow-hidden border-none shadow-xl rounded-2xl bg-white premium-card print:shadow-none print:rounded-none">
+        <div class="overflow-x-auto">
+            <table mat-table [dataSource]="summary()" class="w-full min-w-[600px]">
+
+                <ng-container matColumnDef="unit">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="font-bold text-gray-500 uppercase text-[11px] py-4 w-24">Unidad</th>
+                    <td mat-cell *matCellDef="let row" class="font-mono text-gray-400 font-bold"> {{ row.unit }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="owner">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">
+                        Propietario</th>
+                    <td mat-cell *matCellDef="let row"
+                        [ngClass]="{'font-black text-gray-900': row.isTotal, 'font-medium text-gray-700': !row.isTotal}">
+                        {{ row.owner || 'Sin propietario asignado' }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="receipts">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="font-bold text-gray-500 uppercase text-[11px] text-center">Recibos Vencidos</th>
+                    <td mat-cell *matCellDef="let row" class="text-center font-medium"
+                        [ngClass]="{'font-black text-gray-900': row.isTotal, 'text-gray-600': !row.isTotal}">
+                        {{ row.receipts }}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="debt">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="font-bold text-gray-500 uppercase text-[11px] text-right pr-6">Deuda Total</th>
+                    <td mat-cell *matCellDef="let row" class="text-right pr-6 font-bold"
+                        [ngClass]="{'text-rose-600 text-lg': row.isTotal, 'text-rose-500': !row.isTotal && row.debt > 0}">
+                        {{ row.debt ? (row.debt | currency:'$':'symbol':'1.2-2') : '' }}
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50/50"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                    [ngClass]="{'bg-rose-50/50': row.isTotal, 'hover:bg-gray-50/50 transition-colors': !row.isTotal}">
+                </tr>
+            </table>
+
+            <div *ngIf="summary().length === 0"
+                class="py-16 flex flex-col items-center justify-center text-emerald-500 bg-emerald-50/30">
+                <mat-icon class="text-5xl mb-4 opacity-50">verified_user</mat-icon>
+                <p class="font-bold text-lg">¡Excelente noticia!</p>
+                <p class="text-sm font-medium opacity-80 mt-1">Ningún apartamento presenta deudas en este momento.</p>
+            </div>
+        </div>
+    </mat-card>
+</div>

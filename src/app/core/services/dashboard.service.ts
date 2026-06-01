@@ -16,4 +16,8 @@ export class DashboardService {
     getBuildingsByComplex(): Observable<any> {
         return this.http.get(`${this.API_URL_BUILDING}/managed-buildings`);
     }
+
+    getOwnerDashboard(): Observable<any> {
+        return this.http.get(`${this.API_URL}/owner/dashboard`);
+    }
 }

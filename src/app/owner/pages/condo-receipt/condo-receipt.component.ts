@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -6,18 +6,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { BillingService } from '../../../core/services/billing.service';
 
 @Component({
   selector: 'app-condo-receipt',
   standalone: true,
   imports: [
-    CommonModule,
-    MatCardModule,
-    MatTableModule,
-    MatIconModule,
-    MatButtonModule,
-    MatSelectModule,
-    MatFormFieldModule
+    CommonModule, MatCardModule, MatTableModule, MatIconModule,
+    MatButtonModule, MatSelectModule, MatFormFieldModule
   ],
   templateUrl: './condo-receipt.component.html',
   styles: [`
@@ -26,26 +22,111 @@ import { MatFormFieldModule } from '@angular/material/form-field';
     }
   `]
 })
-export class CondoReceiptComponent {
+export class CondoReceiptComponent implements OnInit {
+  private billingService = inject(BillingService);
+
   displayedColumns: string[] = ['code', 'description', 'totalAmount', 'share'];
 
-  // Data simulada fiel a tus capturas
-  receiptData = signal([
-    { code: '001', description: 'DIF MTTO / LIMPIEZA SR ANTONIO 03 / 2026', totalAmount: 1710.60, share: 307.05, isTotal: false },
-    { code: '001', description: 'MTTO / LIMPIEZA SR ANTONIO 04 / 2026 60$', totalAmount: 30600.00, share: 5492.70, isTotal: false },
-    { code: '005', description: 'ELECTRICIDAD 03 / 2026', totalAmount: 18999.23, share: 3410.36, isTotal: false },
-    { code: '006', description: 'HIDROCAPITAL 03 / 2026', totalAmount: 4027.46, share: 722.93, isTotal: false },
-    { code: '008', description: 'DIF MANTENIMIENTO DE ASCENSOR MAR', totalAmount: 3206.10, share: 575.49, isTotal: false },
-    { code: '042', description: 'COMISIONES BANCARIAS', totalAmount: 8174.13, share: 1467.26, isTotal: false },
-    { code: '040', description: 'GASTOS ADMINISTRATIVOS', totalAmount: 40500.00, share: 7269.75, isTotal: false },
+  availablePeriods = signal<any[]>([]);
+  selectedPeriod = signal<string>(''); // Formato: 'apartmentId-month-year'
 
-    // Subtotales y Totales
-    { code: '', description: 'TOTAL GASTOS COMUNES:', totalAmount: 402384.18, share: 72227.96, isTotal: true },
-    { code: '001', description: 'FDO DE RESERVA', totalAmount: 60357.63, share: 10834.19, isTotal: false },
-    { code: '', description: 'TOTAL FONDOS:', totalAmount: 60357.63, share: 10834.19, isTotal: true },
-    { code: '', description: 'TOTAL FONDOS Y GASTOS COMUNES:', totalAmount: 462741.81, share: 83062.15, isTotal: true },
+  receiptData = signal<any[]>([]);
 
-    // Fila Final
-    { code: '', description: 'TOTAL RECIBO A PAGAR:', totalAmount: null, share: 83062.15, isTotal: true, isFinal: true },
-  ]);
+  // Datos dinámicos para la cabecera
+  currentApt = signal<string>('...');
+  currentAlicuota = signal<number>(0);
+  currentPeriodName = signal<string>('...');
+
+  monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+  ngOnInit() {
+    this.loadPeriods();
+  }
+
+  loadPeriods() {
+    this.billingService.getOwnerReceiptPeriods().subscribe({
+      next: (res: any) => {
+        // Formateamos para el selector (Ej: "Apt 1B - Marzo 2026")
+        const periods = res.data.map((p: any) => ({
+          value: `${p.apartmentId}-${p.month}-${p.year}`,
+          name: `Apt ${p.apartmentNumber} - ${this.monthNames[p.month - 1]} ${p.year}`,
+          monthName: `${this.monthNames[p.month - 1]} ${p.year}`
+        }));
+
+        this.availablePeriods.set(periods);
+
+        // Auto-seleccionar el primero
+        if (periods.length > 0) {
+          this.selectedPeriod.set(periods[0].value);
+          this.onPeriodChange(periods[0].value, periods[0].monthName);
+        }
+      },
+      error: (err) => console.error("Error al cargar periodos", err)
+    });
+  }
+
+  onPeriodChange(value: string, monthName?: string) {
+    this.selectedPeriod.set(value);
+    const [apartmentId, month, year] = value.split('-');
+
+    // Si viene del HTML, buscamos el nombre del mes
+    if (!monthName) {
+      const found = this.availablePeriods().find(p => p.value === value);
+      monthName = found ? found.monthName : `${month}-${year}`;
+    }
+
+    this.currentPeriodName.set(monthName!);
+    this.loadReceiptDetail(Number(apartmentId), Number(month), Number(year));
+  }
+
+  loadReceiptDetail(apartmentId: number, month: number, year: number) {
+    this.billingService.getOwnerReceiptDetail(apartmentId, month, year).subscribe({
+      next: (res: any) => {
+        const data = res.data;
+        const alicuota = Number(res.alicuota);
+
+        this.currentAlicuota.set(alicuota * 100); // Para mostrar en porcentaje
+        this.currentApt.set(res.apartmentNumber);
+
+        if (data.length > 0) {
+          // 1. Cálculos de Montos Base
+          const totalCommon = data.reduce((acc: number, curr: any) => acc + Number(curr.totalAmount), 0);
+          const reservePercentage = 0.15; // 15% Fondo de Reserva
+          const reserveFund = totalCommon * reservePercentage;
+          const grandTotal = totalCommon + reserveFund;
+
+          // 2. Cálculos de la Cuota Parte (Share = Monto Base * Alícuota)
+          const shareCommon = totalCommon * alicuota;
+          const shareReserve = reserveFund * alicuota;
+          const shareGrandTotal = grandTotal * alicuota;
+
+          // 3. Mapear datos agregando la cuota individual
+          const mappedData = data.map((d: any) => ({
+            ...d,
+            share: Number(d.totalAmount) * alicuota,
+            isTotal: false
+          }));
+
+          // 4. Inyectar las filas matemáticas (Totales y Subtotales)
+          const formattedData = [
+            ...mappedData,
+            { code: '', description: 'TOTAL GASTOS COMUNES:', totalAmount: totalCommon, share: shareCommon, isTotal: true },
+            { code: 'FDO', description: `FONDO DE RESERVA (${reservePercentage * 100}%)`, totalAmount: reserveFund, share: shareReserve, isTotal: false },
+            { code: '', description: 'TOTAL FONDOS:', totalAmount: reserveFund, share: shareReserve, isTotal: true },
+            { code: '', description: 'TOTAL FONDOS Y GASTOS COMUNES:', totalAmount: grandTotal, share: shareGrandTotal, isTotal: true },
+            { code: '', description: 'TOTAL RECIBO A PAGAR:', totalAmount: null, share: shareGrandTotal, isTotal: true, isFinal: true }
+          ];
+
+          this.receiptData.set(formattedData);
+        } else {
+          this.receiptData.set([]);
+        }
+      },
+      error: (err) => console.error("Error al cargar recibo", err)
+    });
+  }
+
+  printReceipt() {
+    window.print();
+  }
 }

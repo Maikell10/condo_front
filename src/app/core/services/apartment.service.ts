@@ -62,6 +62,10 @@ export class ApartmentService {
         return this.http.delete(`${this.API_URL}/buildings/${id}/banks`);
     }
 
+    getAliquots(buildingId: number): Observable<any> {
+        return this.http.get(`${this.API_URL}/building_a/${buildingId}/aliquots`);
+    }
+
 
     // getManagedBuildings(): Observable<any> {
     //     return this.http.get<{ data: any[] }>(`${this.API_URL}/buildings/managed-buildings`);

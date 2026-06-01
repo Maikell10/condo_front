@@ -1,46 +1,52 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12 print:p-0 print:m-0">
 
     <div
-        class="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        class="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 print:shadow-none print:border-none print:p-0">
         <div>
             <div class="flex items-center gap-2 text-indigo-600 mb-1">
                 <mat-icon class="scale-75">receipt</mat-icon>
                 <span class="text-xs font-bold uppercase tracking-wider">Detalle Mensual</span>
             </div>
-            <div class="flex items-center gap-4">
-                <h1 class="text-2xl font-black text-gray-900 tracking-tight m-0">Recibo 03-2026</h1>
+            <div class="flex flex-wrap items-center gap-4">
+                <h1 class="text-2xl font-black text-gray-900 tracking-tight m-0">
+                    Recibo Apt {{ currentApt() }}
+                </h1>
                 <span
                     class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-bold border border-indigo-100">
-                    Alícuota: 17,9500000 %
+                    Alícuota: {{ currentAlicuota() | number:'1.2-4' }} %
                 </span>
             </div>
-            <p class="text-gray-500 mt-2 text-sm">Desglose de gastos comunes y tu cuota correspondiente.</p>
+            <p class="text-gray-500 mt-2 text-sm">Desglose de gastos del periodo <strong>{{ currentPeriodName()
+                    }}</strong> y tu cuota correspondiente.</p>
         </div>
 
         <div class="flex items-center gap-3">
-            <mat-form-field appearance="outline" class="w-40 hide-subscript">
-                <mat-label>Período</mat-label>
-                <mat-select [value]="'03-2026'">
-                    <mat-option value="03-2026">03 - 2026</mat-option>
-                    <mat-option value="02-2026">02 - 2026</mat-option>
+            <mat-form-field appearance="outline" class="w-56 hide-subscript print:hidden">
+                <mat-label>Seleccionar Recibo</mat-label>
+                <mat-select [value]="selectedPeriod()" (selectionChange)="onPeriodChange($event.value)">
+                    <mat-option *ngFor="let p of availablePeriods()" [value]="p.value">
+                        {{ p.name }}
+                    </mat-option>
                 </mat-select>
             </mat-form-field>
 
-            <button mat-flat-button color="primary" class="h-[52px] px-6 rounded-xl font-bold shadow-md">
+            <button mat-flat-button color="primary" class="h-[52px] px-6 rounded-xl font-bold shadow-md print:hidden"
+                (click)="printReceipt()">
                 <mat-icon class="mr-2">print</mat-icon>
                 Imprimir
             </button>
         </div>
     </div>
 
-    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white premium-card">
+    <mat-card
+        class="overflow-hidden border-none shadow-xl rounded-2xl bg-white premium-card print:shadow-none print:rounded-none">
         <div class="overflow-x-auto">
             <table mat-table [dataSource]="receiptData()" class="w-full">
 
                 <ng-container matColumnDef="code">
                     <th mat-header-cell *matHeaderCellDef
-                        class="font-bold text-gray-500 uppercase text-[11px] py-4 w-20">Código</th>
-                    <td mat-cell *matCellDef="let row" class="font-mono text-gray-400 text-xs">
+                        class="font-bold text-gray-500 uppercase text-[11px] py-4 w-20 pl-6">Código</th>
+                    <td mat-cell *matCellDef="let row" class="font-mono text-gray-400 text-xs pl-6">
                         {{ row.isTotal ? '' : row.code }}
                     </td>
                 </ng-container>
@@ -62,7 +68,7 @@
                         class="font-bold text-gray-500 uppercase text-[11px] text-right">Monto Base</th>
                     <td mat-cell *matCellDef="let row" class="text-right font-medium"
                         [ngClass]="{'font-black text-gray-800': row.isTotal, 'text-gray-500': !row.isTotal,'opacity-0': row.isFinal}">
-                        {{ row.totalAmount ? (row.totalAmount | currency:'Bs. ':'symbol':'1.2-2') : '' }}
+                        {{ row.totalAmount ? (row.totalAmount | currency:'$':'symbol':'1.2-2') : '' }}
                     </td>
                 </ng-container>
 
@@ -74,7 +80,7 @@
                                 'text-gray-700': !row.isTotal,
                                 'text-indigo-600 text-xl': row.isFinal
                             }">
-                        {{ row.share ? (row.share | currency:'Bs. ':'symbol':'1.2-2') : '' }}
+                        {{ row.share ? (row.share | currency:'$':'symbol':'1.2-2') : '' }}
                     </td>
                 </ng-container>
 
@@ -86,6 +92,12 @@
                         }">
                 </tr>
             </table>
+
+            <div *ngIf="receiptData().length === 0"
+                class="py-16 flex flex-col items-center justify-center text-gray-400">
+                <mat-icon class="text-5xl mb-4 opacity-20">receipt_long</mat-icon>
+                <p class="font-medium">No hay desglose de recibo disponible para este periodo.</p>
+            </div>
         </div>
     </mat-card>
 
