@@ -17,7 +17,7 @@ export class PendingReceiptsComponent implements OnInit {
     private authService = inject(AuthService);
     private billingService = inject(BillingService);
 
-    displayedColumns: string[] = ['unit', 'owner', 'receipts', 'debt'];
+    displayedColumns: string[] = ['unit', 'receipts', 'debt'];
     summary = signal<any[]>([]);
 
     ngOnInit() {

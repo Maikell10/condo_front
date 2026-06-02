@@ -27,7 +27,7 @@
                     {{ financialStatus().currentDebt | currency:'$':'symbol':'1.2-2' }}
                 </div>
                 <button mat-flat-button color="accent" class="w-full rounded-xl font-bold mt-2"
-                    *ngIf="financialStatus().status === 'DEBT'" routerLink="/owner/pending-receipts">
+                    *ngIf="financialStatus().status === 'DEBT'" routerLink="/owner/payments">
                     Reportar Pago
                 </button>
                 <p *ngIf="financialStatus().status === 'UP_TO_DATE'"
@@ -125,11 +125,11 @@
                         <span class="text-xs font-bold text-center">Alícuotas</span>
                     </button>
 
-                    <button routerLink="/owner/incidents"
+                    <!-- <button routerLink="/owner/incidents"
                         class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-700 transition-colors text-gray-600">
                         <mat-icon>campaign</mat-icon>
                         <span class="text-xs font-bold text-center">Reportar</span>
-                    </button>
+                    </button> -->
                 </div>
             </mat-card>
 

@@ -74,16 +74,22 @@ import { MatIconModule } from '@angular/material/icon';
               <mat-icon class="mr-2 text-slate-400">play_circle</mat-icon> Ver cómo funciona
             </button>
           </div> -->
-          
+
           <div class="mt-20 relative max-w-5xl mx-auto">
-            <div class="rounded-2xl border border-slate-200/50 bg-white/50 backdrop-blur-sm p-2 shadow-2xl">
-              <div class="rounded-xl overflow-hidden bg-slate-100 aspect-[16/9] flex items-center justify-center relative">
-                <div class="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 opacity-10"></div>
-                <mat-icon class="text-8xl text-indigo-200">dashboard</mat-icon>
-                <p class="absolute bottom-10 font-bold text-indigo-400 uppercase tracking-widest text-sm">Interfaz del Panel de Control</p>
+              <div class="rounded-2xl border border-slate-200/50 bg-white/50 backdrop-blur-sm p-2 shadow-2xl">
+                  <div class="rounded-xl overflow-hidden aspect-[16/9] flex items-center justify-center relative bg-cover bg-center bg-no-repeat shadow-inner"
+                      style="background-image: url('/democondo.jpg');">
+                      <div class="absolute inset-0 "></div>
+                      <mat-icon class="text-8xl text-white/90 z-10 drop-shadow-lg">dashboard</mat-icon>
+                      <p class="absolute bottom-10 font-bold text-gray uppercase tracking-widest text-sm z-10 drop-shadow-md">
+                          Interfaz del Panel de Control
+                      </p>
+                  </div>
               </div>
-            </div>
           </div>
+
+
+
         </div>
       </section>
 

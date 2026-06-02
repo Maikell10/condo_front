@@ -17,7 +17,7 @@ export class PendingDetailedComponent implements OnInit {
     private authService = inject(AuthService);
     private billingService = inject(BillingService);
 
-    displayedColumns: string[] = ['unit', 'owner', 'receipt', 'debt'];
+    displayedColumns: string[] = ['unit', 'receipt', 'debt'];
     detailed = signal<any[]>([]);
 
     ngOnInit() {

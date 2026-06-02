@@ -77,8 +77,14 @@ export class BankAccountsComponent implements OnInit {
   }
 
   openDialog(account?: any) {
-    // Si estamos en la vista global, no se puede crear
-    if (this.selectedBuildingId() === 'ALL') return;
+    // 🔥 ELIMINAMOS ESTA LÍNEA: if (this.selectedBuildingId() === 'ALL') return;
+
+    // Al editar desde la vista global (ALL), el objeto 'acc' no trae todo el contexto
+    // por seguridad, bloqueamos la edición en la vista ALL, pero PERMITIMOS la creación.
+    if (this.selectedBuildingId() === 'ALL' && account) {
+      this.snackBar.open('Para editar o borrar, selecciona el edificio específico en el menú superior.', 'Entendido', { duration: 4000 });
+      return;
+    }
 
     const dialogRef = this.dialog.open(BankAccountDialogComponent, {
       width: '450px',
@@ -88,15 +94,31 @@ export class BankAccountsComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         if (account) {
+          // Lógica de Edición normal (ya validamos arriba que no esté en vista ALL)
           this.apartmentService.updateBankAccount(account.id, result).subscribe(() => {
             this.snackBar.open('Cuenta actualizada', 'Cerrar', { duration: 3000 });
             this.loadAccounts();
           });
         } else {
-          // Usamos el selectedBuildingId en lugar del viejo ID del token
-          this.apartmentService.createBankAccount({ ...result, building_id: this.selectedBuildingId() }).subscribe(() => {
-            this.snackBar.open('Cuenta registrada', 'Cerrar', { duration: 3000 });
-            this.loadAccounts();
+          // 🔥 LÓGICA DE CREACIÓN (Puede ser un edificio o TODOS)
+          const payload = { ...result };
+
+          if (this.selectedBuildingId() === 'ALL') {
+            payload.building_id = 'ALL';
+            payload.complex_id = this.auth.userSignal()?.complexId;
+          } else {
+            payload.building_id = this.selectedBuildingId();
+          }
+
+          this.apartmentService.createBankAccount(payload).subscribe({
+            next: (res: any) => {
+              // Mostramos el mensaje que nos envía Node.js ("Registrada en 20 edificios")
+              this.snackBar.open(res.message || 'Cuentas registradas', 'Cerrar', { duration: 4000 });
+              this.loadAccounts();
+            },
+            error: (err) => {
+              this.snackBar.open('Error al registrar cuenta', 'Cerrar', { duration: 3000 });
+            }
           });
         }
       }

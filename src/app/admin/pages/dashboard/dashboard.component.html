@@ -11,11 +11,31 @@
             <p class="text-blue-100 opacity-80">Resumen del ecosistema y operaciones de la plataforma.</p>
         </div>
 
-        <div class="flex gap-3">
+        <!-- <div class="flex gap-3">
             <button mat-button class="bg-white/10 text-white hover:bg-white/20 rounded-xl px-6 h-12">
                 <mat-icon class="mr-2">settings</mat-icon> Ajustes
             </button>
             <button mat-flat-button class="bg-white text-indigo-900 hover:bg-gray-50 rounded-xl px-6 h-12 font-bold"
+                (click)="exportReport()">
+                <mat-icon class="mr-2">analytics</mat-icon> Reporte Global
+            </button>
+        </div> -->
+        <div class="flex flex-wrap gap-3 mt-4 md:mt-0">
+            <input type="file" #fileInput accept=".csv" class="hidden" (change)="onFileSelected($event)">
+
+            <button mat-button
+                class="bg-white/10 text-white hover:bg-white/20 rounded-xl px-6 h-12 border border-white/20 transition-all"
+                (click)="triggerFileUpload()" [disabled]="isUploading()">
+                <mat-icon class="mr-2" *ngIf="!isUploading()">upload_file</mat-icon>
+                <mat-icon class="mr-2 animate-spin" *ngIf="isUploading()">sync</mat-icon>
+                {{ isUploading() ? 'Importando...' : 'Importar CSV' }}
+            </button>
+
+            <button mat-button class="bg-white/10 text-white hover:bg-white/20 rounded-xl px-6 h-12">
+                <mat-icon class="mr-2">settings</mat-icon> Ajustes
+            </button>
+            <button mat-flat-button
+                class="bg-white text-indigo-900 hover:bg-gray-50 rounded-xl px-6 h-12 font-bold shadow-lg"
                 (click)="exportReport()">
                 <mat-icon class="mr-2">analytics</mat-icon> Reporte Global
             </button>

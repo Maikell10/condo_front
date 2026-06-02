@@ -47,4 +47,9 @@ export class AdminService {
     getDashboardStats(): Observable<any> {
         return this.http.get(`${this.API_URL}/dashboard-stats`);
     }
+
+    importComplexData(formData: FormData) {
+        // Apunta a la ruta exacta donde configuraste tu multer en Node.js
+        return this.http.post(`${API_URL_BASE}/api/building/import-complex-data`, formData);
+    }
 }

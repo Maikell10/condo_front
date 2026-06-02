@@ -18,7 +18,7 @@ export class AliquotsComponent implements OnInit {
     private authService = inject(AuthService);
 
     // Eliminamos 'area'
-    displayedColumns: string[] = ['unit', 'owner', 'percentage'];
+    displayedColumns: string[] = ['unit', 'percentage'];
     aliquots = signal<any[]>([]);
 
     ngOnInit() {

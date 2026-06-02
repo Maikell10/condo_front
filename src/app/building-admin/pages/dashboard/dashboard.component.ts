@@ -68,7 +68,6 @@ export class DashboardComponent implements OnInit {
     // NOTA: Ajusta el método getStats en tu DashboardService para que reciba un string
     this.dashboardService.getStats(urlParam).subscribe({
       next: (res: any) => {
-        console.log(res)
         this.buildingInfo.set(res.building);
         this.kpis.set(res.kpis);
         this.apartments.set(res.featured);

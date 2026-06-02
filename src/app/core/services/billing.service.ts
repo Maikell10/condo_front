@@ -107,4 +107,8 @@ export class BillingService {
     getPaidReceipts(): Observable<any> {
         return this.http.get(`${this.API_URL}/owner/paid-receipts`);
     }
+
+    createConcept(payload: { description: string }): Observable<any> {
+        return this.http.post(`${this.API_URL}/billing/concepts`, payload);
+    }
 }

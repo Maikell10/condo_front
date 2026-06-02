@@ -23,8 +23,7 @@
             </ng-container>
 
             <button mat-flat-button color="primary" class="rounded-xl px-6 h-12 font-bold shadow-lg w-full sm:w-auto"
-                (click)="openDialog()" [disabled]="selectedBuildingId() === 'ALL'"
-                [matTooltip]="selectedBuildingId() === 'ALL' ? 'Selecciona un edificio específico para agregar una cuenta' : ''">
+                (click)="openDialog()">
                 <mat-icon class="mr-2">add_card</mat-icon> Nueva Cuenta
             </button>
         </div>
