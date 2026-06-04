@@ -111,10 +111,10 @@ export class CondoReceiptComponent implements OnInit {
           const formattedData = [
             ...mappedData,
             { code: '', description: 'TOTAL GASTOS COMUNES:', totalAmount: totalCommon, share: shareCommon, isTotal: true },
-            { code: 'FDO', description: `FONDO DE RESERVA (${reservePercentage * 100}%)`, totalAmount: reserveFund, share: shareReserve, isTotal: false },
-            { code: '', description: 'TOTAL FONDOS:', totalAmount: reserveFund, share: shareReserve, isTotal: true },
-            { code: '', description: 'TOTAL FONDOS Y GASTOS COMUNES:', totalAmount: grandTotal, share: shareGrandTotal, isTotal: true },
-            { code: '', description: 'TOTAL RECIBO A PAGAR:', totalAmount: null, share: shareGrandTotal, isTotal: true, isFinal: true }
+            // { code: 'FDO', description: `FONDO DE RESERVA (${reservePercentage * 100}%)`, totalAmount: reserveFund, share: shareReserve, isTotal: false },
+            // { code: '', description: 'TOTAL FONDOS:', totalAmount: reserveFund, share: shareReserve, isTotal: true },
+            // { code: '', description: 'TOTAL FONDOS Y GASTOS COMUNES:', totalAmount: grandTotal, share: shareGrandTotal, isTotal: true },
+            { code: '', description: 'TOTAL RECIBO A PAGAR:', totalAmount: null, share: shareCommon, isTotal: true, isFinal: true }
           ];
 
           this.receiptData.set(formattedData);

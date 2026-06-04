@@ -94,24 +94,24 @@ export class BuildingExpensesComponent implements OnInit {
                 amount: totalCommon,
                 isTotal: true
               },
-              {
-                code: 'FDO',
-                description: `FONDO DE RESERVA (${reservePercentage * 100}%)`,
-                amount: reserveFund,
-                isTotal: false
-              },
-              {
-                code: '',
-                description: 'TOTAL FONDOS:',
-                amount: reserveFund,
-                isTotal: true
-              },
-              {
-                code: '',
-                description: 'TOTAL FONDOS Y GASTOS COMUNES:',
-                amount: grandTotal,
-                isTotal: true
-              }
+              // {
+              //   code: 'FDO',
+              //   description: `FONDO DE RESERVA (${reservePercentage * 100}%)`,
+              //   amount: reserveFund,
+              //   isTotal: false
+              // },
+              // {
+              //   code: '',
+              //   description: 'TOTAL FONDOS:',
+              //   amount: reserveFund,
+              //   isTotal: true
+              // },
+              // {
+              //   code: '',
+              //   description: 'TOTAL FONDOS Y GASTOS COMUNES:',
+              //   amount: grandTotal,
+              //   isTotal: true
+              // }
             ];
 
             this.expenses.set(formattedData);
