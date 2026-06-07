@@ -149,4 +149,20 @@ export class ApartmentsComponent implements OnInit {
       console.log('Código copiado:', code);
     }
   }
+
+  // Función para obtener el nombre del edificio del apartamento
+  getBuildingName(apt: any): string {
+    // Si tu backend ya envía el nombre directamente (como hicimos en la consulta anterior), lo usamos:
+    if (apt.buildingName) return apt.buildingName;
+
+    // Si la vista está en 'ALL', usamos el building_id del apartamento. 
+    // Si no, usamos el edificio seleccionado en el dropdown.
+    const targetId = this.selectedBuildingId();
+
+    // Buscamos el edificio en la lista que ya cargaste
+    const building = this.buildingsList().find(b => b.id === targetId);
+
+    // Retornamos el nombre, o un string vacío si no lo encuentra
+    return building ? building.name : '';
+  }
 }

@@ -103,9 +103,22 @@ export class StatementsComponent implements OnInit {
   }
 
   openPaymentModal(receipt: any) {
+    // 1. Identificamos el ID del edificio (ya sea del recibo o del filtro seleccionado)
+    const currentBuildingId = this.selectedBuildingId() !== 'ALL'
+      ? this.selectedBuildingId()
+      : (receipt.building_id || receipt.buildingId);
+
+    // 2. Enriquecemos la data antes de enviarla al modal
+    const dialogData = {
+      ...receipt,
+      building_id: currentBuildingId,
+      buildingId: currentBuildingId, // Pasamos ambos formatos (camelCase y snake_case) por precaución
+      complex_id: this.authService.userSignal()?.complexId
+    };
+
     const dialogRef = this.dialog.open(AdminPaymentModalComponent, {
       width: '500px',
-      data: receipt
+      data: dialogData
     });
 
     dialogRef.afterClosed().subscribe(success => {

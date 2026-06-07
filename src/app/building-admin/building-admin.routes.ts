@@ -33,5 +33,15 @@ export const BUILDING_ADMIN_ROUTES: Routes = [
         path: 'contracts',
         loadComponent: () =>
             import('./pages/contracts/contracts.component').then(m => m.ContractsComponent)
+    },
+    {
+        path: 'documents',
+        loadComponent: () =>
+            import('./pages/documents/documents.component').then(m => m.DocumentsComponent)
+    },
+    {
+        path: 'polls',
+        loadComponent: () =>
+            import('./pages/polls/polls.component').then(m => m.PollsComponent)
     }
 ];
