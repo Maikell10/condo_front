@@ -14,11 +14,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   imports: [
     CommonModule,
     MatCardModule,
-    MatTableModule,   // Necesario para mat-table, matHeaderRowDef, etc.
-    MatIconModule,    // Necesario para mat-icon
-    MatButtonModule,  // Para los botones de acción
-    MatTooltipModule, // Para el texto flotante al pasar el mouse
-    MatChipsModule    // Para los estados (Pagado/Pendiente)
+    MatTableModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
+    MatChipsModule
   ],
   templateUrl: './payments.component.html',
 })
@@ -28,13 +28,28 @@ export class PaymentsComponent implements OnInit {
   payments = signal<any[]>([]);
   displayedColumns = ['apartment', 'owner', 'amount', 'date', 'status', 'method', 'actions'];
 
-  // KPIs calculados automáticamente mediante Signals
+  // KPIs
   paidCount = computed(() => this.payments().filter(p => p.status === 'APPROVED').length);
   pendingCount = computed(() => this.payments().filter(p => p.status === 'PENDING_APPROVAL').length);
-  totalCollected = computed(() =>
-    this.payments().filter(p => p.status === 'APPROVED')
-      .reduce((acc, p) => acc + Number(p.amount), 0)
-  );
+
+  // 🔥 CORRECCIÓN: Filtra por estado APROBADO y que pertenezca al MES ACTUAL
+  totalCollected = computed(() => {
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    return this.payments().reduce((acc, p) => {
+      // Necesitamos convertir la fecha que viene de Node (ej. "2026-06-14") a un objeto Date
+      const paymentDate = new Date(p.date);
+
+      const isApproved = p.status === 'APPROVED';
+      const isThisMonth = paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
+
+      if (isApproved && isThisMonth) {
+        return acc + Number(p.amount);
+      }
+      return acc;
+    }, 0);
+  });
 
   ngOnInit() { this.loadPayments(); }
 
@@ -45,7 +60,7 @@ export class PaymentsComponent implements OnInit {
   approve(id: number) {
     this.paymentService.approvePayment(id).subscribe(() => {
       alert('Pago verificado con éxito');
-      this.loadPayments(); // Recarga y actualiza KPIs automáticamente
+      this.loadPayments();
     });
   }
 }

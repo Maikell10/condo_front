@@ -13,6 +13,7 @@ import { DashboardService } from '../../../core/services/dashboard.service'; // 
 import { MatDialog } from '@angular/material/dialog';
 import { LinkOwnerModalComponent } from '../../modal/link-owner-modal.component';
 import { AddApartmentModalComponent } from '../../modal/add-apartment-modal.component';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-apartments',
@@ -164,5 +165,47 @@ export class ApartmentsComponent implements OnInit {
 
     // Retornamos el nombre, o un string vacío si no lo encuentra
     return building ? building.name : '';
+  }
+
+  exportToExcel() {
+    const data = this.apartments();
+
+    if (!data || data.length === 0) {
+      alert('No hay datos de apartamentos para exportar.');
+      return;
+    }
+
+    // 1. Mapear y estructurar los datos exactamente como queremos las columnas
+    const excelData = data.map(a => ({
+      'Edificio': this.getBuildingName(a) || 'N/A',
+      'Apartamento': a.number || '',
+      'Cod. Acceso': a.access_code || 'PENDIENTE',
+      'Propietario': a.ownerName || 'Sin asignar',
+      // Convertimos a Number para que Excel lo reconozca como valor numérico y no texto
+      'Alicuota (%)': Number((a.alicuota * 100).toFixed(4)),
+      'Estado': a.balance > 0 ? 'Moroso' : 'Al día',
+      'Deuda ($)': Number(a.balance) > 0 ? Number(a.balance) : 0
+    }));
+
+    // 2. Convertir el JSON a una Hoja de Excel (Worksheet)
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(excelData);
+
+    // 3. Magia extra: Ajustar el ancho de las columnas para que se vea bonito
+    ws['!cols'] = [
+      { wch: 15 }, // Ancho para Edificio
+      { wch: 15 }, // Ancho para Apartamento
+      { wch: 15 }, // Ancho para Cod. Acceso
+      { wch: 35 }, // Ancho amplio para Propietario
+      { wch: 15 }, // Ancho para Alicuota
+      { wch: 15 }, // Ancho para Estado
+      { wch: 15 }  // Ancho para Deuda
+    ];
+
+    // 4. Crear el Libro de Excel (Workbook) y adjuntar la hoja
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Apartamentos');
+
+    // 5. Descargar el archivo .xlsx nativo
+    XLSX.writeFile(wb, `Listado_Apartamentos_${new Date().getTime()}.xlsx`);
   }
 }

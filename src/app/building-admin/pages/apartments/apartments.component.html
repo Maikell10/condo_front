@@ -21,11 +21,20 @@
             <p class="text-gray-500 mt-1">Administra propietarios, alícuotas y estados de cuenta.</p>
         </div>
 
-        <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl shadow-lg font-bold"
-            (click)="openAddApartmentModal()">
-            <mat-icon class="mr-1">add_business</mat-icon>
-            Nuevo Apartamento
-        </button>
+        <div class="flex items-center gap-3">
+            <button mat-stroked-button
+                class="h-14 px-6 rounded-xl font-bold border-emerald-500 text-emerald-700 hover:bg-emerald-50"
+                (click)="exportToExcel()">
+                <mat-icon class="mr-1 text-emerald-600">table_view</mat-icon>
+                Exportar Excel
+            </button>
+
+            <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl shadow-lg font-bold"
+                (click)="openAddApartmentModal()">
+                <mat-icon class="mr-1">add_business</mat-icon>
+                Nuevo Apartamento
+            </button>
+        </div>
     </div>
 
     <div class="grid gap-6 md:grid-cols-3">

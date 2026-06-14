@@ -7,7 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter } from '@angular/material/core';
 import { BillingService } from '../../../core/services/billing.service';
 import { ApartmentService } from '../../../core/services/apartment.service';
 
@@ -18,6 +18,9 @@ import { ApartmentService } from '../../../core/services/apartment.service';
     CommonModule, FormsModule, MatDialogModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatSelectModule,
     MatDatepickerModule, MatNativeDateModule
+  ],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }
   ],
   template: `
     <h2 mat-dialog-title class="font-black text-gray-800">Registrar Pago Recibido</h2>
@@ -61,7 +64,7 @@ import { ApartmentService } from '../../../core/services/apartment.service';
 
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Fecha del Pago</mat-label>
-          <input matInput [matDatepicker]="picker" [(ngModel)]="payment.paymentDate" required>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="payment.paymentDate" required [max]="maxDate" readonly (click)="picker.open()">
           <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
@@ -78,8 +81,11 @@ import { ApartmentService } from '../../../core/services/apartment.service';
   `
 })
 export class AdminPaymentModalComponent implements OnInit {
+  maxDate: Date = new Date();
   private billingService = inject(BillingService);
   private apartmentService = inject(ApartmentService);
+
+  private dateAdapter = inject(DateAdapter);
 
   banks = signal<any[]>([]);
   payment = {
@@ -96,6 +102,8 @@ export class AdminPaymentModalComponent implements OnInit {
   ) {
     // Autocompletamos el monto con la deuda total por defecto para comodidad
     this.payment.amount = Number(this.data.balance);
+
+    this.dateAdapter.setLocale('es-ES');
   }
 
   ngOnInit() {

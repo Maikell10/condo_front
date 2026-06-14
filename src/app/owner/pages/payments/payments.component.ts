@@ -12,7 +12,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter } from '@angular/material/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { SelectionModel } from '@angular/cdk/collections';
 
@@ -37,14 +37,25 @@ export interface Movement {
     MatRadioModule, MatButtonModule, MatIconModule, MatDatepickerModule,
     MatNativeDateModule, MatTabsModule
   ],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }
+  ],
   templateUrl: './payments.component.html',
 })
 export class PaymentsComponent implements OnInit {
+  maxDate: Date = new Date();
+
+  // 🔥 1. Señal para bloquear el botón y evitar pagos duplicados
+  isSubmitting = signal<boolean>(false);
+
   private fb = inject(FormBuilder);
   private receiptService = inject(ReceiptService);
   private paymentService = inject(PaymentService);
   private authService = inject(AuthService);
   private apartmentService = inject(ApartmentService);
+
+  // 🔥 2. Inyectamos el adaptador de fechas nativo de Angular Material
+  private dateAdapter = inject(DateAdapter);
 
   // --- SIGNALS ---
   receipts = signal<Receipt[]>([]);
@@ -80,7 +91,10 @@ export class PaymentsComponent implements OnInit {
   displayedColumns: string[] = ['select', 'fecha', 'monto', 'pagado', 'deuda', 'saldo'];
   displayedColumnsMovements: string[] = ['fecha', 'detalle', 'monto', 'status'];
 
-
+  constructor() {
+    // 🔥 3. Forzamos el idioma español directamente en el adaptador. ¡Esto arregla el formato!
+    this.dateAdapter.setLocale('es-ES');
+  }
 
   ngOnInit() {
     this.refreshData();
@@ -157,7 +171,11 @@ export class PaymentsComponent implements OnInit {
   }
 
   onSubmit() {
-    if (this.paymentForm.valid && this.totalSelected() > 0) {
+    // 🔥 4. Validamos que el formulario sea válido Y que NO se esté enviando ya
+    if (this.paymentForm.valid && this.totalSelected() > 0 && !this.isSubmitting()) {
+
+      this.isSubmitting.set(true); // Bloqueamos la UI
+
       const rawData = this.paymentForm.getRawValue();
       const formattedDate = new Date(rawData.operationDate).toISOString().split('T')[0];
       const payload = { ...rawData, operationDate: formattedDate };
@@ -167,8 +185,12 @@ export class PaymentsComponent implements OnInit {
           alert(res.message);
           this.resetUI();
           this.refreshData();
+          this.isSubmitting.set(false); // Desbloqueamos al terminar con éxito
         },
-        error: (err) => alert(err.error?.message || 'Error al enviar reporte')
+        error: (err) => {
+          alert(err.error?.message || 'Error al enviar reporte');
+          this.isSubmitting.set(false); // Desbloqueamos si hay error
+        }
       });
     }
   }

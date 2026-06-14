@@ -200,7 +200,8 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <mat-form-field appearance="outline">
                                     <mat-label>Fecha de la operación</mat-label>
-                                    <input matInput [matDatepicker]="picker" formControlName="operationDate">
+                                    <input matInput [matDatepicker]="picker" formControlName="operationDate"
+                                        [max]="maxDate" readonly (click)="picker.open()">
                                     <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                                     <mat-datepicker #picker></mat-datepicker>
                                 </mat-form-field>

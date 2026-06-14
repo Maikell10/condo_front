@@ -44,10 +44,25 @@ export class StatementsComponent implements OnInit {
     return baseCols;
   });
 
-  // KPIs calculados
-  totalExpected = computed(() => this.receipts().reduce((acc, r) => acc + Number(r.amount), 0));
-  totalCollected = computed(() => this.receipts().reduce((acc, r) => acc + Number(r.paid), 0));
-  totalPending = computed(() => this.receipts().reduce((acc, r) => acc + Number(r.balance), 0));
+  // --- LÓGICA DE FILTRADO PARA EL MES ACTUAL ---
+  currentMonthReceipts = computed(() => {
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+
+    return this.receipts().filter(r => {
+      if (!r.issueDate) return false;
+      const parts = r.issueDate.split('-');
+      const receiptYear = parseInt(parts[0], 10);
+      const receiptMonth = parseInt(parts[1], 10);
+
+      return receiptYear === currentYear && receiptMonth === currentMonth;
+    });
+  });
+
+  // --- KPIs CALCULADOS (Solo del mes actual) ---
+  totalExpected = computed(() => this.currentMonthReceipts().reduce((acc, r) => acc + Number(r.amount), 0));
+  totalCollected = computed(() => this.currentMonthReceipts().reduce((acc, r) => acc + Number(r.paid), 0));
+  totalPending = computed(() => this.currentMonthReceipts().reduce((acc, r) => acc + Number(r.balance), 0));
 
   // Porcentaje de recaudación
   collectionRate = computed(() => {
