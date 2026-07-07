@@ -26,11 +26,16 @@ export class DashboardComponent implements OnInit {
 
   // --- SEÑALES DEL DASHBOARD ---
   buildingInfo = signal({ name: 'Cargando...', code: '...' });
-  kpis = signal({ totalApartments: 0, occupied: 0, delinquent: 0, monthIncome: 0 });
+
+  // 🔥 Añadimos prevMonthIncome al KPI
+  kpis = signal({ totalApartments: 0, occupied: 0, delinquent: 0, monthIncome: 0, prevMonthIncome: 0 });
   apartments = signal<any[]>([]);
 
-  // 🔥 NUEVA SEÑAL PARA EFICIENCIA DE RECAUDACIÓN
-  collectionInfo = signal({ period: 'Cargando...', expected: 0, collected: 0, rate: 0, missing: 0 });
+  // 🔥 NUEVA ESTRUCTURA DUAL PARA EFICIENCIA DE RECAUDACIÓN
+  collectionInfo = signal({
+    current: { period: 'Cargando...', expected: 0, collected: 0, rate: 0, missing: 0 },
+    previous: { period: 'Cargando...', expected: 0, collected: 0, rate: 0, missing: 0 }
+  });
 
   delinquentRate = computed(() => {
     const { delinquent, occupied } = this.kpis();
@@ -45,11 +50,10 @@ export class DashboardComponent implements OnInit {
     const user = this.auth.userSignal();
 
     if (user?.complexId) {
-      // Usamos getManagedBuildings para estandarizar
       this.dashboardService.getBuildingsByComplex().subscribe({
         next: (res: any) => {
           this.buildingsList.set(res.data);
-          this.selectedBuildingId.set('ALL'); // Arranca viendo la salud global
+          this.selectedBuildingId.set('ALL');
           this.loadStats('ALL');
         }
       });
@@ -61,20 +65,29 @@ export class DashboardComponent implements OnInit {
 
   loadStats(buildingId: number | 'ALL') {
     const complexId = this.auth.userSignal()?.complexId;
-    // Si tienes un método específico para el dashboard con payload como en facturas, úsalo aquí.
-    // Asumiré que pasas la variable por URL query params si es ALL.
     const urlParam = buildingId === 'ALL' ? `ALL?complexId=${complexId}` : `${buildingId}`;
 
-    // NOTA: Ajusta el método getStats en tu DashboardService para que reciba un string
     this.dashboardService.getStats(urlParam).subscribe({
       next: (res: any) => {
         this.buildingInfo.set(res.building);
-        this.kpis.set(res.kpis);
+
+        // El backend ahora deberá enviar kpis.prevMonthIncome
+        this.kpis.set({
+          totalApartments: res.kpis?.totalApartments || 0,
+          occupied: res.kpis?.occupied || 0,
+          delinquent: res.kpis?.delinquent || 0,
+          monthIncome: res.kpis?.monthIncome || 0,
+          prevMonthIncome: res.kpis?.prevMonthIncome || 0
+        });
+
         this.apartments.set(res.featured);
 
-        // 🔥 Cargamos la data real de la base de datos
+        // 🔥 El backend ahora deberá enviar res.collection.current y res.collection.previous
         if (res.collection) {
-          this.collectionInfo.set(res.collection);
+          this.collectionInfo.set({
+            current: res.collection.current || this.collectionInfo().current,
+            previous: res.collection.previous || this.collectionInfo().previous
+          });
         }
       },
       error: (err) => console.error('Error al cargar dashboard', err)
@@ -84,7 +97,13 @@ export class DashboardComponent implements OnInit {
   onBuildingChange(newBuildingId: number | 'ALL') {
     this.selectedBuildingId.set(newBuildingId);
     this.buildingInfo.set({ name: 'Cargando...', code: '...' });
-    this.collectionInfo.set({ period: 'Cargando...', expected: 0, collected: 0, rate: 0, missing: 0 });
+
+    // Reseteamos ambas vistas
+    this.collectionInfo.set({
+      current: { period: 'Cargando...', expected: 0, collected: 0, rate: 0, missing: 0 },
+      previous: { period: 'Cargando...', expected: 0, collected: 0, rate: 0, missing: 0 }
+    });
+
     this.loadStats(newBuildingId);
   }
 }

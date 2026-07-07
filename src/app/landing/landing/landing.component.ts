@@ -1,13 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { API_URL_BASE } from '../../core/constants';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, RouterModule, MatButtonModule, MatIconModule, ReactiveFormsModule],
   template: `
     <div class="min-h-screen bg-white font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
       
@@ -51,8 +54,8 @@ import { MatIconModule } from '@angular/material/icon';
             La evolución del condominio
           </div>
 
-          <div class="w-50 h-50 rounded-xl overflow-hidden flex items-center justify-center bg-white shadow-md shadow-indigo-100 border border-slate-100 justify-self-center">
-              <img src="/LOGO.jpg" alt="Logo Condominio A Un Clic" class="w-full h-full object-full">
+          <div class="w-48 h-48 mx-auto mb-10 rounded-2xl overflow-hidden flex items-center justify-center bg-white shadow-xl shadow-indigo-100/50 border border-slate-100">
+              <img src="/LOGO.jpg" alt="Logo Condominio A Un Clic" class="w-full h-full object-contain p-2">
           </div>
           
           <h1 class="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight max-w-4xl mx-auto">
@@ -159,16 +162,15 @@ import { MatIconModule } from '@angular/material/icon';
                 </li>
               </ul>
             </div>
-            <div class="order-1 lg:order-2 bg-slate-50 rounded-3xl aspect-[4/3] flex items-center justify-center border border-slate-100 shadow-inner relative overflow-hidden">
-               <div class="absolute inset-0 bg-gradient-to-tr from-purple-100 to-indigo-50 opacity-50"></div>
-               <mat-icon class="text-9xl text-purple-200">query_stats</mat-icon>
+            
+            <div class="order-1 lg:order-2 rounded-3xl aspect-[4/3] flex items-center justify-center shadow-xl relative overflow-hidden bg-white border border-slate-100">
+               <img src="/grafico-tiempo.png" alt="Dashboard de automatización de tiempo" class="w-full h-full object-cover">
             </div>
           </div>
 
           <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div class="bg-slate-50 rounded-3xl aspect-[4/3] flex items-center justify-center border border-slate-100 shadow-inner relative overflow-hidden">
-               <div class="absolute inset-0 bg-gradient-to-tr from-emerald-100 to-teal-50 opacity-50"></div>
-               <mat-icon class="text-9xl text-emerald-200">verified_user</mat-icon>
+            <div class="bg-white rounded-3xl aspect-[4/3] flex items-center justify-center shadow-xl border border-slate-100 relative overflow-hidden">
+               <img src="/grafico-transparencia.png" alt="Gráfico de transparencia financiera" class="w-full h-full object-cover">
             </div>
             <div class="space-y-6">
               <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -197,6 +199,7 @@ import { MatIconModule } from '@angular/material/icon';
           <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden">
             <div class="grid lg:grid-cols-5">
               
+              <!-- PANEL IZQUIERDO INFO DE CONTACTO -->
               <div class="lg:col-span-2 bg-indigo-600 p-10 lg:p-12 text-white flex flex-col justify-between relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-2xl translate-x-1/3 -translate-y-1/3"></div>
                 <div class="absolute bottom-0 left-0 w-40 h-40 bg-purple-500 opacity-20 rounded-full blur-2xl -translate-x-1/2 translate-y-1/2"></div>
@@ -214,6 +217,10 @@ import { MatIconModule } from '@angular/material/icon';
                       <div class="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center"><mat-icon>phone</mat-icon></div>
                       <span class="font-medium">+58 (424) 247-5572</span>
                     </div>
+                     <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center"><mat-icon>phone</mat-icon></div>
+                      <span class="font-medium">(0212) 710-5278</span>
+                    </div>
                     <div class="flex items-center gap-4">
                       <div class="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center"><mat-icon>location_on</mat-icon></div>
                       <span class="font-medium">Caracas, Venezuela</span>
@@ -222,28 +229,40 @@ import { MatIconModule } from '@angular/material/icon';
                 </div>
               </div>
 
+              <!-- 🔥 PANEL DERECHO: FORMULARIO REACTIVO -->
               <div class="lg:col-span-3 p-10 lg:p-12">
-                <form class="space-y-6" (submit)="$event.preventDefault()">
+                
+                <!-- Mensaje de Éxito -->
+                <div *ngIf="successMessage()" class="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-center gap-3">
+                  <mat-icon>check_circle</mat-icon>
+                  <span class="font-bold">{{ successMessage() }}</span>
+                </div>
+
+                <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="space-y-6">
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-2">
                       <label class="text-sm font-bold text-slate-700">Nombre completo</label>
-                      <input type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="Tu nombre">
+                      <input formControlName="name" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="Tu nombre">
                     </div>
                     <div class="space-y-2">
                       <label class="text-sm font-bold text-slate-700">Edificio / Condominio</label>
-                      <input type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="Nombre de tu residencia">
+                      <input formControlName="condo" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="Nombre de tu residencia">
                     </div>
                   </div>
                   <div class="space-y-2">
                     <label class="text-sm font-bold text-slate-700">Correo Electrónico</label>
-                    <input type="email" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="tucorreo@ejemplo.com">
+                    <input formControlName="email" type="email" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none" placeholder="tucorreo@ejemplo.com">
                   </div>
                   <div class="space-y-2">
                     <label class="text-sm font-bold text-slate-700">Mensaje</label>
-                    <textarea rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none resize-none" placeholder="¿En qué podemos ayudarte?"></textarea>
+                    <textarea formControlName="message" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all outline-none resize-none" placeholder="¿En qué podemos ayudarte?"></textarea>
                   </div>
-                  <button mat-flat-button color="primary" class="w-full rounded-xl h-14 text-base font-bold shadow-lg shadow-indigo-200">
-                    Enviar Mensaje
+                  
+                  <button mat-flat-button color="primary" type="submit" 
+                          [disabled]="contactForm.invalid || isSubmitting()"
+                          class="w-full rounded-xl h-14 text-base font-bold shadow-lg shadow-indigo-200">
+                    <mat-icon *ngIf="isSubmitting()" class="animate-spin mr-2">hourglass_empty</mat-icon>
+                    {{ isSubmitting() ? 'Enviando...' : 'Enviar Mensaje' }}
                   </button>
                 </form>
               </div>
@@ -293,4 +312,43 @@ import { MatIconModule } from '@angular/material/icon';
     }
   `]
 })
-export class LandingComponent { }
+export class LandingComponent {
+  private fb = inject(FormBuilder);
+  private http = inject(HttpClient); // Necesitarás asegurarte de que proveHttpClient() esté en tu app.config.ts
+
+  isSubmitting = signal(false);
+  successMessage = signal('');
+
+  // 2. Creamos la estructura y validaciones del formulario
+  contactForm: FormGroup = this.fb.group({
+    name: ['', Validators.required],
+    condo: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    message: ['', Validators.required]
+  });
+
+  onSubmit() {
+    if (this.contactForm.invalid) return;
+
+    this.isSubmitting.set(true);
+
+    const payload = this.contactForm.value;
+
+    // 🔥 3. Enviar al Backend (Asegúrate de ajustar esta URL a la de tu servidor real)
+    this.http.post(API_URL_BASE + '/api/contact/contact', payload).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.successMessage.set('¡Gracias! Hemos recibido tu mensaje y te contactaremos pronto.');
+        this.contactForm.reset();
+
+        // Ocultar mensaje después de 5 segundos
+        setTimeout(() => this.successMessage.set(''), 5000);
+      },
+      error: (err: any) => {
+        this.isSubmitting.set(false);
+        console.error('Error enviando correo', err);
+        alert('Hubo un error de conexión. Por favor, intenta de nuevo más tarde.');
+      }
+    });
+  }
+}

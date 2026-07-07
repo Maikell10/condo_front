@@ -51,7 +51,12 @@ export class InvoicesComponent implements OnInit {
   selectedMonth = signal<number>(this.currentDate.getMonth() === 0 ? 12 : this.currentDate.getMonth());
   selectedYear = signal<number>(this.currentDate.getMonth() === 0 ? this.currentDate.getFullYear() - 1 : this.currentDate.getFullYear());
 
-  totalMonth = computed(() => this.invoices().reduce((acc, inv) => acc + Number(inv.amount), 0));
+  totalMonth = computed(() => {
+    const sumInCents = this.invoices().reduce((acc, inv) => {
+      return acc + Math.round(Number(inv.amount || 0) * 100);
+    }, 0);
+    return sumInCents / 100;
+  });
   monthStatus = signal<string>('OPEN');
   canClosePeriod = signal<boolean>(false);
   closedPeriods = signal<any[]>([]);

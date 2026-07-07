@@ -6,19 +6,50 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule, MAT_DATE_LOCALE, NativeDateAdapter, DateAdapter, MAT_DATE_FORMATS } from '@angular/material/core';
+import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+
 import { BillingService } from '../../../core/services/billing.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
-import { MatDividerModule } from '@angular/material/divider';
 import { AdminPaymentModalComponent } from '../../modal/admin-payment-modal/admin-payment-modal.component';
-import { MatDialog } from '@angular/material/dialog';
+
+class CustomDateAdapter extends NativeDateAdapter {
+  override format(date: Date, displayFormat: Object): string {
+    if (displayFormat === 'input') {
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+    return super.format(date, displayFormat);
+  }
+}
 
 @Component({
   selector: 'app-statements',
   standalone: true,
   imports: [
     CommonModule, MatTableModule, MatCardModule, MatButtonModule,
-    MatIconModule, MatSelectModule, MatTooltipModule, MatDividerModule
+    MatIconModule, MatSelectModule, MatTooltipModule, MatDividerModule,
+    MatInputModule, MatFormFieldModule, MatDatepickerModule, MatNativeDateModule,
+    FormsModule, ReactiveFormsModule
+  ],
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: 'es-ES' },
+    { provide: DateAdapter, useClass: CustomDateAdapter },
+    {
+      provide: MAT_DATE_FORMATS,
+      useValue: {
+        parse: { dateInput: 'input' },
+        display: { dateInput: 'input', monthYearLabel: 'shortMonths', dateA11yLabel: 'input', monthYearA11yLabel: 'shortMonths' }
+      }
+    }
   ],
   templateUrl: './statements.component.html'
 })
@@ -26,7 +57,6 @@ export class StatementsComponent implements OnInit {
   private billingService = inject(BillingService);
   private authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
-
   private dialog = inject(MatDialog);
 
   isComplex = computed(() => !!this.authService.userSignal()?.complexId);
@@ -35,7 +65,23 @@ export class StatementsComponent implements OnInit {
 
   receipts = signal<any[]>([]);
 
-  // Columnas dinámicas
+  searchQuery = signal<string>('');
+  filterMode = signal<'description' | 'date'>('description');
+  selectedDescription = signal<string>('ALL');
+  selectedStatus = signal<'ALL' | 'PAID' | 'PENDING' | 'PARTIAL'>('ALL');
+
+  dateRange = new FormGroup({
+    start: new FormControl<Date | null>(null),
+    end: new FormControl<Date | null>(null)
+  });
+  startDate = signal<Date | null>(null);
+  endDate = signal<Date | null>(null);
+
+  uniqueDescriptions = computed(() => {
+    const all = this.receipts().map(r => r.description).filter(Boolean);
+    return [...new Set(all)];
+  });
+
   displayedColumns = computed(() => {
     const baseCols = ['issueDate', 'apartment', 'ownerName', 'description', 'amount', 'paid', 'balance', 'status', 'actions'];
     if (this.isComplex() && this.selectedBuildingId() === 'ALL') {
@@ -44,27 +90,84 @@ export class StatementsComponent implements OnInit {
     return baseCols;
   });
 
-  // --- LÓGICA DE FILTRADO PARA EL MES ACTUAL ---
-  currentMonthReceipts = computed(() => {
-    const currentMonth = new Date().getMonth() + 1;
-    const currentYear = new Date().getFullYear();
+  filteredReceipts = computed(() => {
+    let data = this.receipts().map(r => {
+      // 1. Matemática de centavos para evitar arrastre de decimales fantasma
+      const amountCents = Math.round(Number(r.amount || 0) * 100);
+      const paidCents = Math.round(Number(r.paid || 0) * 100);
+      const balanceCents = amountCents - paidCents;
 
-    return this.receipts().filter(r => {
-      if (!r.issueDate) return false;
-      const parts = r.issueDate.split('-');
-      const receiptYear = parseInt(parts[0], 10);
-      const receiptMonth = parseInt(parts[1], 10);
+      const amount = amountCents / 100;
+      const paid = paidCents / 100;
+      const balance = balanceCents / 100;
 
-      return receiptYear === currentYear && receiptMonth === currentMonth;
+      let status = r.status;
+      if (balanceCents <= 0) {
+        status = 'PAID';
+      } else if (paidCents > 0) {
+        status = 'PARTIAL';
+      }
+
+      return { ...r, amount, paid, balance, status };
     });
+
+    const currentStatus = this.selectedStatus();
+    if (currentStatus !== 'ALL') {
+      data = data.filter(r => r.status === currentStatus);
+    }
+
+    if (this.filterMode() === 'description') {
+      const desc = this.selectedDescription();
+      if (desc !== 'ALL') {
+        data = data.filter(r => r.description === desc);
+      }
+    } else if (this.filterMode() === 'date') {
+      const start = this.startDate();
+      const end = this.endDate();
+      if (start && end) {
+        const endOfDay = new Date(end);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        data = data.filter(r => {
+          const pDate = r.payment_date || r.paymentDate;
+          const targetDateToFilter = pDate ? pDate : r.issueDate;
+
+          if (!targetDateToFilter) return false;
+
+          const dateString = targetDateToFilter.split('T')[0];
+          const parts = dateString.split('-');
+          const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+
+          return d >= start && d <= endOfDay;
+        });
+      }
+    }
+
+    const q = this.searchQuery().toLowerCase().trim();
+    if (q) {
+      data = data.filter(r =>
+        r.apartment?.toString().toLowerCase().includes(q) ||
+        r.ownerName?.toLowerCase().includes(q) ||
+        r.description?.toLowerCase().includes(q)
+      );
+    }
+
+    return data;
   });
 
-  // --- KPIs CALCULADOS (Solo del mes actual) ---
-  totalExpected = computed(() => this.currentMonthReceipts().reduce((acc, r) => acc + Number(r.amount), 0));
-  totalCollected = computed(() => this.currentMonthReceipts().reduce((acc, r) => acc + Number(r.paid), 0));
-  totalPending = computed(() => this.currentMonthReceipts().reduce((acc, r) => acc + Number(r.balance), 0));
+  // --- FUNCIÓN AUXILIAR DE SUMA EXACTA ---
+  private sumExact(data: any[], field: string): number {
+    const sumInCents = data.reduce((acc, item) => {
+      return acc + Math.round(Number(item[field] || 0) * 100);
+    }, 0);
+    return sumInCents / 100;
+  }
 
-  // Porcentaje de recaudación
+  // --- KPIs CALCULADOS CON EXACTITUD ---
+  totalExpected = computed(() => this.sumExact(this.filteredReceipts(), 'amount'));
+  totalCollected = computed(() => this.sumExact(this.filteredReceipts(), 'paid'));
+  totalPending = computed(() => this.sumExact(this.filteredReceipts(), 'balance'));
+
   collectionRate = computed(() => {
     const expected = this.totalExpected();
     if (expected === 0) return 0;
@@ -77,7 +180,6 @@ export class StatementsComponent implements OnInit {
 
   initView() {
     const user = this.authService.userSignal();
-
     if (user?.complexId) {
       this.dashboardService.getBuildingsByComplex().subscribe({
         next: (res: any) => {
@@ -98,6 +200,20 @@ export class StatementsComponent implements OnInit {
     this.loadStatements();
   }
 
+  onSearch(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.searchQuery.set(target.value);
+  }
+
+  clearFilters() {
+    this.searchQuery.set('');
+    this.selectedDescription.set('ALL');
+    this.selectedStatus.set('ALL');
+    this.dateRange.reset();
+    this.startDate.set(null);
+    this.endDate.set(null);
+  }
+
   loadStatements() {
     const buildingId = this.selectedBuildingId();
     const complexId = this.authService.userSignal()?.complexId;
@@ -113,21 +229,18 @@ export class StatementsComponent implements OnInit {
   }
 
   sendReminder(receipt: any) {
-    // Aquí puedes conectar a tu servicio de Email o WhatsApp en un futuro
     alert(`Aviso de cobro enviado a: ${receipt.ownerName || 'Propietario'} (Apt: ${receipt.apartment})`);
   }
 
   openPaymentModal(receipt: any) {
-    // 1. Identificamos el ID del edificio (ya sea del recibo o del filtro seleccionado)
     const currentBuildingId = this.selectedBuildingId() !== 'ALL'
       ? this.selectedBuildingId()
       : (receipt.building_id || receipt.buildingId);
 
-    // 2. Enriquecemos la data antes de enviarla al modal
     const dialogData = {
       ...receipt,
       building_id: currentBuildingId,
-      buildingId: currentBuildingId, // Pasamos ambos formatos (camelCase y snake_case) por precaución
+      buildingId: currentBuildingId,
       complex_id: this.authService.userSignal()?.complexId
     };
 
@@ -138,7 +251,7 @@ export class StatementsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(success => {
       if (success) {
-        this.loadStatements(); // Recargamos para ver el recibo en PAID y el balance en 0
+        this.loadStatements();
       }
     });
   }
