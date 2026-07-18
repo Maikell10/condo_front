@@ -27,14 +27,13 @@ import { MatIconModule } from '@angular/material/icon';
                 <div class="flex flex-col">
                     <h1 class="text-2xl font-black text-[#0d3b66] m-0 tracking-tighter" style="font-family: Arial, sans-serif;">CONDOMINIO A UN CLIC</h1>
                     <p class="text-[10px] font-bold text-gray-800 m-0">ADMINISTRADORA DE INMUEBLES</p>
-                    <!-- <p class="text-[10px] font-bold text-gray-800 m-0">RIF: J-29626110-5</p> -->
                 </div>
                 <div class="border rounded-xl border-gray-400 p-2 text-center text-xs min-w-[280px]">
                     <div class="h-14 w-auto flex items-center justify-center">
                         <img src="/LOGO_SN1.png" alt="Logo Condominio A Un Clic" class="h-full w-full object-contain mix-blend-multiply">
                     </div>
                     
-                    <div class="bg-white px-4 py-1 rounded-md border shadow-sm">
+                    <div class="bg-white px-4 py-1 rounded-md border shadow-sm mt-1">
                         <p class="m-0 font-bold text-xs text-[#0d3b66] uppercase tracking-wider">
                             Clave ingreso web: <span class="text-sm">{{ data.accessCode }}</span>
                         </p>
@@ -64,7 +63,13 @@ import { MatIconModule } from '@angular/material/icon';
 
                 <div class="font-bold text-center border-r border-[#0d3b66] uppercase">{{ data.ownerName }}</div>
                 <div class="font-bold text-center border-r border-[#0d3b66]">{{ data.quota }}</div>
-                <div class="font-bold text-center border-r border-[#0d3b66] text-green-600">PAGADO</div> 
+                
+                <!-- 🔥 ESTADO DINÁMICO -->
+                <div class="font-bold text-center border-r border-[#0d3b66]"
+                     [ngClass]="data.status === 'PAID' || data.status === 'APPROVED' ? 'text-green-600' : 'text-rose-600'">
+                    {{ data.status === 'PAID' || data.status === 'APPROVED' ? 'PAGADO' : 'PENDIENTE' }}
+                </div> 
+                
                 <div class="font-bold text-center text-sm">{{ data.totalBill | number:'1.2-2' }}</div>
             </div>
 
@@ -76,7 +81,7 @@ import { MatIconModule } from '@angular/material/icon';
                     <div class="col-span-2 text-center">G. INDIVIDUAL $</div>
                 </div>
 
-                <div class="flex-1 text-[10px]">
+                <div class="flex-1 text-[10px] relative z-10">
                     <ng-container *ngFor="let item of data.lineItems">
                         <div class="grid grid-cols-12 hover:bg-gray-50 border-b border-gray-100">
                             <div class="col-span-8 px-2 py-1 border-r border-[#0d3b66]/30 uppercase">{{ item.concept }}</div>
@@ -97,9 +102,12 @@ import { MatIconModule } from '@angular/material/icon';
                     </div>
                 </div>
 
-                <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-                    <h1 class="text-[120px] font-black text-green-600 transform -rotate-45 m-0" style="font-family: Arial, sans-serif;">
-                        PAGADO
+                <!-- 🔥 MARCA DE AGUA DINÁMICA -->
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
+                    <h1 class="text-[120px] font-black transform -rotate-45 m-0" 
+                        [ngClass]="data.status === 'PAID' || data.status === 'APPROVED' ? 'text-green-600' : 'text-rose-500'"
+                        style="font-family: Arial, sans-serif;">
+                        {{ data.status === 'PAID' || data.status === 'APPROVED' ? 'PAGADO' : 'PENDIENTE' }}
                     </h1>
                 </div>
             </div>
@@ -113,26 +121,63 @@ import { MatIconModule } from '@angular/material/icon';
   `,
     styles: [`
     .receipt-a4 {
-        width: 210mm;
+        width: 100%;
+        max-width: 210mm;
         min-height: 297mm;
         padding: 15mm;
         box-sizing: border-box;
     }
     
     @media print {
-        body * {
-            visibility: hidden;
+        /* 1. FORZAR LA IMPRESIÓN DE COLORES DE FONDO (El Azul oscuro) */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
-        #printable-receipt, #printable-receipt * {
-            visibility: visible;
+
+        /* 2. Escondemos la app de fondo */
+        ::ng-deep body * {
+            visibility: hidden !important;
         }
-        #printable-receipt {
-            position: absolute;
-            left: 0;
-            top: 0;
-            margin: 0;
-            padding: 10mm;
-            width: 100%;
+        
+        /* 3. Mostramos solo el recibo */
+        ::ng-deep #printable-receipt, ::ng-deep #printable-receipt * {
+            visibility: visible !important;
+        }
+        
+        /* 4. Liberamos el Body para que permita Múltiples Páginas (1 de 2, etc.) */
+        ::ng-deep html, ::ng-deep body {
+            height: auto !important;
+            overflow: visible !important;
+            background-color: white !important;
+        }
+
+        /* 5. Posicionamos el recibo desde la esquina superior, dejando que crezca hacia abajo */
+        ::ng-deep #printable-receipt {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: auto !important; /* Deja que el contenido empuje la página 2 */
+            margin: 0 !important;
+            padding: 10mm !important;
+        }
+
+        /* 6. Matamos las restricciones de Angular Material que cortan las tablas largas */
+        ::ng-deep .cdk-overlay-container,
+        ::ng-deep .cdk-global-overlay-wrapper,
+        ::ng-deep .cdk-overlay-pane,
+        ::ng-deep .mat-mdc-dialog-container, 
+        ::ng-deep .mdc-dialog__surface,
+        ::ng-deep .mat-mdc-dialog-content {
+            position: static !important;
+            overflow: visible !important;
+            height: auto !important;
+            max-height: none !important;
+            transform: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
         }
     }
   `]

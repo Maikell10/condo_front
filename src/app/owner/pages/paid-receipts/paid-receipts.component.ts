@@ -106,7 +106,10 @@ export class PaidReceiptsComponent implements OnInit {
                     totalGastoComun: finalTotalCommon,
                     totalGastoIndividual: finalBill,
                     totalBill: finalBill,
-                    accessCode: raw.access_code || raw.accessCode || res.access_code || 'PENDIENTE'
+                    accessCode: raw.access_code || raw.accessCode || res.access_code || 'PENDIENTE',
+
+                    // 🔥 ESTA ES LA LÍNEA MÁGICA QUE FALTABA AQUÍ:
+                    status: raw.status || row.status || 'PENDING'
                 };
 
                 this.dialog.open(ReceiptPreviewDialogComponent, {
