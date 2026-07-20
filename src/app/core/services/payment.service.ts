@@ -26,4 +26,8 @@ export class PaymentService {
         // MySQL/Node suelen devolver un objeto con un mensaje, no un array
         return this.http.patch<any>(`${this.API_URL}/${id}/approve`, {});
     }
+
+    getLatestExchangeRate() {
+        return this.http.get<any>(`${API_URL_BASE}/api/tasa/get_tasa/usd`);
+    }
 }

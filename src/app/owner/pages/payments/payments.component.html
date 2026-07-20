@@ -1,7 +1,27 @@
 <div class="space-y-6 max-w-5xl mx-auto pb-10">
-    <div>
-        <h1 class="text-3xl font-bold tracking-tight text-gray-900">Estado de Cuenta y Pagos</h1>
-        <p class="text-gray-500 mt-1">Consulta tus recibos, reporta transferencias y revisa tu historial.</p>
+
+    <!-- 🔥 CINTILLO INFORMATIVO DE TASA DE CAMBIO BCV -->
+    <div
+        class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-indigo-900 to-slate-800 text-white p-5 rounded-xl shadow-md border border-indigo-800">
+        <div class="flex items-center gap-4">
+            <div class="p-3 bg-white/10 rounded-lg backdrop-blur-sm border border-white/5">
+                <mat-icon class="text-amber-400 scale-125">account_balance</mat-icon>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black tracking-tight m-0 text-white">Estado de Cuenta y Pagos</h1>
+                <p class="text-indigo-200 text-sm m-0 mt-1">Consulta tus recibos, reporta transferencias y revisa tu
+                    historial.</p>
+            </div>
+        </div>
+        <div class="bg-black/20 border border-white/10 px-5 py-3 rounded-xl text-right backdrop-blur-sm">
+            <span class="text-[10px] text-indigo-300 uppercase tracking-widest font-bold block mb-1">Tasa Oficial
+                BCV</span>
+            <span class="font-mono text-xl font-black text-amber-400 drop-shadow-sm">1 USD = Bs. {{ tasaDelDia() |
+                number:'1.2-4' }}</span>
+            <span class="text-[10px] text-indigo-200 block mt-1">
+                Fecha Valor: {{ fechaTasa() | date:'dd/MM/yyyy':'UTC' }}
+            </span>
+        </div>
     </div>
 
     <mat-tab-group animationDuration="200ms" color="primary" class="bg-transparent">
@@ -9,6 +29,7 @@
         <mat-tab label="Pendientes y Reporte de Pago">
             <div class="pt-6 space-y-6">
 
+                <!-- TABLA DE RECIBOS PENDIENTES -->
                 <mat-card class="shadow-md border border-gray-100 rounded-xl bg-white overflow-hidden">
                     <div class="p-5 border-b bg-gray-50/80">
                         <h2 class="text-lg font-semibold text-gray-800 m-0">Recibos Pendientes</h2>
@@ -17,6 +38,7 @@
                     <div class="overflow-x-auto">
                         <table mat-table [dataSource]="receipts()" class="w-full min-w-[600px]">
 
+                            <!-- Columna Selección -->
                             <ng-container matColumnDef="select">
                                 <th mat-header-cell *matHeaderCellDef class="w-16">Pagar</th>
                                 <td mat-cell *matCellDef="let row">
@@ -27,17 +49,20 @@
                                 </td>
                             </ng-container>
 
+                            <!-- Columna Fecha -->
                             <ng-container matColumnDef="fecha">
                                 <th mat-header-cell *matHeaderCellDef> Fecha </th>
                                 <td mat-cell *matCellDef="let element" class="font-medium text-gray-700">
                                     {{element.fecha}}</td>
                             </ng-container>
 
+                            <!-- Columna Monto -->
                             <ng-container matColumnDef="monto">
                                 <th mat-header-cell *matHeaderCellDef> Monto </th>
                                 <td mat-cell *matCellDef="let element"> ${{ element.monto | number:'1.2-2' }} </td>
                             </ng-container>
 
+                            <!-- Columna Pagado -->
                             <ng-container matColumnDef="pagado">
                                 <th mat-header-cell *matHeaderCellDef> Pagado </th>
                                 <td mat-cell *matCellDef="let element" class="text-green-600 font-medium">
@@ -45,6 +70,7 @@
                                 </td>
                             </ng-container>
 
+                            <!-- Columna Deuda -->
                             <ng-container matColumnDef="deuda">
                                 <th mat-header-cell *matHeaderCellDef> Deuda </th>
                                 <td mat-cell *matCellDef="let element" class="text-red-500 font-semibold">
@@ -52,43 +78,53 @@
                                 </td>
                             </ng-container>
 
+                            <!-- Columna Estado / Saldo -->
                             <ng-container matColumnDef="saldo">
-                                <th mat-header-cell *matHeaderCellDef> Saldo Total </th>
-                                <td mat-cell *matCellDef="let element" class="font-bold text-gray-900">
-                                    ${{ (element.monto - element.paid) | number:'1.2-2' }}
+                                <th mat-header-cell *matHeaderCellDef> Estado </th>
+                                <td mat-cell *matCellDef="let element">
+                                    <span
+                                        [ngClass]="element.status === 'PARTIAL' ? 'bg-amber-100 text-amber-700 border-amber-200' : 'bg-red-100 text-red-700 border-red-200'"
+                                        class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border">
+                                        {{ element.status === 'PARTIAL' ? 'Abono Parcial' : 'No Pagado' }}
+                                    </span>
                                 </td>
                             </ng-container>
 
-
-
                             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                                class="hover:bg-indigo-50/50 transition-colors cursor-pointer"
+                            <tr mat-row *matRowDef="let row; columns: displayedColumns;" [ngClass]="{
+                                    'bg-indigo-50/40': selection.isSelected(row),
+                                    'border-l-4 border-l-amber-500': row.status === 'PARTIAL'
+                                }" class="hover:bg-indigo-50/50 transition-colors cursor-pointer"
                                 (click)="toggleSelection(row)"></tr>
                         </table>
                     </div>
 
                     <div class="p-5 border-t bg-gray-50 flex flex-col sm:flex-row justify-between items-center gap-4">
                         <div
-                            class="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-red-100 shadow-sm">
+                            class="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border border-red-100 shadow-sm w-full sm:w-auto">
                             <mat-icon class="text-red-500 text-xl">warning_amber</mat-icon>
                             <div class="flex flex-col">
                                 <span class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Deuda Total
-                                    Acumulada</span>
+                                    USD</span>
                                 <span class="font-bold text-xl text-red-600">${{ totalDebt() | number:'1.2-2' }}</span>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-4">
-                            <span class="text-gray-500 text-sm uppercase tracking-wide font-medium">A Pagar:</span>
-                            <div class="bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100">
-                                <span class="font-bold text-2xl text-indigo-700">${{ totalSelected() | number:'1.2-2'
-                                    }}</span>
+                        <!-- 🔥 EQUIVALENCIA EN BS DEL TOTAL SELECCIONADO -->
+                        <div class="flex flex-wrap items-center gap-4 w-full sm:w-auto justify-end">
+                            <div class="text-right">
+                                <span class="text-gray-500 text-[10px] uppercase tracking-wide font-bold block mb-1">A
+                                    Pagar USD:</span>
+                                <div class="bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                                    <span class="font-bold text-xl text-indigo-700">${{ totalSelected() | number:'1.2-2'
+                                        }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </mat-card>
 
+                <!-- HISTORIAL RECIENTE -->
                 <div *ngIf="recentPayments().length > 0">
                     <div class="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
                         <div class="flex items-center mb-3">
@@ -116,10 +152,13 @@
                     </div>
                 </div>
 
+                <!-- FORMULARIO DE REPORTE -->
                 <mat-card class="shadow-md border border-gray-100 rounded-xl bg-white" id="formulario-pago">
-                    <div class="p-5 border-b bg-indigo-50/50 flex items-center gap-2 rounded-t-xl">
-                        <mat-icon class="text-indigo-600">account_balance_wallet</mat-icon>
-                        <h2 class="text-lg font-semibold text-indigo-900 m-0">Reportar Transferencia / Depósito</h2>
+                    <div class="p-5 border-b bg-indigo-50/50 flex items-center justify-between gap-2 rounded-t-xl">
+                        <div class="flex items-center gap-2">
+                            <mat-icon class="text-indigo-600">account_balance_wallet</mat-icon>
+                            <h2 class="text-lg font-semibold text-indigo-900 m-0">Reportar Transferencia / Depósito</h2>
+                        </div>
                     </div>
 
                     <mat-card-content class="p-6">
@@ -137,7 +176,6 @@
 
                                     <div *ngIf="selectedBankDetails()"
                                         class="p-4 rounded-xl border-2 border-indigo-100 bg-gradient-to-br from-indigo-50/50 to-white shadow-sm transition-all">
-
                                         <div class="flex items-start gap-3">
                                             <div class="p-2 bg-indigo-600 text-white rounded-lg">
                                                 <mat-icon class="scale-75">account_balance</mat-icon>
@@ -152,10 +190,8 @@
                                                         {{ selectedBankDetails().account_type }}
                                                     </span>
                                                 </div>
-
                                                 <h4 class="text-sm font-black text-gray-900 mt-1 mb-0">{{
                                                     selectedBankDetails().bank_name }}</h4>
-
                                                 <div
                                                     class="flex items-center gap-2 mt-2 bg-white p-2 rounded-lg border border-gray-100">
                                                     <span
@@ -165,7 +201,6 @@
                                                     <mat-icon
                                                         class="text-[14px] w-[14px] h-[14px] text-gray-400">content_copy</mat-icon>
                                                 </div>
-
                                                 <div
                                                     class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-indigo-100/50">
                                                     <div>
@@ -205,12 +240,24 @@
                                     <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                                     <mat-datepicker #picker></mat-datepicker>
                                 </mat-form-field>
-                                <mat-form-field appearance="outline">
-                                    <mat-label>Monto a reportar</mat-label>
-                                    <span matTextPrefix class="text-gray-500 font-medium ml-1">$&nbsp;</span>
-                                    <input matInput type="number" formControlName="amount" placeholder="0.00"
-                                        class="font-semibold text-indigo-700">
-                                </mat-form-field>
+
+                                <!-- 🔥 INPUT DE MONTO CON RECOMENDACIÓN EN BOLÍVARES DEBAJO -->
+                                <div class="flex flex-col">
+                                    <mat-form-field appearance="outline" class="w-full">
+                                        <mat-label>Monto a reportar (USD)</mat-label>
+                                        <span matTextPrefix class="text-gray-500 font-medium ml-1">$&nbsp;</span>
+                                        <input matInput type="number" formControlName="amount" placeholder="0.00"
+                                            class="font-semibold text-indigo-700">
+                                    </mat-form-field>
+                                    <!-- Ayudante visual reactivo -->
+                                    <div
+                                        class="text-xs text-gray-600 bg-amber-50 border border-amber-100 p-2 rounded-md -mt-4 shadow-sm flex justify-between items-center z-10 relative">
+                                        <span>Equivale en Bs:</span>
+                                        <strong class="font-mono text-amber-700 text-sm">Bs. {{ montoTransferirVES() |
+                                            number:'1.2-2' }}</strong>
+                                    </div>
+                                </div>
+
                                 <mat-form-field appearance="outline">
                                     <mat-label>Nº de Referencia</mat-label>
                                     <input matInput formControlName="referenceNumber" placeholder="Ej. 123456">
@@ -235,6 +282,8 @@
             </div>
         </mat-tab>
 
+
+        <!-- MOVIMIENTOS DE CUENTA -->
         <mat-tab label="Movimientos de Cuenta">
             <div class="pt-6">
                 <mat-card class="shadow-sm border rounded-xl overflow-hidden bg-white">
@@ -243,15 +292,19 @@
                             <th mat-header-cell *matHeaderCellDef> Fecha </th>
                             <td mat-cell *matCellDef="let m"> {{ m.fecha | date:'dd/MM/yyyy' }} </td>
                         </ng-container>
+
                         <ng-container matColumnDef="detalle">
                             <th mat-header-cell *matHeaderCellDef> Detalle </th>
                             <td mat-cell *matCellDef="let m"> {{ m.detalle }} </td>
                         </ng-container>
+
                         <ng-container matColumnDef="monto">
                             <th mat-header-cell *matHeaderCellDef> Monto </th>
-                            <td mat-cell *matCellDef="let m" class="text-green-600 font-bold"> +${{ m.monto |
-                                number:'1.2-2' }} </td>
+                            <td mat-cell *matCellDef="let m" class="text-green-600 font-bold">
+                                +${{ m.monto | number:'1.2-2' }}
+                            </td>
                         </ng-container>
+
                         <ng-container matColumnDef="status">
                             <th mat-header-cell *matHeaderCellDef> Estado </th>
                             <td mat-cell *matCellDef="let m">
@@ -261,6 +314,7 @@
                                 </div>
                             </td>
                         </ng-container>
+
                         <tr mat-header-row *matHeaderRowDef="displayedColumnsMovements"></tr>
                         <tr mat-row *matRowDef="let row; columns: displayedColumnsMovements;"></tr>
                     </table>
