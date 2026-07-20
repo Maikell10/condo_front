@@ -1,15 +1,19 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common'; // Añadido DecimalPipe
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSelectModule } from '@angular/material/select'; // <-- Importante para el selector
-import { MatTooltipModule } from '@angular/material/tooltip'; // <-- Para el tooltip de copiar
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
+// 🔥 Importamos los módulos para el buscador
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+
 import { ApartmentService } from '../../../core/services/apartment.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { DashboardService } from '../../../core/services/dashboard.service'; // <-- Servicio de edificios
+import { DashboardService } from '../../../core/services/dashboard.service';
 import { MatDialog } from '@angular/material/dialog';
 import { LinkOwnerModalComponent } from '../../modal/link-owner-modal.component';
 import { AddApartmentModalComponent } from '../../modal/add-apartment-modal.component';
@@ -27,6 +31,8 @@ import * as XLSX from 'xlsx';
     MatButtonModule,
     MatSelectModule,
     MatTooltipModule,
+    MatFormFieldModule, // <-- Añadido
+    MatInputModule,     // <-- Añadido
     DecimalPipe
   ],
   templateUrl: './apartments.component.html'
@@ -44,10 +50,26 @@ export class ApartmentsComponent implements OnInit {
 
   apartments = signal<any[]>([]);
 
-  // 🔥 Añadimos 'accessCode' para ver el código de acceso en la tabla
+  // 🔥 1. Señal para almacenar el texto de búsqueda
+  searchQuery = signal('');
+
+  // 🔥 2. Computed que filtra los apartamentos en tiempo real
+  filteredApartments = computed(() => {
+    const data = this.apartments();
+    const query = this.searchQuery();
+
+    if (!query) return data;
+
+    return data.filter(a =>
+      a.number?.toString().toLowerCase().includes(query) ||
+      a.ownerName?.toLowerCase().includes(query) ||
+      a.access_code?.toLowerCase().includes(query)
+    );
+  });
+
   displayedColumns = ['number', 'accessCode', 'owner', 'alicuota', 'status', 'balance', 'actions'];
 
-  // KPIs dinámicos
+  // KPIs dinámicos (calculados sobre el total real, no sobre el filtro)
   total = computed(() => this.apartments().length);
   delinquent = computed(() => this.apartments().filter(a => a.balance > 0).length);
   upToDate = computed(() => this.apartments().filter(a => a.balance <= 0).length);
@@ -60,7 +82,6 @@ export class ApartmentsComponent implements OnInit {
     const user = this.authService.userSignal();
 
     if (user?.complexId) {
-      // Si es un conjunto, cargamos la lista de edificios
       this.dashboardService.getBuildingsByComplex().subscribe({
         next: (res: any) => {
           this.buildingsList.set(res.data);
@@ -71,13 +92,11 @@ export class ApartmentsComponent implements OnInit {
         }
       });
     } else if (user?.buildingId) {
-      // Si es individual, cargamos directo
       this.selectedBuildingId.set(Number(user.buildingId));
       this.loadApartments(Number(user.buildingId));
     }
   }
 
-  // Carga apartamentos dependiendo del edificio seleccionado
   loadApartments(buildingId: number) {
     this.apartmentService.getApartments(buildingId).subscribe({
       next: (res) => this.apartments.set(res.data),
@@ -85,11 +104,17 @@ export class ApartmentsComponent implements OnInit {
     });
   }
 
-  // Se ejecuta al cambiar el selector
   onBuildingChange(buildingId: number) {
     this.selectedBuildingId.set(buildingId);
-    this.apartments.set([]); // Limpiamos visualmente mientras carga
+    this.apartments.set([]);
+    this.searchQuery.set(''); // Reseteamos la búsqueda al cambiar de edificio
     this.loadApartments(buildingId);
+  }
+
+  // 🔥 3. Método disparado por el keyup del input
+  applySearch(event: Event) {
+    const filterValue = (event.target as HTMLInputElement).value;
+    this.searchQuery.set(filterValue.trim().toLowerCase());
   }
 
   editAlicuota(apt: any) {
@@ -128,9 +153,7 @@ export class ApartmentsComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result && this.selectedBuildingId()) {
-        // 🔥 Usamos el Edificio SELECCIONADO actualmente, no el del token
         const payload = { ...result, buildingId: this.selectedBuildingId() };
-
         this.apartmentService.createApartment(payload).subscribe({
           next: () => {
             alert('Apartamento creado exitosamente');
@@ -142,70 +165,47 @@ export class ApartmentsComponent implements OnInit {
     });
   }
 
-  // Método para copiar el código rápido
   copyAccessCode(code: string) {
     if (code) {
       navigator.clipboard.writeText(code);
-      // Aquí podrías usar un SnackBar de Angular Material si lo prefieres
       console.log('Código copiado:', code);
     }
   }
 
-  // Función para obtener el nombre del edificio del apartamento
   getBuildingName(apt: any): string {
-    // Si tu backend ya envía el nombre directamente (como hicimos en la consulta anterior), lo usamos:
     if (apt.buildingName) return apt.buildingName;
-
-    // Si la vista está en 'ALL', usamos el building_id del apartamento. 
-    // Si no, usamos el edificio seleccionado en el dropdown.
     const targetId = this.selectedBuildingId();
-
-    // Buscamos el edificio en la lista que ya cargaste
     const building = this.buildingsList().find(b => b.id === targetId);
-
-    // Retornamos el nombre, o un string vacío si no lo encuentra
     return building ? building.name : '';
   }
 
   exportToExcel() {
-    const data = this.apartments();
+    // 🔥 Ahora exportamos la lista filtrada si hay un filtro activo, si no, todos
+    const data = this.filteredApartments();
 
     if (!data || data.length === 0) {
       alert('No hay datos de apartamentos para exportar.');
       return;
     }
 
-    // 1. Mapear y estructurar los datos exactamente como queremos las columnas
     const excelData = data.map(a => ({
       'Edificio': this.getBuildingName(a) || 'N/A',
       'Apartamento': a.number || '',
       'Cod. Acceso': a.access_code || 'PENDIENTE',
       'Propietario': a.ownerName || 'Sin asignar',
-      // Convertimos a Number para que Excel lo reconozca como valor numérico y no texto
       'Alicuota (%)': Number((a.alicuota * 100).toFixed(4)),
       'Estado': a.balance > 0 ? 'Moroso' : 'Al día',
       'Deuda ($)': Number(a.balance) > 0 ? Number(a.balance) : 0
     }));
 
-    // 2. Convertir el JSON a una Hoja de Excel (Worksheet)
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(excelData);
-
-    // 3. Magia extra: Ajustar el ancho de las columnas para que se vea bonito
     ws['!cols'] = [
-      { wch: 15 }, // Ancho para Edificio
-      { wch: 15 }, // Ancho para Apartamento
-      { wch: 15 }, // Ancho para Cod. Acceso
-      { wch: 35 }, // Ancho amplio para Propietario
-      { wch: 15 }, // Ancho para Alicuota
-      { wch: 15 }, // Ancho para Estado
-      { wch: 15 }  // Ancho para Deuda
+      { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 35 },
+      { wch: 15 }, { wch: 15 }, { wch: 15 }
     ];
 
-    // 4. Crear el Libro de Excel (Workbook) y adjuntar la hoja
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Apartamentos');
-
-    // 5. Descargar el archivo .xlsx nativo
     XLSX.writeFile(wb, `Listado_Apartamentos_${new Date().getTime()}.xlsx`);
   }
 }

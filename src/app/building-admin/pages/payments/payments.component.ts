@@ -8,11 +8,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-// 🔥 Agregamos los módulos necesarios para los filtros
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-payments-admin',
@@ -25,36 +25,33 @@ import { MatDividerModule } from '@angular/material/divider';
     MatButtonModule,
     MatTooltipModule,
     MatChipsModule,
-    MatFormFieldModule, // <-- Módulos de filtros
+    MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatDividerModule
+    MatDividerModule,
+    MatSnackBarModule
   ],
   templateUrl: './payments.component.html',
 })
 export class PaymentsComponent implements OnInit {
   private paymentService = inject(PaymentService);
+  private snackBar = inject(MatSnackBar);
 
-  // La data original (Intacta)
   payments = signal<any[]>([]);
   displayedColumns = ['apartment', 'owner', 'amount', 'date', 'status', 'method', 'actions'];
 
-  // 🔥 1. SEÑALES PARA LOS FILTROS
   searchQuery = signal('');
   selectedStatus = signal('ALL');
 
-  // 🔥 2. COMPUTED PARA LA TABLA (Este es el que alimenta el HTML)
   filteredPayments = computed(() => {
     let data = this.payments();
     const status = this.selectedStatus();
     const query = this.searchQuery();
 
-    // Filtro por Estado (Dropdown)
     if (status !== 'ALL') {
       data = data.filter(p => p.status === status);
     }
 
-    // Filtro por Texto (Buscador)
     if (query) {
       data = data.filter(p =>
         p.apartment?.toString().toLowerCase().includes(query) ||
@@ -67,7 +64,6 @@ export class PaymentsComponent implements OnInit {
     return data;
   });
 
-  // KPIs (Se calculan sobre 'payments' original para no perder totales al filtrar)
   paidCount = computed(() => this.payments().filter(p => p.status === 'APPROVED').length);
   pendingCount = computed(() => this.payments().filter(p => p.status === 'PENDING_APPROVAL').length);
 
@@ -76,7 +72,7 @@ export class PaymentsComponent implements OnInit {
     const currentYear = new Date().getFullYear();
 
     return this.payments().reduce((acc, p) => {
-      const paymentDate = new Date(p.date);
+      const paymentDate = new Date(p.date || p.payment_date); // Tolerancia a formatos
       const isApproved = p.status === 'APPROVED';
       const isThisMonth = paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
 
@@ -94,13 +90,36 @@ export class PaymentsComponent implements OnInit {
   }
 
   approve(id: number) {
-    this.paymentService.approvePayment(id).subscribe(() => {
-      alert('Pago verificado con éxito');
-      this.loadPayments();
-    });
+    // Cuadro de confirmación antes de disparar el backend
+    const confirmacion = window.confirm(
+      '¿Estás seguro de verificar y aprobar este pago?\n\nAl hacerlo, el saldo del propietario se actualizará y esta acción no se puede deshacer.'
+    );
+
+    if (confirmacion) {
+      this.paymentService.approvePayment(id).subscribe({
+        next: () => {
+          // Toast elegante de éxito
+          this.snackBar.open('✅ Pago verificado y procesado con éxito', 'Cerrar', {
+            duration: 4000, // Desaparece en 4 segundos
+            horizontalPosition: 'end', // Aparece a la derecha
+            verticalPosition: 'bottom', // Aparece abajo
+          });
+
+          this.loadPayments(); // Recargamos la tabla
+        },
+        error: (err) => {
+          // Toast elegante de error
+          this.snackBar.open('❌ Hubo un error al verificar el pago', 'Cerrar', {
+            duration: 4000,
+            horizontalPosition: 'end',
+            verticalPosition: 'bottom',
+          });
+          console.error('Error aprobando pago:', err);
+        }
+      });
+    }
   }
 
-  // 🔥 3. FUNCIONES DE EVENTOS DISPARADAS DESDE EL HTML
   applySearch(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.searchQuery.set(filterValue.trim().toLowerCase());
@@ -108,5 +127,29 @@ export class PaymentsComponent implements OnInit {
 
   applyStatusFilter(status: string) {
     this.selectedStatus.set(status);
+  }
+
+  // 🔥 NUEVAS FUNCIONES AUXILIARES PARA EL RENDERIZADO BIMONETARIO Y VISUAL
+
+  // Determina si debemos mostrar los datos en Bolívares (Tasa distinta a 1)
+  hasExchange(p: any): boolean {
+    const rate = Number(p.exchange_rate || p.exchangeRate);
+    return !isNaN(rate) && rate > 1; // Si es mayor a 1, es una tasa real
+  }
+
+  getRate(p: any): number {
+    return Number(p.exchange_rate || p.exchangeRate);
+  }
+
+  getLocalAmount(p: any): number {
+    return Number(p.amount_local || p.amountLocal);
+  }
+
+  // Limpia el nombre del método de pago para que no se vea feo el "same_bank"
+  formatMethod(method: string): string {
+    if (!method) return 'Transferencia';
+    if (method.includes('same_bank')) return 'Mismo Banco';
+    if (method.includes('other_bank')) return 'Otro Banco';
+    return method;
   }
 }

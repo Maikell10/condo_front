@@ -1,5 +1,6 @@
 <div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
 
+    <!-- CABECERA -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
             <ng-container *ngIf="isComplex(); else singleBuildingTpl">
@@ -37,6 +38,7 @@
         </div>
     </div>
 
+    <!-- KPIs -->
     <div class="grid gap-6 md:grid-cols-3">
         <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
             <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><mat-icon>domain</mat-icon></div>
@@ -63,13 +65,23 @@
         </mat-card>
     </div>
 
+    <!-- 🔥 BARRA DE BÚSQUEDA -->
+    <div class="flex items-center gap-4 mt-2">
+        <mat-form-field appearance="outline" class="w-full sm:w-1/2 md:w-1/3 bg-white rounded-xl">
+            <mat-label>Buscar apartamento o propietario</mat-label>
+            <mat-icon matPrefix class="text-gray-400 ml-1 mr-2">search</mat-icon>
+            <input matInput (keyup)="applySearch($event)" placeholder="Ej. Apto 101, Juan Perez, o Cód. Acceso...">
+        </mat-form-field>
+    </div>
+
     <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white">
         <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
             <h3 class="font-bold text-gray-700 m-0">Listado de Unidades</h3>
         </div>
 
         <div class="overflow-x-auto">
-            <table mat-table [dataSource]="apartments()" class="w-full">
+            <!-- 🔥 ACTUALIZADO: [dataSource] ahora apunta a filteredApartments() -->
+            <table mat-table [dataSource]="filteredApartments()" class="w-full">
 
                 <ng-container matColumnDef="number">
                     <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
@@ -161,10 +173,11 @@
                     class="hover:bg-gray-50/50 transition-colors"></tr>
             </table>
 
-            <div *ngIf="apartments().length === 0"
+            <!-- 🔥 ACTUALIZADO: Mensaje de "No hay resultados" basado en el filtro -->
+            <div *ngIf="filteredApartments().length === 0"
                 class="py-20 flex flex-col items-center justify-center text-gray-400">
-                <mat-icon class="text-6xl mb-4 opacity-10">apartment</mat-icon>
-                <p class="text-sm font-medium italic">No se encontraron apartamentos registrados.</p>
+                <mat-icon class="text-6xl mb-4 opacity-30">search_off</mat-icon>
+                <p class="text-sm font-medium italic">No se encontraron apartamentos con esa búsqueda.</p>
             </div>
         </div>
     </mat-card>

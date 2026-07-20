@@ -1,59 +1,59 @@
 <div class="space-y-6 max-w-6xl mx-auto pb-10">
-    <div class="flex justify-between items-center">
+    <div
+        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">Validación de Pagos</h1>
-            <p class="text-gray-500">Gestión de recaudación</p>
+            <h1 class="text-3xl font-black text-gray-900 m-0">Validación de Pagos</h1>
+            <p class="text-gray-500 font-medium mt-1 m-0">Gestión de recaudación y auditoría de transferencias</p>
+        </div>
+        <div class="bg-indigo-50 px-4 py-2 rounded-lg border border-indigo-100">
+            <span class="text-xs font-bold text-indigo-400 uppercase tracking-widest block">Recaudación del Mes</span>
+            <span class="text-2xl font-black text-indigo-700">${{ totalCollected() | number:'1.2-2' }}</span>
         </div>
     </div>
 
-    <!-- KPIs SUPERIORES -->
-    <div class="grid gap-6 md:grid-cols-3">
-        <mat-card class="p-6 border-l-4 border-green-500 shadow-sm">
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-green-50 rounded-full text-green-600"><mat-icon>check_circle</mat-icon></div>
+    <!-- KPIs SUPERIORES REDISEÑADOS -->
+    <div class="grid gap-6 md:grid-cols-2">
+        <mat-card class="p-6 border-l-4 border-green-500 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center gap-5">
+                <div class="p-4 bg-green-50 rounded-2xl text-green-600">
+                    <mat-icon class="scale-150">verified_user</mat-icon>
+                </div>
                 <div>
-                    <div class="text-sm text-gray-500 font-medium">Pagos Verificados</div>
-                    <div class="text-2xl font-bold">{{ paidCount() }}</div>
+                    <div class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Pagos Verificados</div>
+                    <div class="text-3xl font-black text-gray-800">{{ paidCount() }} <span
+                            class="text-sm font-medium text-gray-400 normal-case">aprobados</span></div>
                 </div>
             </div>
         </mat-card>
 
-        <mat-card class="p-6 border-l-4 border-amber-500 shadow-sm">
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-amber-50 rounded-full text-amber-600"><mat-icon>hourglass_top</mat-icon></div>
-                <div>
-                    <div class="text-sm text-gray-500 font-medium">Pendientes de Revisar</div>
-                    <div class="text-2xl font-bold text-amber-600">{{ pendingCount() }}</div>
+        <mat-card
+            class="p-6 border-l-4 border-amber-500 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-r from-white to-amber-50/30">
+            <div class="flex items-center gap-5">
+                <div class="p-4 bg-amber-100 rounded-2xl text-amber-600 shadow-inner">
+                    <mat-icon class="scale-150 animate-pulse">pending_actions</mat-icon>
                 </div>
-            </div>
-        </mat-card>
-
-        <mat-card class="p-6 border-l-4 border-indigo-500 shadow-sm">
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-indigo-50 rounded-full text-indigo-600"><mat-icon>payments</mat-icon></div>
                 <div>
-                    <div class="text-sm text-gray-500 font-medium">Recaudación Total</div>
-                    <div class="text-2xl font-bold text-indigo-700">${{ totalCollected() | number:'1.2-2' }}</div>
+                    <div class="text-sm text-gray-500 font-bold uppercase tracking-wider mb-1">Pendientes de Revisar
+                    </div>
+                    <div class="text-3xl font-black text-amber-600">{{ pendingCount() }} <span
+                            class="text-sm font-medium text-gray-400 normal-case">en cola</span></div>
                 </div>
             </div>
         </mat-card>
     </div>
 
-    <!-- 🔥 NUEVA SECCIÓN DE FILTROS -->
-    <div class="flex flex-col sm:flex-row gap-4 mt-6 mb-2 items-center justify-between">
-
-        <!-- Input de Búsqueda de Texto -->
-        <mat-form-field appearance="outline" class="w-full sm:w-1/2 md:w-1/3 bg-white rounded-xl">
-            <mat-label>Buscar pago</mat-label>
+    <!-- SECCIÓN DE FILTROS -->
+    <div
+        class="flex flex-col sm:flex-row gap-4 mt-6 mb-2 items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+        <mat-form-field appearance="outline" class="w-full sm:w-1/2 bg-white rounded-xl">
+            <mat-label>Buscar pago rápido</mat-label>
             <mat-icon matPrefix class="text-gray-400 ml-1 mr-2">search</mat-icon>
-            <input matInput (keyup)="applySearch($event)" placeholder="Apto, Propietario, o Referencia...">
+            <input matInput (keyup)="applySearch($event)" placeholder="Apto, Propietario, o N° de Referencia...">
         </mat-form-field>
 
-        <!-- Dropdown de Estado -->
         <mat-form-field appearance="outline" class="w-full sm:w-64 bg-white rounded-xl">
             <mat-label>Filtrar por Estado</mat-label>
             <mat-icon matPrefix class="text-indigo-400 ml-1 mr-2">filter_list</mat-icon>
-            <!-- Asegúrate de tener una variable selectedStatus en tu TS inicializada en 'ALL' -->
             <mat-select (selectionChange)="applyStatusFilter($event.value)" value="ALL">
                 <mat-option value="ALL" class="font-bold text-indigo-600">Todos los pagos</mat-option>
                 <mat-divider></mat-divider>
@@ -61,69 +61,109 @@
                 <mat-option value="APPROVED" class="text-green-700 font-medium">Verificados</mat-option>
             </mat-select>
         </mat-form-field>
-
     </div>
 
     <!-- TABLA DE PAGOS -->
-    <mat-card class="rounded-xl shadow-md border border-gray-100 overflow-hidden">
+    <mat-card class="rounded-2xl shadow-md border border-gray-100 overflow-hidden">
         <table mat-table [dataSource]="filteredPayments()" class="w-full">
 
             <ng-container matColumnDef="apartment">
-                <th mat-header-cell *matHeaderCellDef>Apto</th>
-                <td mat-cell *matCellDef="let p" class="font-bold text-gray-700">{{p.buildingName}}-{{ p.apartment }}
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50">Apto</th>
+                <td mat-cell *matCellDef="let p" class="font-black text-gray-800">
+                    <div class="flex items-center gap-2 py-3">
+                        <div
+                            class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                            {{p.buildingName}}-{{ p.apartment }}
+                        </div>
+                    </div>
                 </td>
             </ng-container>
 
             <ng-container matColumnDef="owner">
-                <th mat-header-cell *matHeaderCellDef>Propietario</th>
-                <td mat-cell *matCellDef="let p">{{ p.ownerName }}</td>
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50">Propietario</th>
+                <td mat-cell *matCellDef="let p" class="font-medium text-gray-600">{{ p.ownerName }}</td>
             </ng-container>
 
+            <!-- 🔥 COLUMNA BIMONETARIA ENRIQUECIDA -->
             <ng-container matColumnDef="amount">
-                <th mat-header-cell *matHeaderCellDef>Monto</th>
-                <td mat-cell *matCellDef="let p" class="font-semibold text-indigo-600">${{ p.amount }}</td>
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50">Monto Reportado</th>
+                <td mat-cell *matCellDef="let p">
+                    <div class="flex flex-col py-2 justify-center">
+                        <span class="font-black text-indigo-700 text-base">${{ p.amount | number:'1.2-2' }}</span>
+
+                        <!-- Solo se muestra si hubo cálculo de Tasa BCV (Mayor a 1) -->
+                        <ng-container *ngIf="hasExchange(p)">
+                            <div class="flex flex-col mt-0.5">
+                                <span
+                                    class="text-[13px] font-mono font-bold text-slate-500 bg-slate-100 rounded px-1.5 py-0.5 inline-block w-max">
+                                    Bs. {{ getLocalAmount(p) | number:'1.2-2' }}
+                                </span>
+                                <span class="text-[10px] text-gray-400 font-medium mt-0.5">
+                                    Tasa: {{ getRate(p) | number:'1.2-4' }}
+                                </span>
+                            </div>
+                        </ng-container>
+                    </div>
+                </td>
             </ng-container>
 
             <ng-container matColumnDef="date">
-                <th mat-header-cell *matHeaderCellDef>Fecha Reporte</th>
-                <td mat-cell *matCellDef="let p" class="text-gray-500">{{ p.date }}</td>
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50">Fecha</th>
+                <td mat-cell *matCellDef="let p" class="text-xs font-medium text-gray-500">{{ p.date | date:'dd/MM/yyyy'
+                    }}</td>
             </ng-container>
 
             <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Estado</th>
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50">Estado</th>
                 <td mat-cell *matCellDef="let p">
                     <span
-                        [ngClass]="p.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'"
-                        class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                        [ngClass]="p.status === 'APPROVED' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-amber-100 text-amber-700 border-amber-200'"
+                        class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm flex items-center w-max gap-1">
+                        <mat-icon class="scale-50 w-4 h-4">{{ p.status === 'APPROVED' ? 'done_all' : 'hourglass_empty'
+                            }}</mat-icon>
                         {{ p.status === 'APPROVED' ? 'Verificado' : 'Por Revisar' }}
                     </span>
                 </td>
             </ng-container>
 
+            <!-- 🔥 COLUMNA DE REFERENCIA MEJORADA -->
             <ng-container matColumnDef="method">
-                <th mat-header-cell *matHeaderCellDef>Referencia</th>
-                <td mat-cell *matCellDef="let p" class="text-xs font-mono text-gray-400">{{ p.reference }}</td>
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50">Detalle Bancario</th>
+                <td mat-cell *matCellDef="let p">
+                    <div class="flex flex-col py-2">
+                        <span class="text-sm font-mono font-black text-gray-800">{{ p.reference }}</span>
+                    </div>
+                </td>
             </ng-container>
 
             <ng-container matColumnDef="actions">
-                <th mat-header-cell *matHeaderCellDef class="text-right">Acción</th>
+                <th mat-header-cell *matHeaderCellDef class="text-right bg-gray-50">Acción</th>
                 <td mat-cell *matCellDef="let p" class="text-right">
-                    <button *ngIf="p.status === 'PENDING_APPROVAL'" mat-mini-fab color="primary" (click)="approve(p.id)"
-                        matTooltip="Aprobar Pago">
-                        <mat-icon>check</mat-icon>
+                    <button *ngIf="p.status === 'PENDING_APPROVAL'" mat-mini-fab
+                        class="!bg-indigo-600 !text-white shadow-md hover:!bg-indigo-700 transition-colors"
+                        (click)="approve(p.id)" matTooltip="Aprobar Transferencia">
+                        <mat-icon>thumb_up</mat-icon>
                     </button>
-                    <span *ngIf="p.status === 'APPROVED'" class="text-green-500"><mat-icon>verified</mat-icon></span>
+                    <div *ngIf="p.status === 'APPROVED'" class="text-green-500 flex justify-end pr-2"
+                        matTooltip="Pago Procesado">
+                        <mat-icon>verified</mat-icon>
+                    </div>
                 </td>
             </ng-container>
 
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="hover:bg-gray-50"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"
+                class="hover:bg-indigo-50/30 transition-colors border-b border-gray-50"></tr>
         </table>
 
-        <!-- Mensaje cuando la tabla está vacía tras filtrar -->
-        <div *ngIf="payments().length === 0" class="p-10 text-center text-gray-400">
-            <mat-icon class="text-4xl opacity-50 mb-2">search_off</mat-icon>
-            <p>No se encontraron pagos con esos filtros.</p>
+        <!-- MENSAJE VACÍO ESTILIZADO -->
+        <div *ngIf="filteredPayments().length === 0"
+            class="p-16 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
+            <div class="p-4 bg-gray-100 rounded-full mb-3">
+                <mat-icon class="text-5xl opacity-40">search_off</mat-icon>
+            </div>
+            <h3 class="text-lg font-bold text-gray-600 m-0">No hay pagos a la vista</h3>
+            <p class="text-sm">Intenta ajustar los filtros de búsqueda.</p>
         </div>
     </mat-card>
 </div>
