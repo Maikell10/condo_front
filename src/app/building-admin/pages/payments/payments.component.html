@@ -59,6 +59,7 @@
                 <mat-divider></mat-divider>
                 <mat-option value="PENDING_APPROVAL" class="text-amber-700 font-medium">Por Revisar</mat-option>
                 <mat-option value="APPROVED" class="text-green-700 font-medium">Verificados</mat-option>
+                <mat-option value="REJECTED" class="text-red-700 font-medium">Rechazados</mat-option>
             </mat-select>
         </mat-form-field>
     </div>
@@ -116,12 +117,20 @@
             <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef class="bg-gray-50">Estado</th>
                 <td mat-cell *matCellDef="let p">
-                    <span
-                        [ngClass]="p.status === 'APPROVED' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-amber-100 text-amber-700 border-amber-200'"
+                    <span [ngClass]="{
+                            'bg-green-100 text-green-700 border-green-200': p.status === 'APPROVED',
+                            'bg-amber-100 text-amber-700 border-amber-200': p.status === 'PENDING_APPROVAL',
+                            'bg-red-100 text-red-700 border-red-200': p.status === 'REJECTED'
+                        }"
                         class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm flex items-center w-max gap-1">
-                        <mat-icon class="scale-50 w-4 h-4">{{ p.status === 'APPROVED' ? 'done_all' : 'hourglass_empty'
-                            }}</mat-icon>
-                        {{ p.status === 'APPROVED' ? 'Verificado' : 'Por Revisar' }}
+
+                        <mat-icon class="scale-50 w-4 h-4">
+                            {{ p.status === 'APPROVED' ? 'done_all' : (p.status === 'REJECTED' ? 'cancel' :
+                            'hourglass_empty') }}
+                        </mat-icon>
+
+                        {{ p.status === 'APPROVED' ? 'Verificado' : (p.status === 'REJECTED' ? 'Rechazado' : 'Por
+                        Revisar') }}
                     </span>
                 </td>
             </ng-container>
@@ -139,15 +148,33 @@
             <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef class="text-right bg-gray-50">Acción</th>
                 <td mat-cell *matCellDef="let p" class="text-right">
-                    <button *ngIf="p.status === 'PENDING_APPROVAL'" mat-mini-fab
-                        class="!bg-indigo-600 !text-white shadow-md hover:!bg-indigo-700 transition-colors"
-                        (click)="approve(p.id)" matTooltip="Aprobar Transferencia">
-                        <mat-icon>thumb_up</mat-icon>
-                    </button>
-                    <div *ngIf="p.status === 'APPROVED'" class="text-green-500 flex justify-end pr-2"
+
+                    <!-- Botones solo si está pendiente -->
+                    <div class="flex items-center justify-end gap-2 pr-2" *ngIf="p.status === 'PENDING_APPROVAL'">
+                        <button mat-mini-fab
+                            class="!bg-red-500 !text-white shadow-md hover:!bg-red-600 transition-colors"
+                            (click)="reject(p.id)" matTooltip="Rechazar Pago">
+                            <mat-icon>thumb_down</mat-icon>
+                        </button>
+
+                        <button mat-mini-fab
+                            class="!bg-indigo-600 !text-white shadow-md hover:!bg-indigo-700 transition-colors"
+                            (click)="approve(p.id)" matTooltip="Aprobar Transferencia">
+                            <mat-icon>thumb_up</mat-icon>
+                        </button>
+                    </div>
+
+                    <!-- Iconos de solo lectura si ya fue procesado -->
+                    <div *ngIf="p.status === 'APPROVED'" class="text-green-500 flex justify-end pr-4"
                         matTooltip="Pago Procesado">
                         <mat-icon>verified</mat-icon>
                     </div>
+
+                    <div *ngIf="p.status === 'REJECTED'" class="text-red-500 flex justify-end pr-4"
+                        matTooltip="Pago Rechazado">
+                        <mat-icon>block</mat-icon>
+                    </div>
+
                 </td>
             </ng-container>
 

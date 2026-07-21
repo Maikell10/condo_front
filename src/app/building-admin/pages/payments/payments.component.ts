@@ -120,6 +120,33 @@ export class PaymentsComponent implements OnInit {
     }
   }
 
+  reject(id: number) {
+    const confirmacion = window.confirm(
+      '¿Estás seguro de RECHAZAR este pago?\n\nEl propietario verá que su pago fue rechazado y su deuda se mantendrá intacta.'
+    );
+
+    if (confirmacion) {
+      this.paymentService.rejectPayment(id).subscribe({
+        next: () => {
+          this.snackBar.open('🚫 Pago rechazado y devuelto con éxito', 'Cerrar', {
+            duration: 4000,
+            horizontalPosition: 'end',
+            verticalPosition: 'bottom',
+          });
+          this.loadPayments();
+        },
+        error: (err) => {
+          this.snackBar.open('❌ Error al rechazar el pago', 'Cerrar', {
+            duration: 4000,
+            horizontalPosition: 'end',
+            verticalPosition: 'bottom',
+          });
+          console.error('Error rechazando pago:', err);
+        }
+      });
+    }
+  }
+
   applySearch(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.searchQuery.set(filterValue.trim().toLowerCase());
