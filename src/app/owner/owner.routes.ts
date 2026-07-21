@@ -42,6 +42,11 @@ export const OWNER_ROUTES: Routes = [
         path: 'aliquots',
         loadComponent: () =>
             import('./pages/aliquots/aliquots.component').then(m => m.AliquotsComponent)
+    },
+    {
+        path: 'polls',
+        loadComponent: () =>
+            import('./pages/polls-owner/polls-owner.component').then(m => m.PollsOwnerComponent)
     }
 
 ];

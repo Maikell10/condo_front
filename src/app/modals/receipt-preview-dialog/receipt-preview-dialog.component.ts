@@ -26,7 +26,7 @@ import { MatIconModule } from '@angular/material/icon';
             <div class="flex justify-between items-start mb-2">
                 <div class="flex flex-col">
                     <h1 class="text-2xl font-black text-[#0d3b66] m-0 tracking-tighter" style="font-family: Arial, sans-serif;">CONDOMINIO A UN CLIC</h1>
-                    <p class="text-[10px] font-bold text-gray-800 m-0">ADMINISTRADORA DE INMUEBLES</p>
+                    <p class="text-[10px] font-bold text-gray-800 m-0">SOLUCIONES DE SISTEMAS</p>
                 </div>
                 <div class="border rounded-xl border-gray-400 p-2 text-center text-xs min-w-[280px]">
                     <div class="h-14 w-auto flex items-center justify-center">
