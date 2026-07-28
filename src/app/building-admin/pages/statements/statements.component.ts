@@ -237,12 +237,24 @@ export class StatementsComponent implements OnInit {
       ? this.selectedBuildingId()
       : (receipt.building_id || receipt.buildingId);
 
+    // 🔥 Safety check: Find the apartment ID regardless of the backend's naming convention
+    const aptId = receipt.apartmentId || receipt.apartment_id;
+
+    if (!aptId) {
+      console.warn("Missing apartment ID in receipt data:", receipt);
+      // If you absolutely need it, you might have to alert the user or stop the modal,
+      // but typically fixing the backend is required if this is truly missing.
+    }
+
     const dialogData = {
       ...receipt,
+      apartmentId: aptId, // Force the property to exist
       building_id: currentBuildingId,
       buildingId: currentBuildingId,
       complex_id: this.authService.userSignal()?.complexId
     };
+
+    console.log("Dialog Data Prepared:", dialogData);
 
     const dialogRef = this.dialog.open(AdminPaymentModalComponent, {
       width: '500px',
@@ -255,4 +267,29 @@ export class StatementsComponent implements OnInit {
       }
     });
   }
+
+  // openPaymentModal(receipt: any) {
+  //   const currentBuildingId = this.selectedBuildingId() !== 'ALL'
+  //     ? this.selectedBuildingId()
+  //     : (receipt.building_id || receipt.buildingId);
+
+  //   const dialogData = {
+  //     ...receipt,
+  //     building_id: currentBuildingId,
+  //     buildingId: currentBuildingId,
+  //     complex_id: this.authService.userSignal()?.complexId
+  //   };
+  //   console.log(dialogData)
+
+  //   const dialogRef = this.dialog.open(AdminPaymentModalComponent, {
+  //     width: '500px',
+  //     data: dialogData
+  //   });
+
+  //   dialogRef.afterClosed().subscribe(success => {
+  //     if (success) {
+  //       this.loadStatements();
+  //     }
+  //   });
+  // }
 }
