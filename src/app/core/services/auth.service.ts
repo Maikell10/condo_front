@@ -56,6 +56,7 @@ export class AuthService {
     ownerLogin(payload: any): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.API_URL}/login/owner`, { accessCode: payload.accessCode }).pipe(
             tap(response => {
+                console.log(response.user, response.token)
                 // Si la petición es exitosa, guardamos la sesión
                 this.setSession(response.user, response.token);
             })

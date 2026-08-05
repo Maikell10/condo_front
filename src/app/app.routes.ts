@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AuthGuard } from './core/services/auth.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { LandingComponent } from './landing/landing/landing.component';
+import { ConfigComponent } from './core/components/config/config.component';
 
 export const routes: Routes = [
 
@@ -43,6 +44,11 @@ export const routes: Routes = [
                 data: { roles: ['OWNER'] },
                 loadChildren: () =>
                     import('./owner/owner.routes').then(m => m.OWNER_ROUTES)
+            },
+            {
+                path: 'config',
+                loadComponent: () =>
+                    import('./core/components/config/config.component').then(m => m.ConfigComponent)
             }
         ]
     },

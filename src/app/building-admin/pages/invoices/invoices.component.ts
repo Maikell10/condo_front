@@ -7,12 +7,16 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDividerModule } from '@angular/material/divider';
+
 import { BillingService } from '../../../core/services/billing.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
+// 🔥 1. Importamos el ConfigService que creamos hace un momento
+import { ConfigService } from '../../../core/services/config.service';
+
 import { AddExpenseModalComponent } from '../../modal/add-expense-modal/add-expense-modal.component';
 import { ReportViewModalComponent } from '../../modal/report-view-modal/report-view-modal.component';
-import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-invoices',
@@ -27,18 +31,21 @@ export class InvoicesComponent implements OnInit {
   private billingService = inject(BillingService);
   private authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
+  private configService = inject(ConfigService); // 🔥 2. Lo inyectamos
   private dialog = inject(MatDialog);
 
   isComplex = computed(() => !!this.authService.userSignal()?.complexId);
   buildingsList = signal<any[]>([]);
 
-  // 🔥 Ahora inicia en 'ALL'
   selectedBuildingId = signal<number | 'ALL'>('ALL');
   currentTabIndex = signal<number>(0);
 
   invoices = signal<any[]>([]);
 
-  // 🔥 Columnas dinámicas: Muestra el edificio solo si estamos en vista 'ALL'
+  // 🔥 3. Señales para guardar el estado del Fondo de Reserva
+  hasReserveFund = signal<boolean>(false);
+  reserveFundPercentage = signal<number>(0);
+
   displayedColumns = computed(() => {
     const baseCols = ['code', 'provider', 'amount', 'date', 'type', 'actions'];
     if (this.isComplex() && this.selectedBuildingId() === 'ALL') {
@@ -57,12 +64,26 @@ export class InvoicesComponent implements OnInit {
     }, 0);
     return sumInCents / 100;
   });
+
   monthStatus = signal<string>('OPEN');
   canClosePeriod = signal<boolean>(false);
   closedPeriods = signal<any[]>([]);
 
   ngOnInit() {
     this.initView();
+    this.loadAdminConfig(); // 🔥 4. Llamamos a cargar la configuración
+  }
+
+  // 🔥 5. Función que busca la configuración guardada
+  loadAdminConfig() {
+    this.configService.getAdminSettings().subscribe({
+      next: (res: any) => {
+        if (res.data) {
+          this.hasReserveFund.set(Boolean(res.data.has_reserve_fund));
+          this.reserveFundPercentage.set(Number(res.data.reserve_fund_percentage || 0));
+        }
+      }
+    });
   }
 
   initView() {
@@ -72,7 +93,7 @@ export class InvoicesComponent implements OnInit {
       this.dashboardService.getBuildingsByComplex().subscribe({
         next: (res: any) => {
           this.buildingsList.set(res.data);
-          this.selectedBuildingId.set('ALL'); // Comienza viendo todo
+          this.selectedBuildingId.set('ALL');
           this.refreshCurrentView();
         }
       });

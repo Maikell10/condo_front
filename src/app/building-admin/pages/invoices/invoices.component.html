@@ -55,7 +55,21 @@
         </div>
     </div>
 
-    <hr class="border-gray-100">
+    <hr class="border-gray-100 my-4">
+
+    <!-- 🔥 BANNER FONDO DE RESERVA -->
+    <div *ngIf="hasReserveFund()"
+        class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex items-center gap-3 mb-6 shadow-sm">
+        <div class="p-2 bg-emerald-500 text-white rounded-full flex-shrink-0">
+            <mat-icon class="scale-90 w-5 h-5">savings</mat-icon>
+        </div>
+        <div>
+            <p class="text-emerald-900 font-bold m-0 text-sm">Fondo de Reserva Activado ({{ reserveFundPercentage() }}%)
+            </p>
+            <p class="text-emerald-600 text-xs font-medium m-0">El sistema agregará automáticamente este porcentaje
+                sobre el total de gastos ordinarios al momento de cerrar el mes y generar los recibos.</p>
+        </div>
+    </div>
 
     <mat-tab-group (selectedTabChange)="onTabChange($event.index)" color="primary" class="bg-transparent">
 
@@ -123,7 +137,9 @@
                                 class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Concepto /
                                 Proveedor </th>
                             <td mat-cell *matCellDef="let element" class="text-gray-700 font-medium">
-                                {{element.provider}}
+                                <!-- Si no hay proveedor, mostramos el nombre del concepto o un texto por defecto -->
+                                {{ element.provider || element.concept_description || 'Ahorro Automático del Edificio'
+                                }}
                             </td>
                         </ng-container>
 
@@ -145,9 +161,9 @@
                             <th mat-header-cell *matHeaderCellDef
                                 class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Tipo </th>
                             <td mat-cell *matCellDef="let element">
-                                <span
-                                    class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter">
-                                    {{element.type}}
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter"
+                                    [ngClass]="element.provider === 'Fondo de Reserva' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'">
+                                    {{ element.provider === 'Fondo de Reserva' ? 'FIJO' : element.type }}
                                 </span>
                             </td>
                         </ng-container>

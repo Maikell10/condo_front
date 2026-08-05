@@ -6,6 +6,7 @@ import { MatMenuModule } from '@angular/material/menu'; // 🔥 Para el menú de
 import { MatBadgeModule } from '@angular/material/badge'; // 🔥 Para la campanita
 import { AuthService } from '../../services/auth.service';
 import { MatDividerModule } from '@angular/material/divider';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -17,7 +18,7 @@ import { MatDividerModule } from '@angular/material/divider';
     MatMenuModule,
     MatBadgeModule,
     MatDividerModule,
-
+    RouterModule
   ],
   templateUrl: './header.component.html'
 })

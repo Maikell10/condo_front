@@ -1,0 +1,124 @@
+<div class="space-y-6 max-w-4xl mx-auto pb-10 pt-4 px-4 sm:px-0">
+
+    <!-- CABECERA -->
+    <div class="flex items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div class="p-4 bg-slate-50 rounded-2xl text-slate-600">
+            <mat-icon class="scale-150">settings</mat-icon>
+        </div>
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-gray-900 m-0">Configuración</h1>
+            <p class="text-gray-500 font-medium mt-1 m-0 text-sm sm:text-base">
+                {{ role() === 'SUPER_ADMIN' ? 'Ajustes globales del sistema SaaS.' : 'Ajustes generales para todos tus
+                edificios y condominios.' }}
+            </p>
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- PANEL PARA BUILDING ADMIN (Fondo de Reserva) -->
+    <!-- ============================================== -->
+    <ng-container *ngIf="role() === 'BUILDING_ADMIN'">
+        <mat-card class="shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
+            <div class="p-5 border-b bg-indigo-50/50 flex items-center gap-3">
+                <mat-icon class="text-indigo-600">savings</mat-icon>
+                <h2 class="text-lg font-bold text-indigo-900 m-0">Fondo de Reserva</h2>
+            </div>
+
+            <form [formGroup]="reserveForm" (ngSubmit)="saveSettings()" class="p-6">
+
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-6 mb-8">
+                    <div class="flex-1">
+                        <h3 class="font-bold text-gray-800 text-base m-0">Habilitar Recaudación de Fondo de Reserva</h3>
+                        <p class="text-gray-500 text-sm m-0 mt-1">Al activar esta opción, el sistema calculará
+                            automáticamente un porcentaje extra sobre los gastos mensuales para destinarlo a emergencias
+                            e imprevistos.</p>
+                    </div>
+
+                    <mat-slide-toggle formControlName="hasReserveFund" color="primary" class="scale-110">
+                        {{ reserveForm.get('hasReserveFund')?.value ? 'Activado' : 'Desactivado' }}
+                    </mat-slide-toggle>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 flex flex-col sm:flex-row items-center gap-6 transition-opacity"
+                    [class.opacity-50]="!reserveForm.get('hasReserveFund')?.value">
+
+                    <div class="flex-1">
+                        <h4 class="font-bold text-gray-800 m-0">Porcentaje de Recaudación</h4>
+                        <p class="text-xs text-gray-500 mt-1 m-0">Ingresa el porcentaje exacto que indica el documento
+                            de condominio (Ej. 10%).</p>
+                    </div>
+
+                    <mat-form-field appearance="outline" class="w-full sm:w-48 !mb-[-1.25em]">
+                        <mat-label>Porcentaje (%)</mat-label>
+                        <input matInput type="number" formControlName="reserveFundPercentage" placeholder="0.00"
+                            step="0.1">
+                        <mat-icon matSuffix class="text-gray-400 mr-2">percent</mat-icon>
+                        <mat-error *ngIf="reserveForm.get('reserveFundPercentage')?.hasError('min')">
+                            Debe ser mayor a 0
+                        </mat-error>
+                    </mat-form-field>
+                </div>
+
+                <mat-divider class="my-6"></mat-divider>
+
+                <div class="flex justify-end mt-5">
+                    <button mat-flat-button color="primary" type="submit" class="h-12 px-8 rounded-xl font-bold"
+                        [disabled]="reserveForm.invalid || isSubmitting()">
+                        <mat-icon>save</mat-icon> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </mat-card>
+    </ng-container>
+
+    <!-- ============================================== -->
+    <!-- PANEL DEMO PARA SUPER ADMIN -->
+    <!-- ============================================== -->
+    <ng-container *ngIf="role() === 'SUPER_ADMIN'">
+        <mat-card class="shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
+            <div class="p-5 border-b bg-slate-50 flex items-center gap-3">
+                <mat-icon class="text-slate-600">admin_panel_settings</mat-icon>
+                <h2 class="text-lg font-bold text-slate-800 m-0">Preferencias del Servidor (Demo)</h2>
+            </div>
+
+            <form [formGroup]="superAdminForm" (ngSubmit)="saveSuperAdminDemo()" class="p-6 space-y-6">
+
+                <div class="flex justify-between items-center pb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="font-bold text-gray-800 m-0">Modo Mantenimiento</h3>
+                        <p class="text-gray-500 text-sm m-0">Bloquea el acceso a usuarios e inquilinos temporalmente.
+                        </p>
+                    </div>
+                    <mat-slide-toggle formControlName="maintenanceMode" color="warn"></mat-slide-toggle>
+                </div>
+
+                <div class="flex justify-between items-center pb-4 border-b border-gray-100">
+                    <div>
+                        <h3 class="font-bold text-gray-800 m-0">Auditoría Estricta</h3>
+                        <p class="text-gray-500 text-sm m-0">Registrar en base de datos cada clic y petición HTTP.</p>
+                    </div>
+                    <mat-slide-toggle formControlName="strictAudit" color="primary"></mat-slide-toggle>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-gray-800 m-0">Notificaciones Globales (Push)</h3>
+                        <p class="text-gray-500 text-sm m-0">Habilitar servidor de websockets para alertas en tiempo
+                            real.</p>
+                    </div>
+                    <mat-slide-toggle formControlName="globalNotifications" color="primary"></mat-slide-toggle>
+                </div>
+
+                <mat-divider class="my-6"></mat-divider>
+
+                <div class="flex justify-end">
+                    <button mat-flat-button class="!bg-slate-800 !text-white h-12 px-8 rounded-xl font-bold"
+                        type="submit">
+                        <mat-icon>sync</mat-icon> Aplicar Ajustes
+                    </button>
+                </div>
+            </form>
+        </mat-card>
+    </ng-container>
+
+</div>
