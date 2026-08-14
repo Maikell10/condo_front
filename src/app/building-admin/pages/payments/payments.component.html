@@ -73,7 +73,7 @@
                 <td mat-cell *matCellDef="let p" class="font-black text-gray-800">
                     <div class="flex items-center gap-2 py-3">
                         <div
-                            class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                            class="w-15 h-15 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold">
                             {{p.buildingName}}-{{ p.apartment }}
                         </div>
                     </div>
@@ -159,7 +159,7 @@
 
                         <button mat-mini-fab
                             class="!bg-indigo-600 !text-white shadow-md hover:!bg-indigo-700 transition-colors"
-                            (click)="approve(p.id)" matTooltip="Aprobar Transferencia">
+                            (click)="approve(p.id)" matTooltip="Aprobar Pago">
                             <mat-icon>thumb_up</mat-icon>
                         </button>
                     </div>
