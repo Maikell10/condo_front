@@ -17,6 +17,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'audit',
         loadComponent: () =>
             import('./pages/audit/audit.component').then(m => m.AuditComponent)
+    },
+    {
+        path: 'administration',
+        loadComponent: () =>
+            import('./pages/administration/administration.component').then(m => m.AdministrationComponent)
     }
 
 

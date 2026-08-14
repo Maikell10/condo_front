@@ -1,0 +1,191 @@
+<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+
+    <!-- CABECERA PRINCIPAL -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Cobranza SaaS</h1>
+            <p class="text-gray-500 mt-1">Control de suscripciones, tarifas y pagos de clientes (Administradores).</p>
+        </div>
+
+        <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl shadow-lg font-bold">
+            <mat-icon class="mr-1">add_chart</mat-icon>
+            Reporte de Ingresos
+        </button>
+    </div>
+
+    <!-- TARJETAS DE KPIs (MRR) -->
+    <div class="grid gap-6 grid-cols-1 sm:grid-cols-3">
+        <!-- (Aquí van las mismas 3 tarjetas de KPIs del código anterior, no han cambiado) -->
+        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
+            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><mat-icon>trending_up</mat-icon></div>
+            <div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">MRR (Ingreso Recurrente)</div>
+                <div class="text-2xl font-black text-gray-800">${{ totalMRR() | number:'1.2-2' }}</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
+            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><mat-icon>price_check</mat-icon></div>
+            <div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">Cobrado este Mes</div>
+                <div class="text-2xl font-black text-emerald-600">${{ collectedThisMonth() | number:'1.2-2' }}</div>
+            </div>
+        </mat-card>
+
+        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
+            <div class="p-3 bg-amber-50 text-amber-600 rounded-xl"><mat-icon>pending_actions</mat-icon></div>
+            <div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">Por Cobrar</div>
+                <div class="text-2xl font-black text-amber-600">${{ pendingCollection() | number:'1.2-2' }}</div>
+            </div>
+        </mat-card>
+    </div>
+
+    <!-- 🔥 BARRA DE FILTROS AVANZADOS -->
+    <div class="flex flex-col md:flex-row gap-4 mt-2 items-center">
+        <!-- Buscador por Texto -->
+        <mat-form-field appearance="outline" class="w-full md:w-[350px] bg-white rounded-xl mb-[-1.25em]">
+            <mat-label>Buscar por cliente o email</mat-label>
+            <mat-icon matPrefix class="text-gray-400 ml-1 mr-2">search</mat-icon>
+            <input matInput (keyup)="applySearch($event)" placeholder="Ej. Carlos Mendoza, admin@...">
+            <button *ngIf="searchQuery()" matSuffix mat-icon-button aria-label="Clear" (click)="searchQuery.set('')">
+                <mat-icon>close</mat-icon>
+            </button>
+        </mat-form-field>
+
+        <!-- Filtro por Estado -->
+        <mat-form-field appearance="outline" class="w-full md:w-[200px] bg-white rounded-xl mb-[-1.25em]">
+            <mat-label>Estado del mes</mat-label>
+            <mat-select [value]="selectedStatus()" (selectionChange)="selectedStatus.set($event.value)">
+                <mat-option value="ALL" class="font-bold text-indigo-600">Todos</mat-option>
+                <mat-option value="PAID">Solvente</mat-option>
+                <mat-option value="PENDING">Pendiente</mat-option>
+                <mat-option value="OVERDUE">En Mora</mat-option>
+            </mat-select>
+        </mat-form-field>
+    </div>
+
+    <!-- TABLA DE SUSCRIPCIONES -->
+    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white mt-4">
+        <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="font-bold text-gray-700 m-0">Cartera de Clientes (Building Admins)</h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <!-- 🔥 Usamos el arreglo filtrado -->
+            <table mat-table [dataSource]="filteredAdmins()" class="w-full min-w-[950px]">
+
+                <!-- (Las columnas Client, Scope, Plan, Status y Amounts se mantienen exactamente igual que el código anterior) -->
+
+                <ng-container matColumnDef="client">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
+                        Cliente / Admin</th>
+                    <td mat-cell *matCellDef="let admin">
+                        <div class="font-bold text-gray-900">{{ admin.name }}</div>
+                        <div class="text-xs text-gray-400">{{ admin.email }}</div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="scope">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Alcance
+                    </th>
+                    <td mat-cell *matCellDef="let admin">
+                        <div class="flex items-center gap-2">
+                            <span
+                                [ngClass]="admin.scope === 'COMPLEX' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+                                class="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest">
+                                {{ admin.scope === 'COMPLEX' ? 'CONJUNTO' : 'EDIF. ÚNICO' }}
+                            </span>
+                        </div>
+                        <div class="text-xs font-medium text-gray-600 mt-1">{{ admin.scopeName }}</div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="plan">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Tarifa
+                        Configurada</th>
+                    <td mat-cell *matCellDef="let admin">
+                        <div class="font-black text-slate-800">
+                            {{ admin.billingConfig.feeAmount | number:'1.2-2' }} {{ admin.billingConfig.currency }} /
+                            mes
+                        </div>
+                        <button mat-button color="primary" class="scale-75 -ml-3 mt-[-5px]"
+                            (click)="openConfigModal(admin)">
+                            <mat-icon>settings</mat-icon> Modificar Tarifa
+                        </button>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Estado
+                        Estado Actual</th>
+                    <td mat-cell *matCellDef="let admin">
+                        <span [ngClass]="{
+                                'bg-emerald-100 text-emerald-700': admin.currentPeriod.status === 'PAID',
+                                'bg-amber-100 text-amber-700': admin.currentPeriod.status === 'PENDING',
+                                'bg-red-100 text-red-700': admin.currentPeriod.status === 'OVERDUE'
+                              }" class="px-3 py-1 rounded-full text-[10px] font-black uppercase">
+                            {{ admin.currentPeriod.status === 'PAID' ? 'Solvente' : admin.currentPeriod.status ===
+                            'PENDING' ? 'Pendiente' : 'En Mora' }}
+                        </span>
+                        <div *ngIf="admin.currentPeriod.status === 'PAID'"
+                            class="text-[10px] text-emerald-600 font-bold mt-1 ml-1">
+                            Pagado el {{ admin.currentPeriod.paymentDate | date:'dd/MM/yy' }}
+                        </div>
+                        <div *ngIf="admin.currentPeriod.status !== 'PAID'" class="text-[10px] text-gray-400 mt-1 ml-1">
+                            Vence: {{ admin.currentPeriod.dueDate | date:'dd/MM/yy' }}
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="amounts">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="text-right font-bold text-gray-500 uppercase text-[11px]">Monto a Cobrar</th>
+                    <td mat-cell *matCellDef="let admin" class="text-right">
+                        <div class="font-black text-gray-900">
+                            {{ admin.billingConfig.feeAmount | number:'1.2-2' }} {{ admin.billingConfig.currency }}
+                        </div>
+                        <div *ngIf="admin.billingConfig.currency !== admin.billingConfig.localCurrency"
+                            class="text-xs font-bold text-indigo-500 mt-1">
+                            ~ {{ (admin.billingConfig.feeAmount * admin.billingConfig.exchangeRate) | number:'1.2-2' }}
+                            {{ admin.billingConfig.localCurrency }}
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- 🔥 ACCIONES (Actualizado con Botón de Historial) -->
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef
+                        class="text-right pr-6 font-bold text-gray-500 uppercase text-[11px]">Acciones</th>
+                    <td mat-cell *matCellDef="let admin" class="text-right pr-4">
+
+                        <!-- Botón de Historial -->
+                        <button mat-icon-button class="text-gray-400 hover:text-indigo-600 transition-colors"
+                            matTooltip="Ver historial de pagos" (click)="openHistoryModal(admin)">
+                            <mat-icon>history</mat-icon>
+                        </button>
+
+                        <!-- Botón de Pago -->
+                        <button mat-icon-button color="primary" [disabled]="admin.currentPeriod.status === 'PAID'"
+                            [ngClass]="admin.currentPeriod.status === 'PAID' ? 'opacity-30' : ''"
+                            matTooltip="Registrar Pago de Suscripción" (click)="registerSaaSPayment(admin)">
+                            <mat-icon>payments</mat-icon>
+                        </button>
+
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                    class="hover:bg-gray-50/50 transition-colors"></tr>
+            </table>
+
+            <!-- MENSAJE DE TABLA VACÍA -->
+            <div *ngIf="filteredAdmins().length === 0"
+                class="py-16 flex flex-col items-center justify-center text-gray-400">
+                <mat-icon class="text-6xl mb-4 opacity-30">search_off</mat-icon>
+                <p class="text-sm font-medium italic">No se encontraron clientes con esos filtros.</p>
+            </div>
+        </div>
+    </mat-card>
+</div>

@@ -25,19 +25,29 @@
         <ng-container *ngIf="role() === 'SUPER_ADMIN'">
             <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Administración Global
             </div>
+
             <a routerLink="/admin" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 [routerLinkActiveOptions]="{exact: true}"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>dashboard</mat-icon> Dashboard
             </a>
+
             <a routerLink="/admin/buildings" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>location_city</mat-icon> Edificios
             </a>
+
             <a routerLink="/admin/users" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>groups</mat-icon> Usuarios
             </a>
+
+            <!-- 🔥 NUEVO MENÚ DE COBRANZA SAAS -->
+            <a routerLink="/admin/administration" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>request_quote</mat-icon> Cobranza SaaS
+            </a>
+
             <a routerLink="/admin/audit" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>history</mat-icon> Auditoría
