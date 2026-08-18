@@ -51,7 +51,7 @@ import { API_URL_BASE } from '../../core/constants';
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
             </span>
-            La evolución del condominio
+            La evolución administrativa
           </div>
 
           <div class="w-48 h-48 mx-auto mb-10 rounded-2xl overflow-hidden flex items-center justify-center bg-white shadow-xl shadow-indigo-100/50 border border-slate-100">
@@ -61,12 +61,12 @@ import { API_URL_BASE } from '../../core/constants';
           <h1 class="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-tight max-w-4xl mx-auto">
             Gestión transparente para <br class="hidden md:block" />
             <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
-              edificios de primer nivel
+              edificios y estacionamientos
             </span>
           </h1>
           
           <p class="text-lg md:text-xl text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Automatiza la cobranza, valida pagos al instante y ofrece a tus propietarios una experiencia digital premium. Dile adiós al Excel y los recibos en papel.
+            Automatiza la cobranza, valida pagos al instante y ofrece a tus propietarios o clientes una experiencia digital premium. Dile adiós al Excel y los recibos en papel.
           </p>
           
           <!-- <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -100,7 +100,7 @@ import { API_URL_BASE } from '../../core/constants';
         <div class="max-w-7xl mx-auto px-6">
           <div class="text-center max-w-2xl mx-auto mb-16">
             <h2 class="text-3xl md:text-4xl font-black tracking-tight mb-4">Todo lo que necesitas, en un solo lugar</h2>
-            <p class="text-slate-500 text-lg">Diseñado tanto para la tranquilidad del administrador como para la comodidad del propietario.</p>
+            <p class="text-slate-500 text-lg">Diseñado tanto para la tranquilidad del administrador como para la comodidad del usuario final.</p>
           </div>
 
           <div class="grid md:grid-cols-3 gap-8">
@@ -178,7 +178,7 @@ import { API_URL_BASE } from '../../core/constants';
               </div>
               <h3 class="text-3xl font-black text-slate-800">Confianza y Transparencia</h3>
               <p class="text-slate-500 leading-relaxed text-lg">
-                Cero dudas, cero conflictos. Cada propietario tiene acceso directo 24/7 a su historial de pagos, recibos detallados y los gastos generales del edificio.
+                Cero dudas, cero conflictos. Cada usuario tiene acceso directo 24/7 a su historial de pagos, recibos detallados y los gastos generales del recinto.
               </p>
               <ul class="space-y-4 pt-4 text-slate-700 font-medium">
                 <li class="flex items-center gap-3">
