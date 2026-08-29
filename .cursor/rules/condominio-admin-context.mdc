@@ -1,0 +1,23 @@
+---
+description: Protocolo de contexto fullstack Condominio — leer docs antes de explorar
+alwaysApply: true
+---
+
+# Contexto Condominio (fullstack)
+
+Antes de glob/grep masivo o explorar el repo:
+
+1. Leer `docs/context/00-fullstack.md`
+2. Leer **un** doc de capa según la tarea:
+   - UI/rutas Angular → `docs/context/01-web.md`
+   - API Express → `docs/context/02-backend.md`
+   - MySQL/schema → `docs/context/03-db.md`
+3. Abrir **un** archivo de entrada (tabla en `00-fullstack.md`)
+4. Grep acotado solo si el doc no alcanza
+5. Si cambias código, actualiza el `.md` de esa capa
+
+Repos relacionados (fuera de workspace):
+- Backend: `C:\Dev\ProyectoCondominio\condo-backend`
+- DB: `.env` del backend (`DB_*`, `JWT_SECRET`)
+
+No copiar secrets. Ver `docs/context/README.md` para mantenimiento.

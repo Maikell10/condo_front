@@ -1,0 +1,31 @@
+<div class="auth-page" [attr.data-accent]="accent">
+  <div class="auth-blob auth-blob--1"></div>
+  <div class="auth-blob auth-blob--2"></div>
+  <div class="auth-blob auth-blob--3"></div>
+
+  <div class="auth-card">
+    <header class="auth-header">
+      <div class="auth-logo">
+        <img src="/LOGO.jpg" alt="Logo Condominio A Un Clic" />
+      </div>
+      <div class="auth-icon-badge" *ngIf="showIconBadge">
+        <mat-icon>{{ icon }}</mat-icon>
+      </div>
+      <h1>{{ title }}</h1>
+      <p *ngIf="subtitle">{{ subtitle }}</p>
+    </header>
+
+    <div class="auth-body">
+      <ng-content />
+    </div>
+
+    <footer class="auth-footer" *ngIf="showBackLink">
+      <a [routerLink]="backLink" class="auth-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ backLabel }}
+      </a>
+    </footer>
+  </div>
+
+  <p class="auth-copyright">© 2026 Condominio A Un Clic</p>
+</div>

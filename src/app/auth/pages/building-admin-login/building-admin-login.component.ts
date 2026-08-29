@@ -4,9 +4,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
 
 @Component({
   selector: 'app-building-admin-login',
@@ -17,7 +20,10 @@ import { AuthService } from '../../../core/services/auth.service';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    AuthShellComponent
   ],
   templateUrl: './building-admin-login.component.html',
   styleUrl: './building-admin-login.component.scss'
@@ -28,6 +34,7 @@ export class BuildingAdminLoginComponent {
   password = '';
   error = '';
   isLoading = false;
+  showPassword = false;
 
   constructor(private auth: AuthService, private router: Router) { }
 

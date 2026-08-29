@@ -1,1 +1,257 @@
-<p>landing works!</p>
+<div class="landing-page">
+  <nav class="landing-nav" [class.is-scrolled]="navScrolled()">
+    <div class="landing-nav__inner">
+      <div class="landing-brand">
+        <img src="/LOGO_SN1.png" alt="Logo Condominio A Un Clic" />
+        <span>Condominio <em>A Un Clic</em></span>
+      </div>
+
+      <div class="landing-nav__links">
+        <a href="#features">Características</a>
+        <a href="#benefits">Beneficios</a>
+        <a href="#contact">Contacto</a>
+      </div>
+
+      <a routerLink="/login">
+        <button mat-flat-button color="primary" class="rounded-xl px-6 h-12 font-bold shadow-lg shadow-indigo-200">
+          Iniciar Sesión
+        </button>
+      </a>
+    </div>
+  </nav>
+
+  <section class="landing-hero">
+    <div class="landing-hero__bg"></div>
+    <div class="landing-grid"></div>
+    <div class="landing-blob landing-blob--1"></div>
+    <div class="landing-blob landing-blob--2"></div>
+
+    <div class="landing-hero__inner">
+      <div class="landing-badge">
+        <span class="pulse-dot"></span>
+        Plataforma de gestión administrativa
+      </div>
+
+      <div class="landing-logo">
+        <img src="/LOGO.jpg" alt="Logo Condominio A Un Clic" />
+      </div>
+
+      <h1>
+        Control financiero y operativo para
+        <span class="gradient-text">residencias, estacionamientos y más</span>
+      </h1>
+
+      <p class="landing-hero__lead">
+        Centraliza cobranza, conciliación de pagos, recibos y reportes en un panel administrativo
+        moderno. Menos Excel, más control y transparencia para administradores y clientes.
+      </p>
+
+      <div class="landing-sectors">
+        @for (sector of sectors; track sector.label) {
+          <div class="landing-sector" [class.is-soon]="sector.soon">
+            <mat-icon>{{ sector.icon }}</mat-icon>
+            {{ sector.label }}
+          </div>
+        }
+      </div>
+
+      <div class="landing-metrics">
+        @for (metric of metrics; track metric.label) {
+          <div class="landing-metric">
+            <strong>{{ metric.value }}</strong>
+            <span>{{ metric.label }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="admin-preview">
+        <div class="admin-preview__frame">
+          <div class="admin-preview__chrome">
+            <span></span><span></span><span></span>
+            <p>Panel administrativo · Vista general</p>
+          </div>
+          <div class="admin-preview__screen" style="background-image: url('/democondo.jpg')">
+            <div class="admin-preview__overlay"></div>
+            <div class="admin-preview__widgets">
+              @for (widget of dashboardWidgets; track widget.label) {
+                <div class="admin-widget">
+                  <span class="admin-widget__label">{{ widget.label }}</span>
+                  <strong class="admin-widget__value">{{ widget.value }}</strong>
+                  <span class="admin-widget__trend">
+                    <mat-icon>trending_up</mat-icon>
+                    {{ widget.trend }}
+                  </span>
+                </div>
+              }
+            </div>
+            <div class="admin-preview__caption">
+              <span>Operaciones · Finanzas · Reportes</span>
+              <mat-icon>dashboard</mat-icon>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="landing-section landing-section--muted">
+    <div class="landing-section__inner">
+      <div class="landing-section__header landing-reveal">
+        <h2>Herramientas para administrar con precisión</h2>
+        <p>
+          Un mismo sistema para distintos tipos de recintos: unidades habitacionales,
+          puestos de estacionamiento y espacios administrados bajo reglas de cobro claras.
+        </p>
+      </div>
+
+      <div class="landing-features">
+        @for (feature of features; track feature.title; let i = $index) {
+          <article
+            class="landing-feature landing-reveal"
+            [ngClass]="'landing-reveal--delay-' + (i + 1)">
+            <div class="landing-feature__icon" [style.background]="feature.bg" [style.color]="feature.color">
+              <mat-icon>{{ feature.icon }}</mat-icon>
+            </div>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+          </article>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section id="benefits" class="landing-section">
+    <div class="landing-section__inner">
+      <div class="landing-section__header landing-reveal">
+        <h2>Por qué elegir Condominio A Un Clic</h2>
+        <p>Impacto real en la operación diaria de administradores, propietarios y clientes.</p>
+      </div>
+
+      <div class="landing-benefit landing-reveal">
+        <div class="landing-benefit__copy">
+          <div class="landing-benefit__icon bg-purple-50 text-purple-600">
+            <mat-icon>timer</mat-icon>
+          </div>
+          <h3>Recupera tiempo operativo</h3>
+          <p>
+            Automatiza conciliaciones, cierres y seguimiento de pagos. Menos tareas manuales
+            y más foco en la gestión del recinto.
+          </p>
+          <ul>
+            <li><mat-icon>check_circle</mat-icon> Cierres contables en minutos, no en días.</li>
+            <li><mat-icon>check_circle</mat-icon> Cálculo preciso de alícuotas, cuotas y deudas.</li>
+          </ul>
+        </div>
+        <div class="landing-benefit__visual">
+          <img src="/grafico-tiempo.png" alt="Dashboard de automatización de tiempo" />
+        </div>
+      </div>
+
+      <div class="landing-benefit landing-reveal">
+        <div class="landing-benefit__visual">
+          <img src="/grafico-transparencia.png" alt="Gráfico de transparencia financiera" />
+        </div>
+        <div class="landing-benefit__copy">
+          <div class="landing-benefit__icon bg-emerald-50 text-emerald-600">
+            <mat-icon>visibility</mat-icon>
+          </div>
+          <h3>Transparencia para generar confianza</h3>
+          <p>
+            Cada usuario accede a su historial de pagos, recibos y estados de cuenta.
+            Menos fricción, más claridad en la relación administrativa.
+          </p>
+          <ul>
+            <li><mat-icon>check_circle</mat-icon> Información disponible 24/7 desde cualquier dispositivo.</li>
+            <li><mat-icon>check_circle</mat-icon> Historial de solvencia y movimientos trazables.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="landing-section landing-section--muted landing-contact">
+    <div class="landing-section__inner">
+      <div class="landing-contact__card landing-reveal">
+        <div class="landing-contact__info">
+          <div class="landing-contact__blob landing-contact__blob--1"></div>
+          <div class="landing-contact__blob landing-contact__blob--2"></div>
+
+          <h3>Hablemos</h3>
+          <p>¿Quieres una demostración o adaptar el sistema a tu operación? Escríbenos.</p>
+
+          <div class="landing-contact__items">
+            <div class="landing-contact__item">
+              <div class="icon-wrap"><mat-icon>email</mat-icon></div>
+              <span>condominioaunclic&#64;gmail.com</span>
+            </div>
+            <div class="landing-contact__item">
+              <div class="icon-wrap"><mat-icon>phone</mat-icon></div>
+              <span>+58 (424) 247-5572</span>
+            </div>
+            <div class="landing-contact__item">
+              <div class="icon-wrap"><mat-icon>phone</mat-icon></div>
+              <span>(0212) 710-5278</span>
+            </div>
+            <div class="landing-contact__item">
+              <div class="icon-wrap"><mat-icon>location_on</mat-icon></div>
+              <span>Caracas, Venezuela</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="landing-contact__form">
+          <div *ngIf="successMessage()" class="landing-success">
+            <mat-icon>check_circle</mat-icon>
+            <span>{{ successMessage() }}</span>
+          </div>
+
+          <form [formGroup]="contactForm" (ngSubmit)="onSubmit()" class="space-y-6">
+            <div class="landing-form-grid">
+              <div class="landing-field">
+                <label>Nombre completo</label>
+                <input formControlName="name" type="text" placeholder="Tu nombre" />
+              </div>
+              <div class="landing-field">
+                <label>Organización / Recinto</label>
+                <input formControlName="condo" type="text" placeholder="Residencia, estacionamiento, etc." />
+              </div>
+            </div>
+            <div class="landing-field">
+              <label>Correo electrónico</label>
+              <input formControlName="email" type="email" placeholder="tucorreo@ejemplo.com" />
+            </div>
+            <div class="landing-field">
+              <label>Mensaje</label>
+              <textarea formControlName="message" rows="4" placeholder="Cuéntanos sobre tu operación"></textarea>
+            </div>
+
+            <button
+              mat-flat-button
+              color="primary"
+              type="submit"
+              [disabled]="contactForm.invalid || isSubmitting()"
+              class="w-full rounded-xl h-14 text-base font-bold shadow-lg shadow-indigo-200">
+              <mat-icon *ngIf="isSubmitting()" class="animate-spin mr-2">hourglass_empty</mat-icon>
+              {{ isSubmitting() ? 'Enviando...' : 'Enviar mensaje' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-cta landing-reveal">
+    <div class="landing-cta__pattern"></div>
+    <div class="landing-cta__inner">
+      <h2>Moderniza la administración de tu recinto</h2>
+      <p>
+        Desde condominios residenciales hasta estacionamientos y futuros verticales,
+        una plataforma pensada para escalar contigo.
+      </p>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <p>© 2026 Condominio A Un Clic. Todos los derechos reservados.</p>
+  </footer>
+</div>

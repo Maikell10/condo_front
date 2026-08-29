@@ -1,21 +1,58 @@
-<mat-card>
-    <h2>Login Admin de Edificio</h2>
+<app-auth-shell
+  title="Administrador de Edificio"
+  subtitle="Gestión de residencias y estacionamientos"
+  icon="manage_accounts"
+  accent="building-admin">
 
-    <form (ngSubmit)="onSubmit()">
-        <mat-form-field appearance="outline" class="full-width" style="width: 100%; margin-bottom: 1rem;">
-            <mat-label>Correo Electrónico</mat-label>
-            <input matInput [(ngModel)]="email" name="email" type="email" required />
-        </mat-form-field>
+  <form class="auth-form" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline">
+      <mat-label>Correo electrónico</mat-label>
+      <mat-icon matPrefix class="auth-field-icon">mail_outline</mat-icon>
+      <input
+        matInput
+        [(ngModel)]="email"
+        name="email"
+        type="email"
+        placeholder="admin@edificio.com"
+        required
+        autocomplete="email"
+        [disabled]="isLoading" />
+    </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width" style="width: 100%; margin-bottom: 1rem;">
-            <mat-label>Contraseña</mat-label>
-            <input matInput [(ngModel)]="password" name="password" type="password" required />
-        </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Contraseña</mat-label>
+      <mat-icon matPrefix class="auth-field-icon">lock_outline</mat-icon>
+      <input
+        matInput
+        [(ngModel)]="password"
+        name="password"
+        [type]="showPassword ? 'text' : 'password'"
+        required
+        autocomplete="current-password"
+        [disabled]="isLoading" />
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        (click)="showPassword = !showPassword"
+        [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+        <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+    </mat-form-field>
 
-        <button mat-raised-button color="primary" type="submit" [disabled]="isLoading" style="width: 100%;">
-            {{ isLoading ? 'Validando...' : 'Entrar' }}
-        </button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="submit"
+      class="auth-submit"
+      [disabled]="isLoading">
+      <mat-spinner *ngIf="isLoading" diameter="20" class="auth-spinner"></mat-spinner>
+      {{ isLoading ? 'Validando...' : 'Entrar al panel' }}
+    </button>
 
-        <p *ngIf="error" style="color: red; margin-top: 1rem; text-align: center;">{{ error }}</p>
-    </form>
-</mat-card>
+    <p *ngIf="error" class="auth-error">
+      <mat-icon>error_outline</mat-icon>
+      {{ error }}
+    </p>
+  </form>
+</app-auth-shell>
