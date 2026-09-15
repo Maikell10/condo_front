@@ -47,7 +47,7 @@ import { PaymentService } from '../../../core/services/payment.service'; // 🔥
 
       <!-- 🔥 TIPO DE PAGO (BANCARIO VS EFECTIVO) -->
       <div class="border rounded-xl p-3 border-gray-200 bg-gray-50 flex items-center justify-center mb-2">
-        <mat-radio-group [(ngModel)]="paymentMode" class="flex gap-6">
+        <mat-radio-group [(ngModel)]="paymentMode" (ngModelChange)="onPaymentModeChange($event)" class="flex gap-6">
           <mat-radio-button value="bank" color="primary" class="font-medium text-gray-700">Transferencia / Bs.</mat-radio-button>
           <mat-radio-button value="cash" color="primary" class="font-medium text-emerald-700">Efectivo ($)</mat-radio-button>
         </mat-radio-group>
@@ -98,15 +98,32 @@ import { PaymentService } from '../../../core/services/payment.service'; // 🔥
       <!-- CAMPOS COMUNES -->
       <div class="grid grid-cols-2 gap-4">
         <div class="flex flex-col">
-            <mat-form-field appearance="outline" class="w-full">
+            <mat-form-field appearance="outline" class="w-full" *ngIf="paymentMode === 'bank' && tasaReady">
+              <mat-label>Monto a Pagar (Bs)</mat-label>
+              <span matPrefix class="text-gray-500 mr-1">Bs.</span>
+              <input matInput type="number"
+                [ngModel]="amountBs"
+                (ngModelChange)="onAmountInput($event)"
+                required step="0.01">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full" *ngIf="paymentMode === 'bank' && !tasaReady">
+              <mat-label>Monto a Pagar (Bs)</mat-label>
+              <span matPrefix class="text-gray-500 mr-1">Bs.</span>
+              <input matInput disabled placeholder="Cargando tasa...">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full" *ngIf="paymentMode === 'cash'">
               <mat-label>Monto a Pagar ($)</mat-label>
-              <!-- Si es efectivo forzamos paso de 1 en 1 para evitar decimales con flechas -->
-              <input matInput type="number" [(ngModel)]="payment.amount" required [step]="paymentMode === 'cash' ? 1 : 0.01">
+              <span matPrefix class="text-gray-500 mr-1">$</span>
+              <input matInput type="number"
+                [ngModel]="payment.amount"
+                (ngModelChange)="onAmountInput($event)"
+                required step="1">
             </mat-form-field>
             
-            <!-- Calculadora en tiempo real para Bs (Solo visible si es bancario) -->
-            <div *ngIf="paymentMode === 'bank' && payment.amount > 0" class="text-[11px] text-gray-600 bg-gray-100 px-2 py-1.5 rounded-md -mt-4 text-right border border-gray-200">
-                Eq: <strong class="font-mono text-indigo-700">Bs. {{ (payment.amount * tasaDelDia()) | number:'1.2-2' }}</strong>
+            <div *ngIf="paymentMode === 'bank' && amountBs > 0" class="text-[11px] text-gray-600 bg-gray-100 px-2 py-1.5 rounded-md -mt-4 text-right border border-gray-200">
+                Eq: <strong class="font-mono text-indigo-700">$ {{ payment.amount | number:'1.2-2' }}</strong>
             </div>
         </div>
 
@@ -154,6 +171,9 @@ export class AdminPaymentModalComponent implements OnInit {
     paymentDate: new Date()
   };
 
+  amountBs = 0;
+  tasaReady = false;
+
   constructor(
     public dialogRef: MatDialogRef<AdminPaymentModalComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
@@ -175,10 +195,35 @@ export class AdminPaymentModalComponent implements OnInit {
           this.tasaDelDia.set(Number(res.data.rate));
           const rawDate = res.data.rate_date ? res.data.rate_date.split('T')[0] : '';
           this.fechaTasa.set(rawDate);
+          this.syncAmountBsFromUsd();
+          this.tasaReady = true;
         }
       },
       error: (err) => console.error("Error al cargar la tasa", err)
     });
+  }
+
+  onPaymentModeChange(mode: string) {
+    if (mode === 'bank') {
+      this.syncAmountBsFromUsd();
+    }
+  }
+
+  onAmountInput(value: number | string) {
+    const parsed = Number(value) || 0;
+
+    if (this.paymentMode === 'bank') {
+      this.amountBs = parsed;
+      const tasa = this.tasaDelDia();
+      this.payment.amount = tasa > 0 ? parseFloat((this.amountBs / tasa).toFixed(2)) : 0;
+      return;
+    }
+
+    this.payment.amount = parsed;
+  }
+
+  private syncAmountBsFromUsd() {
+    this.amountBs = parseFloat((Number(this.payment.amount) * this.tasaDelDia()).toFixed(2));
   }
 
   // Validación dinámica del botón Submit dependiendo del tipo de pago
@@ -213,8 +258,8 @@ export class AdminPaymentModalComponent implements OnInit {
     const finalCurrency = isCash ? 'USD' : 'VES';
     const finalRate = isCash ? 1.0000 : this.tasaDelDia();
 
-    // Si es cash es 1:1, si es banco calculamos los Bs reales
-    const finalAmountLocal = isCash ? this.payment.amount : parseFloat((this.payment.amount * this.tasaDelDia()).toFixed(2));
+    // Si es cash es 1:1; si es banco se guarda el Bs que escribió el admin
+    const finalAmountLocal = isCash ? this.payment.amount : parseFloat(Number(this.amountBs).toFixed(2));
 
     const payload = {
       receiptId: this.data.id,

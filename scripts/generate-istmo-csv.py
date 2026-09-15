@@ -11,6 +11,8 @@ OUT_LEGACY = Path(r"c:\Dev\ProyectoCondominio\condo-backend\istmo-subir-conjunto
 OUT_REPORT = Path(r"c:\Dev\ProyectoCondominio\condominio-admin\docs\context\istmo-import-report.txt")
 DEFAULT_PWD = "$2b$10$P6nti1ZV4YagWwXoYnp3U.plcyRTPloHT.ylsvmlRwHM0y1LwJUiK"
 
+SHEET_NAME_PATTERN = re.compile(r"^(.+)-(\d+)$", re.UNICODE)
+
 
 def clean(value):
     if value is None:
@@ -18,23 +20,9 @@ def clean(value):
     return str(value).strip()
 
 
-def parse_alicuota(value):
-    if value is None or value == "":
-        return ""
-    raw = str(value).replace(",", ".").strip()
-    try:
-        number = float(raw)
-    except ValueError:
-        return ""
-    if number > 1:
-        number /= 100
-    return f"{number:.6f}".rstrip("0").rstrip(".")
-
-
 def parse_sheet(workbook, name):
     worksheet = workbook[name]
     owner = ""
-    alicuota = ""
     header_row_index = None
 
     rows = list(worksheet.iter_rows(min_row=1, max_row=20, values_only=True))
@@ -50,17 +38,12 @@ def parse_sheet(workbook, name):
         for row in rows[header_row_index + 1 : header_row_index + 4]:
             cells = [clean(cell) for cell in row]
             candidate_owner = cells[3] if len(cells) > 3 else ""
-            candidate_alicuota = parse_alicuota(cells[8] if len(cells) > 8 else None)
 
             if candidate_owner and candidate_owner not in ("0", "-", "."):
                 owner = candidate_owner
-            if candidate_alicuota and not alicuota:
-                alicuota = candidate_alicuota
-
-            if owner or alicuota:
                 break
 
-    match = re.match(r"^([A-Za-z]+)-(\d+)$", name.strip())
+    match = SHEET_NAME_PATTERN.match(name.strip())
     if not match:
         return None
 
@@ -72,9 +55,23 @@ def parse_sheet(workbook, name):
         "apartment": apartment,
         "number": f"{building}-{apartment}",
         "owner": owner,
-        "alicuota": alicuota,
         "sheet": name,
     }
+
+
+def assign_equal_alicuotas(records):
+    by_building = defaultdict(list)
+    for record in records:
+        by_building[record["building_name"]].append(record)
+
+    for building, building_records in by_building.items():
+        equal_share = round(1 / len(building_records), 6)
+        for record in building_records:
+            record["alicuota"] = f"{equal_share:.6f}".rstrip("0").rstrip(".")
+
+
+def building_sort_key(building_order, record):
+    return (building_order.index(record["building_name"]), int(record["apartment"]))
 
 
 def main():
@@ -82,15 +79,27 @@ def main():
         XLSM, read_only=True, data_only=True, keep_vba=True
     )
 
+    building_order = []
+    seen_buildings = set()
+    for sheet_name in workbook.sheetnames:
+        if sheet_name.lower() == "mes":
+            continue
+        match = SHEET_NAME_PATTERN.match(sheet_name.strip())
+        if not match:
+            continue
+        building = match.group(1).upper()
+        if building not in seen_buildings:
+            seen_buildings.add(building)
+            building_order.append(building)
+
     records = [
         parse_sheet(workbook, sheet_name)
         for sheet_name in workbook.sheetnames
         if sheet_name.lower() != "mes"
     ]
-    records = sorted(
-        [record for record in records if record],
-        key=lambda item: (item["building_name"], int(item["apartment"])),
-    )
+    records = [record for record in records if record]
+    assign_equal_alicuotas(records)
+    records.sort(key=lambda item: building_sort_key(building_order, item))
     workbook.close()
 
     with OUT_IMPORT.open("w", encoding="utf-8-sig", newline="") as handle:
@@ -140,31 +149,36 @@ def main():
             )
 
     no_owner = [record for record in records if not record["owner"]]
-    by_building = defaultdict(int)
+    by_building = defaultdict(list)
     for record in records:
-        by_building[record["building_name"]] += 1
+        by_building[record["building_name"]].append(record)
 
     lines = [
         f"Total apartamentos: {len(records)}",
+        f"Edificios: {len(building_order)}",
         f"Con propietario: {len(records) - len(no_owner)}",
         f"Sin propietario: {len(no_owner)}",
+        f"Alicuota: partes iguales por edificio (1/n)",
         "",
-        "Apartamentos sin propietario:",
+        "Orden edificios:",
+        f"  {', '.join(building_order)}",
+        "",
+        "Edificios y cantidad:",
     ]
+    for building in building_order:
+        share = by_building[building][0]["alicuota"]
+        lines.append(f"  {building}: {len(by_building[building])} aptos | alicuota c/u {share}")
+    lines.extend(["", "Apartamentos sin propietario:"])
     for record in no_owner:
         lines.append(
-            f"  {record['sheet']} | edificio {record['building_name']} | apt {record['apartment']} | alicuota {record['alicuota']}"
+            f"  {record['sheet']} | edificio {record['building_name']} | apt {record['apartment']}"
         )
-    lines.extend(["", "Edificios y cantidad:"])
-    for building, count in sorted(by_building.items()):
-        lines.append(f"  {building}: {count}")
 
     OUT_REPORT.write_text("\n".join(lines), encoding="utf-8")
 
     print(f"Wrote {OUT_IMPORT}")
-    print(f"Wrote {OUT_LEGACY}")
-    print(f"Wrote {OUT_REPORT}")
-    print(f"No owner count: {len(no_owner)}")
+    print(f"Apartamentos: {len(records)} | Edificios: {len(building_order)}")
+    print(f"Edificios: {building_order}")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,19 @@
-<div class="p-6 space-y-6 max-w-5xl mx-auto pb-12">
+<div class="p-6 space-y-6 max-w-6xl mx-auto pb-12">
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div>
+    <div class="flex items-start gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div class="p-4 bg-indigo-50 rounded-2xl text-indigo-600 shrink-0">
+            <mat-icon class="scale-150 origin-center">description</mat-icon>
+        </div>
+        <div class="min-w-0 flex-1">
             <h1 class="text-3xl font-black text-gray-900 tracking-tight m-0">Emisión de Documentos</h1>
-            <p class="text-gray-500 mt-1">Genera cartas y constancias automáticas para los residentes.</p>
+            <p class="text-gray-500 mt-1 mb-0">Genera cartas y constancias oficiales para los residentes, con los datos de tu conjunto.</p>
+            <div *ngIf="complexInfo().name" class="mt-3 inline-flex items-start gap-2 max-w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                <mat-icon class="text-indigo-500 text-[20px] w-5 h-5 shrink-0 mt-0.5">apartment</mat-icon>
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-slate-800 m-0 leading-tight">{{ complexInfo().name }}</p>
+                    <p *ngIf="complexInfo().direccion" class="text-xs text-slate-500 m-0 mt-0.5 leading-snug">{{ complexInfo().direccion }}</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -12,36 +22,46 @@
         <div class="lg:col-span-2 space-y-6">
 
             <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl">
-                <div class="flex items-center gap-2 mb-4">
-                    <div
-                        class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                        1</div>
-                    <h2 class="text-lg font-bold text-gray-800 m-0">Selecciona el Documento</h2>
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">1</div>
+                    <h2 class="text-lg font-bold text-gray-800 m-0">Selecciona el documento</h2>
                 </div>
+                <p class="text-sm text-gray-400 mb-5 ml-10">El texto del PDF usará el nombre y la dirección de tu conjunto.</p>
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div *ngFor="let doc of documentTypes" (click)="selectedDoc.set(doc.id)"
-                        class="border-2 rounded-xl p-4 cursor-pointer transition-all flex flex-col items-center text-center"
-                        [ngClass]="selectedDoc() === doc.id ? 'border-indigo-500 bg-indigo-50/50' : 'border-gray-100 hover:border-indigo-200 hover:bg-gray-50'">
-                        <mat-icon [ngClass]="selectedDoc() === doc.id ? 'text-indigo-600' : 'text-gray-400'"
-                            class="scale-150 mb-3 mt-2">{{doc.icon}}</mat-icon>
-                        <span class="font-bold text-sm"
-                            [ngClass]="selectedDoc() === doc.id ? 'text-indigo-900' : 'text-gray-700'">{{doc.name}}</span>
-                    </div>
+                    <button type="button" *ngFor="let doc of documentTypes" (click)="selectedDoc.set(doc.id)"
+                        class="relative w-full cursor-pointer appearance-none border-2 rounded-2xl p-4 text-left transition-all"
+                        [ngClass]="selectedDoc() === doc.id
+                            ? 'border-indigo-500 bg-indigo-50/70 shadow-sm'
+                            : 'border-gray-100 hover:border-indigo-200 hover:bg-gray-50 bg-white'">
+                        <span *ngIf="selectedDoc() === doc.id"
+                            class="absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                            <mat-icon class="text-[14px] w-3.5 h-3.5">check</mat-icon>
+                        </span>
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-3"
+                            [ngClass]="selectedDoc() === doc.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'">
+                            <mat-icon>{{ doc.icon }}</mat-icon>
+                        </div>
+                        <span class="block font-bold text-sm mb-1"
+                            [ngClass]="selectedDoc() === doc.id ? 'text-indigo-900' : 'text-gray-800'">{{ doc.name }}</span>
+                        <span class="block text-xs leading-snug"
+                            [ngClass]="selectedDoc() === doc.id ? 'text-indigo-700/80' : 'text-gray-400'">{{ doc.desc }}</span>
+                    </button>
                 </div>
             </mat-card>
 
-            <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl" [class.opacity-50]="!selectedDoc()">
-                <div class="flex items-center gap-2 mb-6">
-                    <div
-                        class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">
-                        2</div>
-                    <h2 class="text-lg font-bold text-gray-800 m-0">Selecciona el Destinatario</h2>
+            <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl transition-opacity"
+                [class.opacity-50]="!selectedDoc()">
+                <div class="flex items-center gap-2 mb-1">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm">2</div>
+                    <h2 class="text-lg font-bold text-gray-800 m-0">Selecciona el destinatario</h2>
                 </div>
+                <p class="text-sm text-gray-400 mb-5 ml-10">Elige la unidad y el propietario a nombre de quien se emite.</p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <mat-form-field appearance="outline" class="w-full" *ngIf="isComplex()">
                         <mat-label>Edificio / Torre</mat-label>
+                        <mat-icon matPrefix class="text-indigo-500 ml-1">business</mat-icon>
                         <mat-select [disabled]="!selectedDoc()" [value]="selectedBuildingId()"
                             (selectionChange)="onBuildingChange($event.value)">
                             <mat-option *ngFor="let b of buildingsList()" [value]="b.id">
@@ -50,10 +70,11 @@
                         </mat-select>
                     </mat-form-field>
 
-                    <mat-form-field appearance="outline" class="w-full">
-                        <mat-label>Unidad y Propietario</mat-label>
+                    <mat-form-field appearance="outline" class="w-full" [class.md:col-span-2]="!isComplex()">
+                        <mat-label>Unidad y propietario</mat-label>
+                        <mat-icon matPrefix class="text-indigo-500 ml-1">person</mat-icon>
                         <mat-select [disabled]="!selectedBuildingId() || apartmentsList().length === 0"
-                            [(value)]="selectedAptId" (selectionChange)="selectedAptId.set($event.value)">
+                            [value]="selectedAptId()" (selectionChange)="selectedAptId.set($event.value)">
                             <mat-option *ngFor="let a of apartmentsList()" [value]="a.id">
                                 <span class="font-bold text-indigo-600 mr-2">{{ a.number }}</span>
                                 {{ a.ownerName || 'Sin asignar' }}
@@ -66,44 +87,49 @@
 
         <div class="space-y-6">
             <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl sticky top-6">
-                <h3 class="font-bold text-gray-400 uppercase tracking-widest text-xs mb-4">Resumen de Emisión</h3>
+                <h3 class="font-bold text-gray-400 uppercase tracking-widest text-xs mb-4">Resumen de emisión</h3>
 
                 <div class="space-y-4 mb-8">
                     <div>
-                        <p class="text-[10px] uppercase font-bold text-gray-400">Documento</p>
-                        <p class="font-bold text-gray-800">{{ selectedDocObj()?.name || '...' }}</p>
+                        <p class="text-[10px] uppercase font-bold text-gray-400 m-0">Documento</p>
+                        <p class="font-bold text-gray-800 m-0">{{ selectedDocObj()?.name || 'Sin seleccionar' }}</p>
                     </div>
 
                     <div>
-                        <p class="text-[10px] uppercase font-bold text-gray-400">A nombre de</p>
-                        <p class="font-black text-indigo-900 text-lg leading-tight">{{ selectedOwner()?.ownerName ||
-                            '...' }}</p>
+                        <p class="text-[10px] uppercase font-bold text-gray-400 m-0">A nombre de</p>
+                        <p class="font-black text-indigo-900 text-lg leading-tight m-0">{{ selectedOwner()?.ownerName || '—' }}</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
-                            <p class="text-[10px] uppercase font-bold text-gray-400">Unidad</p>
-                            <p class="font-bold text-gray-800">{{ selectedOwner()?.number || '...' }}</p>
+                        <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                            <p class="text-[10px] uppercase font-bold text-gray-400 m-0">Unidad</p>
+                            <p class="font-bold text-gray-800 m-0">{{ selectedOwner()?.number || '—' }}</p>
                         </div>
-                        <div class="bg-gray-50 p-2 rounded-lg border border-gray-100">
-                            <p class="text-[10px] uppercase font-bold text-gray-400">Solvencia</p>
-                            <p class="font-bold"
+                        <div class="bg-gray-50 p-2.5 rounded-xl border border-gray-100">
+                            <p class="text-[10px] uppercase font-bold text-gray-400 m-0">Solvencia</p>
+                            <p class="font-bold m-0"
                                 [ngClass]="selectedOwner()?.balance > 0 ? 'text-rose-600' : 'text-emerald-600'">
-                                {{ selectedOwner() ? (selectedOwner()?.balance > 0 ? 'Moroso' : 'Al día') : '...' }}
+                                {{ selectedOwner() ? (selectedOwner()?.balance > 0 ? 'Moroso' : 'Al día') : '—' }}
                             </p>
                         </div>
                     </div>
+
+                    <div *ngIf="complexInfo().name" class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3">
+                        <p class="text-[10px] uppercase font-bold text-indigo-400 m-0">Aparecerá en el PDF</p>
+                        <p class="text-sm font-bold text-indigo-900 m-0 leading-snug">{{ complexInfo().name }}</p>
+                        <p *ngIf="complexInfo().direccion" class="text-xs text-indigo-700/80 m-0 mt-1 leading-snug">{{ complexInfo().direccion }}</p>
+                    </div>
                 </div>
 
-                <button mat-flat-button color="primary" class="w-full h-14 rounded-xl font-bold shadow-lg text-lg"
-                    [disabled]="!selectedDoc() || !selectedOwner()" (click)="generateDocument()">
-                    <mat-icon class="mr-2">print</mat-icon> Generar e Imprimir
+                <button mat-flat-button color="primary" class="w-full h-14 rounded-xl font-bold shadow-lg text-base"
+                    [disabled]="!canGenerate()" (click)="generateDocument()">
+                    <mat-icon class="mr-2">print</mat-icon> Generar e imprimir
                 </button>
 
                 <p *ngIf="selectedDoc() === 'solvencia' && selectedOwner()?.balance > 0"
-                    class="text-xs text-rose-500 mt-4 text-center flex items-start gap-1 bg-rose-50 p-2 rounded-lg">
+                    class="text-xs text-rose-500 mt-4 text-center flex items-start gap-1 bg-rose-50 p-2 rounded-lg m-0">
                     <mat-icon class="scale-75 -mt-1">warning</mat-icon>
-                    Advertencia: El propietario seleccionado presenta deuda. ¿Seguro que desea emitir una solvencia?
+                    El propietario seleccionado presenta deuda. ¿Seguro que desea emitir una solvencia?
                 </p>
             </mat-card>
         </div>
@@ -111,27 +137,31 @@
     </div>
 </div>
 
-<!-- ========================================== -->
-<!-- MODAL DE PARÁMETROS DINÁMICO (Las 3 cartas)-->
-<!-- ========================================== -->
 <ng-template #docParamsDialog>
     <div class="p-6">
-        <h2 class="text-xl font-black text-indigo-900 mb-2">Completar Datos</h2>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                <mat-icon>{{ selectedDocObj()?.icon }}</mat-icon>
+            </div>
+            <div>
+                <h2 class="text-xl font-black text-indigo-900 m-0">Completar datos</h2>
+                <p class="text-xs text-gray-400 m-0">{{ selectedDocObj()?.name }}</p>
+            </div>
+        </div>
 
-        <p class="text-sm text-gray-500 mb-6">Faltan algunos detalles para emitir la <strong>{{ selectedDocObj()?.name
-                }}</strong> a nombre de <span class="text-indigo-600 font-bold">{{ selectedOwner()?.ownerName }}</span>.
+        <p class="text-sm text-gray-500 mb-6">
+            Faltan algunos detalles para emitir el documento a nombre de
+            <span class="text-indigo-600 font-bold">{{ selectedOwner()?.ownerName }}</span>.
         </p>
 
         <div class="space-y-4">
-            <!-- Cédula (Siempre visible) -->
             <mat-form-field appearance="outline" class="w-full">
-                <mat-label>Cédula de Identidad</mat-label>
+                <mat-label>Cédula de identidad</mat-label>
                 <input matInput [(ngModel)]="docData.cedula" placeholder="Ej: V-18.094.749" autocomplete="off">
             </mat-form-field>
 
-            <!-- Tiempo de Residencia (Se OCULTA si es Solvencia) -->
             <mat-form-field appearance="outline" class="w-full" *ngIf="selectedDoc() !== 'solvencia'">
-                <mat-label>Tiempo de Residencia</mat-label>
+                <mat-label>Tiempo de residencia</mat-label>
                 <input matInput [(ngModel)]="docData.tiempoResidencia" placeholder="Ej: 1 año y 8 meses"
                     autocomplete="off">
                 <mat-hint>Escríbalo tal cual aparecerá en el documento.</mat-hint>
@@ -140,12 +170,10 @@
 
         <div class="flex justify-end gap-3 mt-8">
             <button mat-button mat-dialog-close>Cancelar</button>
-
-            <!-- 🔥 FIX: La validación ahora respeta si es Solvencia o no -->
             <button mat-flat-button color="primary" class="font-bold px-6"
                 [disabled]="!docData.cedula || (selectedDoc() !== 'solvencia' && !docData.tiempoResidencia)"
                 (click)="confirmAndPrintDocument()">
-                Generar Documento
+                Generar documento
             </button>
         </div>
     </div>
