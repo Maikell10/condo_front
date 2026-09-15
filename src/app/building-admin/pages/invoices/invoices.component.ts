@@ -8,31 +8,54 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { BillingService } from '../../../core/services/billing.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
-// 🔥 1. Importamos el ConfigService que creamos hace un momento
 import { ConfigService } from '../../../core/services/config.service';
 
 import { AddExpenseModalComponent } from '../../modal/add-expense-modal/add-expense-modal.component';
 import { ReportViewModalComponent } from '../../modal/report-view-modal/report-view-modal.component';
+
+function spanishPaginator(): MatPaginatorIntl {
+  const intl = new MatPaginatorIntl();
+  intl.itemsPerPageLabel = 'Gastos por página';
+  intl.nextPageLabel = 'Siguiente';
+  intl.previousPageLabel = 'Anterior';
+  intl.firstPageLabel = 'Primera página';
+  intl.lastPageLabel = 'Última página';
+  intl.getRangeLabel = (page, pageSize, length) => {
+    if (length === 0 || pageSize === 0) return `0 de ${length}`;
+    const start = page * pageSize + 1;
+    const end = Math.min((page + 1) * pageSize, length);
+    return `${start} – ${end} de ${length}`;
+  };
+  return intl;
+}
 
 @Component({
   selector: 'app-invoices',
   standalone: true,
   imports: [
     CommonModule, MatTableModule, MatCardModule, MatButtonModule,
-    MatIconModule, MatDialogModule, MatSelectModule, MatTabsModule, MatDividerModule
+    MatIconModule, MatDialogModule, MatSelectModule, MatTabsModule, MatDividerModule,
+    MatFormFieldModule, MatInputModule, MatPaginatorModule, MatTooltipModule
   ],
+  providers: [{ provide: MatPaginatorIntl, useValue: spanishPaginator() }],
   templateUrl: './invoices.component.html'
 })
 export class InvoicesComponent implements OnInit {
   private billingService = inject(BillingService);
   private authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
-  private configService = inject(ConfigService); // 🔥 2. Lo inyectamos
+  private configService = inject(ConfigService);
   private dialog = inject(MatDialog);
+
+  readonly monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
   isComplex = computed(() => !!this.authService.userSignal()?.complexId);
   buildingsList = signal<any[]>([]);
@@ -41,8 +64,10 @@ export class InvoicesComponent implements OnInit {
   currentTabIndex = signal<number>(0);
 
   invoices = signal<any[]>([]);
+  searchQuery = signal('');
+  pageIndex = signal(0);
+  pageSize = signal(10);
 
-  // 🔥 3. Señales para guardar el estado del Fondo de Reserva
   hasReserveFund = signal<boolean>(false);
   reserveFundPercentage = signal<number>(0);
 
@@ -58,6 +83,44 @@ export class InvoicesComponent implements OnInit {
   selectedMonth = signal<number>(this.currentDate.getMonth() === 0 ? 12 : this.currentDate.getMonth());
   selectedYear = signal<number>(this.currentDate.getMonth() === 0 ? this.currentDate.getFullYear() - 1 : this.currentDate.getFullYear());
 
+  availablePeriods = this.buildPeriods();
+  currentPeriodKey = computed(() => `${this.selectedYear()}-${this.selectedMonth()}`);
+  currentPeriodLabel = computed(() => {
+    const month = this.monthNames[this.selectedMonth() - 1] || '';
+    return `${month} ${this.selectedYear()}`;
+  });
+
+  canGoPrev = computed(() => this.periodIndex() > 0);
+  canGoNext = computed(() => this.periodIndex() < this.availablePeriods.length - 1);
+
+  filteredInvoices = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    const rows = this.invoices();
+    if (!query) return rows;
+
+    const compact = query.replace(/\s+/g, '');
+    return rows.filter(inv => {
+      const haystack = [
+        inv.code,
+        inv.provider,
+        inv.concept_description,
+        inv.buildingName,
+        inv.type,
+        inv.amount
+      ].map(v => String(v ?? '').toLowerCase()).join(' ');
+      const compactHaystack = haystack.replace(/\s+/g, '');
+      return haystack.includes(query) || compactHaystack.includes(compact);
+    });
+  });
+
+  pagedInvoices = computed(() => {
+    const rows = this.filteredInvoices();
+    const size = this.pageSize();
+    const maxPage = Math.max(0, Math.ceil(rows.length / size) - 1);
+    const page = Math.min(this.pageIndex(), maxPage);
+    return rows.slice(page * size, page * size + size);
+  });
+
   totalMonth = computed(() => {
     const sumInCents = this.invoices().reduce((acc, inv) => {
       return acc + Math.round(Number(inv.amount || 0) * 100);
@@ -71,10 +134,9 @@ export class InvoicesComponent implements OnInit {
 
   ngOnInit() {
     this.initView();
-    this.loadAdminConfig(); // 🔥 4. Llamamos a cargar la configuración
+    this.loadAdminConfig();
   }
 
-  // 🔥 5. Función que busca la configuración guardada
   loadAdminConfig() {
     this.configService.getAdminSettings().subscribe({
       next: (res: any) => {
@@ -107,11 +169,34 @@ export class InvoicesComponent implements OnInit {
     this.selectedBuildingId.set(buildingId);
     this.invoices.set([]);
     this.closedPeriods.set([]);
+    this.resetTableView();
     this.refreshCurrentView();
   }
 
-  onPeriodChange() {
+  onPeriodSelect(key: string) {
+    const period = this.availablePeriods.find(p => p.key === key);
+    if (!period) return;
+    this.selectedMonth.set(period.month);
+    this.selectedYear.set(period.year);
+    this.resetTableView();
     this.refreshCurrentView();
+  }
+
+  goPeriod(offset: number) {
+    const next = this.availablePeriods[this.periodIndex() + offset];
+    if (!next) return;
+    this.onPeriodSelect(next.key);
+  }
+
+  onSearch(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.searchQuery.set(target.value);
+    this.pageIndex.set(0);
+  }
+
+  onPage(event: PageEvent) {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 
   onTabChange(index: number) {
@@ -129,26 +214,24 @@ export class InvoicesComponent implements OnInit {
 
   loadExpenses() {
     const buildingId = this.selectedBuildingId();
-    // NOTA: Tu billingService debe poder manejar 'ALL' enviando el complexId al backend
     const complexId = this.authService.userSignal()?.complexId;
 
     const payload = buildingId === 'ALL'
       ? { isComplex: true, complexId: complexId }
       : { isComplex: false, buildingId: buildingId };
 
-    // Llama a tu servicio pasándole la info
     this.billingService.getExpenses(payload, this.selectedMonth(), this.selectedYear()).subscribe({
       next: (res: any) => {
         this.invoices.set(res.data);
         this.monthStatus.set(res.status);
         this.canClosePeriod.set(res.canClose);
+        this.pageIndex.set(0);
       }
     });
   }
 
   loadHistory() {
     const buildingId = this.selectedBuildingId();
-    // Solo cargamos el histórico si hay UN edificio seleccionado. No se cierra el mes globalmente.
     if (buildingId !== 'ALL') {
       this.billingService.getClosedPeriods(buildingId).subscribe({
         next: (res: any) => this.closedPeriods.set(res.data),
@@ -165,7 +248,6 @@ export class InvoicesComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        // 🔥 Aquí enviamos 'ALL' o el ID numérico
         const payload = {
           ...result,
           buildingId: this.selectedBuildingId(),
@@ -185,7 +267,7 @@ export class InvoicesComponent implements OnInit {
 
   closeMonth() {
     const buildingId = this.selectedBuildingId();
-    if (buildingId === 'ALL' || !buildingId) return; // Validación de seguridad extra
+    if (buildingId === 'ALL' || !buildingId) return;
 
     const payload = {
       buildingId: buildingId,
@@ -193,7 +275,7 @@ export class InvoicesComponent implements OnInit {
       year: this.selectedYear()
     };
 
-    const confirmMsg = `¿Deseas cerrar el mes ${this.selectedMonth()}/${this.selectedYear()}? Se generarán los recibos.`;
+    const confirmMsg = `¿Deseas cerrar ${this.currentPeriodLabel()}? Se generarán los recibos.`;
 
     if (confirm(confirmMsg)) {
       this.billingService.generateBilling(payload).subscribe({
@@ -221,8 +303,59 @@ export class InvoicesComponent implements OnInit {
     const buildingId = this.selectedBuildingId();
     if (buildingId !== 'ALL') {
       this.billingService.getMonthlyReport(buildingId, period.month, period.year).subscribe((res: any) => {
-        this.dialog.open(ReportViewModalComponent, { width: '800px', data: res });
+        this.dialog.open(ReportViewModalComponent, {
+          width: '800px',
+          maxWidth: '95vw',
+          maxHeight: '90vh',
+          autoFocus: false,
+          data: res
+        });
       });
     }
+  }
+
+  periodLabel(month: number, year: number): string {
+    const name = this.monthNames[Number(month) - 1] || String(month);
+    return `${name} ${year}`;
+  }
+
+  formatClosedAt(value: string | Date | null | undefined): string {
+    if (value == null || value === '') return 'No registrada';
+    const raw = String(value).trim();
+    // API actual (prod): DATE_FORMAT dd/MM/yyyy — DatePipe lo rompe si el día > 12
+    if (/^\d{2}\/\d{2}\/\d{4}/.test(raw)) return raw;
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return 'No registrada';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(parsed.getDate())}/${pad(parsed.getMonth() + 1)}/${parsed.getFullYear()} ${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+  }
+
+  private periodIndex(): number {
+    const idx = this.availablePeriods.findIndex(p => p.key === this.currentPeriodKey());
+    return idx < 0 ? this.availablePeriods.length - 2 : idx;
+  }
+
+  private resetTableView() {
+    this.searchQuery.set('');
+    this.pageIndex.set(0);
+  }
+
+  private buildPeriods() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 24, 1);
+    const count = 26;
+    const periods: { month: number; year: number; key: string; label: string }[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+      periods.push({
+        month: d.getMonth() + 1,
+        year: d.getFullYear(),
+        key: `${d.getFullYear()}-${d.getMonth() + 1}`,
+        label: `${this.monthNames[d.getMonth()]} ${d.getFullYear()}`
+      });
+    }
+
+    return periods;
   }
 }

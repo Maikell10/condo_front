@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,30 +15,60 @@ import { MatButtonModule } from '@angular/material/button';
   ],
   templateUrl: './report-view-modal.component.html',
   styles: [`
-    /* Estilos para que al imprimir solo salga el reporte y no los botones del modal */
+    :host {
+      display: flex;
+      flex-direction: column;
+      max-height: 85vh;
+    }
+
+    .report-dialog {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      max-height: 85vh;
+    }
+
+    .report-dialog-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: none;
+      overflow: auto;
+    }
+
     @media print {
+      :host,
+      .report-dialog {
+        max-height: none;
+      }
       .no-print {
         display: none !important;
+      }
+      .report-dialog-body {
+        overflow: visible !important;
+        max-height: none !important;
       }
       mat-dialog-container {
         box-shadow: none !important;
         padding: 0 !important;
       }
-      .max-w-4xl {
-        max-width: 100% !important;
-      }
     }
   `]
 })
 export class ReportViewModalComponent {
-  // Inyectamos la referencia del modal y los datos recibidos del componente padre
   public dialogRef = inject(MatDialogRef<ReportViewModalComponent>);
   public data = inject(MAT_DIALOG_DATA);
 
-  /**
-   * Dispara el diálogo de impresión del sistema.
-   * Gracias a los estilos CSS de arriba, se ocultarán los botones al generar el PDF.
-   */
+  private readonly monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  get periodLabel(): string {
+    const month = Number(this.data?.month);
+    const name = this.monthNames[month - 1] || String(this.data?.month ?? '');
+    return `${name} ${this.data?.year ?? ''}`.trim();
+  }
+
   printReport() {
     window.print();
   }

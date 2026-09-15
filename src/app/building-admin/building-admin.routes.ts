@@ -5,6 +5,11 @@ import { StatementsComponent } from './pages/statements/statements.component';
 export const BUILDING_ADMIN_ROUTES: Routes = [
     { path: '', component: DashboardComponent },
     {
+        path: 'kpi',
+        loadComponent: () =>
+            import('./pages/kpi/kpi.component').then(m => m.KpiComponent)
+    },
+    {
         path: 'apartments',
         loadComponent: () =>
             import('./pages/apartments/apartments.component').then(m => m.ApartmentsComponent)

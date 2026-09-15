@@ -10,6 +10,8 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatSelectModule } from '@angular/material/select'; // 🔥 Añadido
 import { MatTooltipModule } from '@angular/material/tooltip'; // 🔥 Añadido
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { BankAccountDialogComponent } from '../../modal/bank-account-dialog/bank-account-dialog.component';
 import { MatDividerModule } from '@angular/material/divider';
 
@@ -18,7 +20,8 @@ import { MatDividerModule } from '@angular/material/divider';
   standalone: true,
   imports: [
     CommonModule, MatCardModule, MatIconModule, MatButtonModule,
-    MatDialogModule, MatSnackBarModule, MatSelectModule, MatTooltipModule, MatDividerModule
+    MatDialogModule, MatSnackBarModule, MatSelectModule, MatTooltipModule, MatDividerModule,
+    MatFormFieldModule, MatInputModule
   ],
   templateUrl: './bank-accounts.component.html'
 })
@@ -35,6 +38,21 @@ export class BankAccountsComponent implements OnInit {
   selectedBuildingId = signal<number | 'ALL'>('ALL');
 
   accounts = signal<any[]>([]);
+  searchQuery = signal('');
+
+  filteredAccounts = computed(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    const data = this.accounts();
+    if (!query) return data;
+
+    const compactQuery = query.replace(/\s+/g, '');
+    return data.filter(acc => {
+      const bankName = String(acc.bank_name || '').toLowerCase();
+      const accountNumber = String(acc.account_number || '').toLowerCase();
+      const compactAccount = accountNumber.replace(/\s+/g, '');
+      return bankName.includes(query) || accountNumber.includes(query) || compactAccount.includes(compactQuery);
+    });
+  });
 
   ngOnInit() {
     this.initView();
@@ -61,6 +79,11 @@ export class BankAccountsComponent implements OnInit {
     this.selectedBuildingId.set(buildingId);
     this.accounts.set([]); // Limpiamos vista temporalmente
     this.loadAccounts();
+  }
+
+  onSearch(event: Event) {
+    const target = event.target as HTMLInputElement;
+    this.searchQuery.set(target.value);
   }
 
   loadAccounts() {
