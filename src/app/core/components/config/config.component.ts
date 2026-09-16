@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../../core/services/auth.service';
@@ -19,7 +20,7 @@ import { ConfigService } from '../../../core/services/config.service';
   imports: [
     CommonModule, ReactiveFormsModule, MatCardModule, MatSlideToggleModule,
     MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule,
-    MatDividerModule, MatSnackBarModule
+    MatDividerModule, MatSnackBarModule, MatRadioModule
   ],
   templateUrl: './config.component.html'
 })
@@ -35,7 +36,8 @@ export class ConfigComponent implements OnInit {
   // Formulario para BUILDING_ADMIN
   reserveForm: FormGroup = this.fb.group({
     hasReserveFund: [false],
-    reserveFundPercentage: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0.1), Validators.max(100)]]
+    reserveFundPercentage: [{ value: 0, disabled: true }, [Validators.required, Validators.min(0.1), Validators.max(100)]],
+    expenseSplitMode: ['BY_BUILDING']
   });
 
   // Formularios Demo para SUPER_ADMIN
@@ -72,7 +74,8 @@ export class ConfigComponent implements OnInit {
           const hasFund = Boolean(res.data.has_reserve_fund);
           this.reserveForm.patchValue({
             hasReserveFund: hasFund,
-            reserveFundPercentage: res.data.reserve_fund_percentage || 0
+            reserveFundPercentage: res.data.reserve_fund_percentage || 0,
+            expenseSplitMode: res.data.expense_split_mode === 'BY_APARTMENT' ? 'BY_APARTMENT' : 'BY_BUILDING'
           });
         }
       }

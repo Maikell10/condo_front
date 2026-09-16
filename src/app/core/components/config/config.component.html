@@ -59,6 +59,29 @@
                     </mat-form-field>
                 </div>
 
+                <div class="mt-8 p-6 rounded-xl border border-indigo-100 bg-indigo-50/40">
+                    <h3 class="font-bold text-gray-800 text-base m-0">Prorrateo de gastos del conjunto</h3>
+                    <p class="text-gray-500 text-sm m-0 mt-1 mb-4">
+                        Solo cambia esto si el conjunto tiene torres con distinta cantidad de apartamentos
+                        (por ejemplo un edificio que se partió en dos). El resto de conjuntos deja
+                        <strong>Por edificio</strong>.
+                    </p>
+                    <mat-radio-group formControlName="expenseSplitMode" class="flex flex-col gap-3">
+                        <mat-radio-button value="BY_BUILDING" color="primary">
+                            <span class="font-semibold text-gray-800">Por edificio (predeterminado)</span>
+                            <span class="block text-xs text-gray-500 font-normal mt-0.5">
+                                Divide el total en partes iguales entre las torres. Es el modo de los conjuntos regulares.
+                            </span>
+                        </mat-radio-button>
+                        <mat-radio-button value="BY_APARTMENT" color="primary">
+                            <span class="font-semibold text-gray-800">Por apartamento</span>
+                            <span class="block text-xs text-gray-500 font-normal mt-0.5">
+                                Cada unidad paga lo mismo. Una torre de 8 aptos recibe la mitad que una de 16.
+                            </span>
+                        </mat-radio-button>
+                    </mat-radio-group>
+                </div>
+
                 <mat-divider class="my-6"></mat-divider>
 
                 <div class="flex justify-end mt-5">

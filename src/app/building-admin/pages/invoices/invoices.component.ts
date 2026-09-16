@@ -70,6 +70,7 @@ export class InvoicesComponent implements OnInit {
 
   hasReserveFund = signal<boolean>(false);
   reserveFundPercentage = signal<number>(0);
+  expenseSplitByApartment = signal<boolean>(false);
 
   displayedColumns = computed(() => {
     const baseCols = ['code', 'provider', 'amount', 'date', 'type', 'actions'];
@@ -143,6 +144,7 @@ export class InvoicesComponent implements OnInit {
         if (res.data) {
           this.hasReserveFund.set(Boolean(res.data.has_reserve_fund));
           this.reserveFundPercentage.set(Number(res.data.reserve_fund_percentage || 0));
+          this.expenseSplitByApartment.set(res.data.expense_split_mode === 'BY_APARTMENT');
         }
       }
     });
