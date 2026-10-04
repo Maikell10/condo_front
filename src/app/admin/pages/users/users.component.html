@@ -1,113 +1,174 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+<div class="users-page space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
 
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-black text-gray-900 tracking-tight">Usuarios</h1>
-            <p class="text-gray-500 mt-1">Gestión centralizada de accesos y roles del ecosistema Latitud.</p>
+  <div class="users-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+      <div>
+        <div class="text-violet-200 text-xs font-bold uppercase tracking-wider mb-2">Accesos del ecosistema</div>
+        <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Usuarios</h1>
+        <p class="text-violet-100/90 mt-2 mb-0 max-w-2xl">
+          Búsqueda, filtros y paginación server-side para administrar miles de cuentas sin ralentizar el panel.
+        </p>
+      </div>
+      <button mat-flat-button class="!bg-white !text-violet-900 !rounded-xl h-12 px-6 font-bold shrink-0"
+        (click)="openDialog()">
+        <mat-icon>person_add</mat-icon> Nuevo usuario
+      </button>
+    </div>
+  </div>
+
+  <div class="stat-cards-grid">
+    @for (card of statCards(); track card.id; let i = $index) {
+      <mat-card
+        class="stat-card stat-card--{{ card.variant }}"
+        [@statCardIn]="{ params: { delay: i * 85 } }">
+        <div class="stat-card__shine" aria-hidden="true"></div>
+        <div class="stat-card__top">
+          <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <span class="stat-card__chip" [ngClass]="card.chipClass">{{ card.chip }}</span>
         </div>
+        <div class="stat-card__label">{{ card.label }}</div>
+        <div class="stat-card__value" [@statValuePop]="card.value">{{ card.value | number }}</div>
+      </mat-card>
+    }
+  </div>
 
-        <button (click)="openDialog()" mat-flat-button color="primary" class="h-14 px-6 rounded-xl font-bold shadow-lg">
-            <mat-icon class="mr-2">person_add</mat-icon>
-            Registrar Nuevo Usuario
+  <mat-card class="!rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+    <div class="flex flex-col lg:flex-row gap-3 lg:items-center">
+      <mat-form-field appearance="outline" class="w-full lg:flex-1 !mb-0">
+        <mat-label>Buscar por nombre o correo</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
+          placeholder="Ej. García, admin@..." />
+        <button *ngIf="searchQuery()" matSuffix mat-icon-button type="button" (click)="onSearchChange('')">
+          <mat-icon>close</mat-icon>
         </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full lg:w-48 !mb-0">
+        <mat-label>Rol</mat-label>
+        <mat-select [ngModel]="roleFilter()" (ngModelChange)="onRoleFilterChange($event)">
+          <mat-option value="ALL">Todos</mat-option>
+          <mat-option value="SUPER_ADMIN">Super admin</mat-option>
+          <mat-option value="BUILDING_ADMIN">Admin edificio</mat-option>
+          <mat-option value="OWNER">Propietario</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full lg:w-44 !mb-0">
+        <mat-label>Estado</mat-label>
+        <mat-select [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)">
+          <mat-option value="ALL">Todos</mat-option>
+          <mat-option value="ACTIVE">Activos</mat-option>
+          <mat-option value="INACTIVE">Inactivos</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="flex gap-2 shrink-0">
+        <button mat-stroked-button type="button" class="!rounded-xl h-[56px]" (click)="clearFilters()">Limpiar</button>
+        <button mat-stroked-button type="button" class="!rounded-xl h-[56px]" (click)="loadUsers()">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-3">
-        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
-            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl"><mat-icon>group</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Total Usuarios</div>
-                <div class="text-2xl font-black text-gray-800">{{ total() }}</div>
-            </div>
-        </mat-card>
+    <div class="mt-4 pt-3 border-t border-gray-100 text-sm text-gray-500">
+      Mostrando página <strong class="text-gray-800">{{ pageIndex() + 1 }}</strong> —
+      <strong class="text-gray-800">{{ listTotal() | number }}</strong> coincidencias con el filtro actual
+    </div>
+  </mat-card>
 
-        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
-            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><mat-icon>check_circle</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Cuentas Activas</div>
-                <div class="text-2xl font-black text-gray-800">{{ active() }}</div>
-            </div>
-        </mat-card>
+  <div *ngIf="loadError()" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 text-sm">
+    {{ loadError() }}
+  </div>
 
-        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
-            <div class="p-3 bg-rose-50 text-rose-600 rounded-xl"><mat-icon>block</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Baneados / Inactivos</div>
-                <div class="text-2xl font-black text-gray-800">{{ inactive() }}</div>
-            </div>
-        </mat-card>
+  <mat-card *ngIf="!loadError()"
+    class="table-panel premium-card !rounded-2xl">
+    <div class="table-panel__head">
+      <h3 class="m-0 font-bold text-gray-800">Directorio de usuarios</h3>
+      <span class="text-xs text-gray-500">{{ listTotal() | number }} en total</span>
     </div>
 
-    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white">
-        <div class="overflow-x-auto">
-            <table mat-table [dataSource]="users()" class="w-full">
+    <div class="table-panel__body" [class.table-panel__body--loading]="loading()">
+      <div *ngIf="loading()" class="table-panel__loading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+      <div class="overflow-x-auto">
+      <table mat-table [dataSource]="users()" class="w-full min-w-[920px]">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let u" class="font-semibold text-gray-900">{{ u.name }}</td>
+        </ng-container>
 
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
-                        Nombre</th>
-                    <td mat-cell *matCellDef="let u" class="font-bold text-gray-800"> {{ u.name }} </td>
-                </ng-container>
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Correo</th>
+          <td mat-cell *matCellDef="let u" class="text-gray-600 text-sm">{{ u.email }}</td>
+        </ng-container>
 
-                <ng-container matColumnDef="email">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Email
-                    </th>
-                    <td mat-cell *matCellDef="let u" class="text-gray-500 text-sm"> {{ u.email }} </td>
-                </ng-container>
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef>Rol</th>
+          <td mat-cell *matCellDef="let u">
+            <span class="role-pill" [ngClass]="{
+              'role-pill--super': u.role === 'SUPER_ADMIN',
+              'role-pill--admin': u.role === 'BUILDING_ADMIN',
+              'role-pill--owner': u.role === 'OWNER'
+            }">{{ roleLabel(u.role) }}</span>
+          </td>
+        </ng-container>
 
-                <ng-container matColumnDef="role">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Rol</th>
-                    <td mat-cell *matCellDef="let u">
-                        <span class="px-2 py-1 rounded text-[10px] font-black uppercase" [ngClass]="{
-                    'bg-blue-100 text-blue-700': u.role === 'SUPER_ADMIN',
-                    'bg-purple-100 text-purple-700': u.role === 'BUILDING_ADMIN',
-                    'bg-amber-100 text-amber-700': u.role === 'OWNER'
-                  }">
-                            {{ u.role }}
-                        </span>
-                    </td>
-                </ng-container>
+        <ng-container matColumnDef="building">
+          <th mat-header-cell *matHeaderCellDef>Ámbito</th>
+          <td mat-cell *matCellDef="let u" class="text-gray-500 text-xs max-w-[220px]">
+            <span class="line-clamp-2">{{ u.buildingName || '—' }}</span>
+          </td>
+        </ng-container>
 
-                <ng-container matColumnDef="building">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Edificio
-                    </th>
-                    <td mat-cell *matCellDef="let u" class="text-gray-400 text-xs italic">
-                        {{ u.buildingName || 'Sistema Central' }}
-                    </td>
-                </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Estado</th>
+          <td mat-cell *matCellDef="let u">
+            <span class="status-pill" [class.status-pill--active]="u.status === 'ACTIVE'">
+              {{ u.status === 'ACTIVE' ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+        </ng-container>
 
-                <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Estado
-                    </th>
-                    <td mat-cell *matCellDef="let u">
-                        <div class="flex items-center gap-1"
-                            [ngClass]="u.status === 'ACTIVE' ? 'text-emerald-600' : 'text-rose-600'">
-                            <mat-icon class="text-sm scale-75">{{ u.status === 'ACTIVE' ? 'check_circle' : 'cancel'
-                                }}</mat-icon>
-                            <span class="text-[10px] font-bold uppercase">{{ u.status === 'ACTIVE' ? 'Activo' :
-                                'Inactivo' }}</span>
-                        </div>
-                    </td>
-                </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let u" class="text-right">
+            <button mat-icon-button
+              [matTooltip]="u.status === 'ACTIVE' ? 'Desactivar usuario' : 'Activar usuario'"
+              (click)="toggleStatus(u)">
+              <mat-icon [class.text-rose-500]="u.status === 'ACTIVE'" [class.text-emerald-600]="u.status !== 'ACTIVE'">
+                {{ u.status === 'ACTIVE' ? 'person_off' : 'person_add' }}
+              </mat-icon>
+            </button>
+            <button mat-icon-button matTooltip="Editar" (click)="openDialog(u)">
+              <mat-icon class="text-gray-400">edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
 
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef class="text-right pr-6"></th>
-                    <td mat-cell *matCellDef="let u" class="text-right pr-4">
-                        <button mat-icon-button (click)="toggleStatus(u)"
-                            [matTooltip]="u.status === 'ACTIVE' ? 'Desactivar usuario' : 'Activar usuario'"
-                            [ngClass]="u.status === 'ACTIVE' ? 'text-rose-400' : 'text-emerald-400'">
-                            <mat-icon>{{ u.status === 'ACTIVE' ? 'person_off' : 'person_add' }}</mat-icon>
-                        </button>
-                        <button (click)="openDialog(u)" mat-icon-button class="text-gray-300">
-                            <mat-icon>edit</mat-icon>
-                        </button>
-                    </td>
-                </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns" class="row-hover"></tr>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                    class="hover:bg-gray-50/50 transition-colors"></tr>
-            </table>
-        </div>
-    </mat-card>
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell py-10 text-center text-gray-500" [attr.colspan]="displayedColumns.length">
+            No hay usuarios con estos filtros.
+          </td>
+        </tr>
+      </table>
+      </div>
+    </div>
+
+    <mat-paginator
+      class="users-paginator border-t border-gray-100"
+      [length]="listTotal()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[10, 25, 50, 100]"
+      [showFirstLastButtons]="true"
+      [disabled]="loading()"
+      (page)="onPage($event)">
+    </mat-paginator>
+  </mat-card>
 
 </div>

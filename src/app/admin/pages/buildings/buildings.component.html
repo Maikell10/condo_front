@@ -1,110 +1,326 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+<div class="buildings-page space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
 
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-black text-gray-900 tracking-tight italic">Edificios</h1>
-            <p class="text-gray-500 mt-1">Control global de los condominios registrados en el sistema.</p>
+  <div class="buildings-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+      <div>
+        <div class="text-indigo-200 text-xs font-bold uppercase tracking-wider mb-2">Administración global</div>
+        <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Edificios y conjuntos</h1>
+        <p class="text-indigo-100/90 mt-2 mb-0 max-w-2xl">
+          Torres y recintos agrupados por conjunto residencial. Filtra, revisa administradores y unidades.
+        </p>
+      </div>
+      <button mat-flat-button class="!bg-white !text-indigo-900 !rounded-xl h-12 px-6 font-bold shrink-0"
+        (click)="openDialog()">
+        <mat-icon>domain_add</mat-icon> Nuevo edificio
+      </button>
+    </div>
+  </div>
+
+  <div class="stat-cards-grid">
+    @for (card of statCards(); track card.id; let i = $index) {
+      <mat-card
+        class="stat-card stat-card--{{ card.variant }}"
+        [@statCardIn]="{ params: { delay: i * 85 } }">
+        <div class="stat-card__shine" aria-hidden="true"></div>
+        <div class="stat-card__top">
+          <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <span class="stat-card__chip" [ngClass]="card.chipClass">{{ card.chip }}</span>
         </div>
+        <div class="stat-card__label">{{ card.label }}</div>
+        <div class="stat-card__value" [@statValuePop]="card.value">{{ card.value }}</div>
+      </mat-card>
+    }
+  </div>
 
-        <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl font-bold shadow-lg" (click)="openDialog()">
-            <mat-icon class="mr-2">domain_add</mat-icon>
-            Nuevo Edificio
+  <mat-card class="!rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+    <div class="flex flex-col lg:flex-row gap-3 lg:items-center">
+      <mat-form-field appearance="outline" class="w-full lg:flex-1 !mb-0">
+        <mat-label>Buscar edificio, código, admin o conjunto</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
+          placeholder="Ej. Istmo, TORRE-A, admin@..." />
+        <button *ngIf="searchQuery()" matSuffix mat-icon-button type="button" (click)="searchQuery.set('')">
+          <mat-icon>close</mat-icon>
         </button>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full lg:w-44 !mb-0">
+        <mat-label>Estado</mat-label>
+        <mat-select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <mat-option value="ALL">Todos</mat-option>
+          <mat-option value="ACTIVE">Activos</mat-option>
+          <mat-option value="INACTIVE">Suspendidos</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full lg:w-56 !mb-0">
+        <mat-label>Conjunto</mat-label>
+        <mat-select [ngModel]="complexFilter()" (ngModelChange)="complexFilter.set($event)">
+          <mat-option value="ALL">Todos</mat-option>
+          <mat-option value="none">Sin conjunto</mat-option>
+          <mat-option *ngFor="let c of complexes()" [value]="'' + c.id">{{ c.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <div class="flex gap-2 shrink-0">
+        <button mat-stroked-button type="button" class="!rounded-xl h-[56px]" (click)="clearFilters()">Limpiar</button>
+        <button mat-stroked-button type="button" class="!rounded-xl h-[56px]" (click)="loadBuildings()">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
     </div>
 
-    <div class="grid gap-6 md:grid-cols-3">
-        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
-            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl"><mat-icon>location_city</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Total Edificios</div>
-                <div class="text-2xl font-black text-gray-800">{{ total() }}</div>
-            </div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
-            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><mat-icon>verified</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Activos</div>
-                <div class="text-2xl font-black text-gray-800">{{ active() }}</div>
-            </div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm rounded-2xl flex items-center gap-4 bg-white">
-            <div class="p-3 bg-rose-50 text-rose-600 rounded-xl"><mat-icon>domain_disabled</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Suspendidos</div>
-                <div class="text-2xl font-black text-gray-800">{{ inactive() }}</div>
-            </div>
-        </mat-card>
+    <div class="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100">
+      <span class="text-sm text-gray-500">
+        Mostrando <strong class="text-gray-800">{{ totalFiltered() }}</strong> de {{ total() }} edificios
+      </span>
+      <div class="view-toggle">
+        <button type="button" [class.active]="viewMode() === 'grouped'" (click)="viewMode.set('grouped')">
+          <mat-icon>view_agenda</mat-icon> Por conjunto
+        </button>
+        <button type="button" [class.active]="viewMode() === 'table'" (click)="viewMode.set('table')">
+          <mat-icon>table_rows</mat-icon> Tabla
+        </button>
+      </div>
     </div>
+  </mat-card>
 
-    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white">
-        <div class="overflow-x-auto">
-            <table mat-table [dataSource]="buildings()" class="w-full">
+  <div *ngIf="loadError()" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 text-sm">
+    {{ loadError() }}
+  </div>
 
-                <ng-container matColumnDef="code">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
-                        Código</th>
-                    <td mat-cell *matCellDef="let b" class="font-mono font-bold text-indigo-600"> {{ b.code }} </td>
-                </ng-container>
+  <div *ngIf="loading()" class="flex justify-center py-16">
+    <mat-spinner diameter="44"></mat-spinner>
+  </div>
 
-                <ng-container matColumnDef="name">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Nombre
-                    </th>
-                    <td mat-cell *matCellDef="let b" class="font-bold text-gray-800"> {{ b.name }} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="admin">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">
-                        Administrador</th>
-                    <td mat-cell *matCellDef="let b" class="text-gray-500 text-sm"> {{ b.adminEmail || 'Sin asignar' }}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="apartments">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Unidades
-                    </th>
-                    <td mat-cell *matCellDef="let b" class="text-gray-900 font-medium"> {{ b.totalApartments }} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Estado
-                    </th>
-                    <td mat-cell *matCellDef="let b">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase"
-                            [ngClass]="b.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'">
-                            {{ b.status === 'ACTIVE' ? 'Activo' : 'Suspendido' }}
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef class="text-right pr-6"></th>
-                    <td mat-cell *matCellDef="let b" class="text-right pr-4">
-
-                        <button mat-icon-button class="text-blue-400 hover:text-blue-600 transition-colors mr-1"
-                            [matTooltip]="b.adminEmail ? 'Cambiar Administrador' : 'Asignar Administrador'"
-                            (click)="openAssignAdmin(b)">
-                            <mat-icon>{{ b.adminEmail ? 'manage_accounts' : 'person_add' }}</mat-icon>
-                        </button>
-
-                        <button mat-icon-button (click)="toggleStatus(b)"
-                            [matTooltip]="b.status === 'ACTIVE' ? 'Suspender edificio' : 'Activar edificio'"
-                            [ngClass]="b.status === 'ACTIVE' ? 'text-rose-400' : 'text-emerald-400'">
-                            <mat-icon>{{ b.status === 'ACTIVE' ? 'block' : 'check_circle' }}</mat-icon>
-                        </button>
-                        <button mat-icon-button class="text-gray-300 hover:text-indigo-500 transition-colors"
-                            (click)="openDialog(b)">
-                            <mat-icon>edit</mat-icon>
-                        </button>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                    class="hover:bg-gray-50/50 transition-colors"></tr>
-            </table>
+  <ng-container *ngIf="!loading() && viewMode() === 'grouped'">
+    <div *ngIf="groupedComplexes().length; else emptyState" class="conjunto-layout">
+      <div>
+        <p class="conjunto-layout__hint m-0 mb-3 text-sm text-gray-500">
+          Elige un conjunto para ver sus edificios. Toca otro card para cambiar al instante.
+        </p>
+        <div class="conjunto-picker">
+          <button
+            type="button"
+            *ngFor="let group of groupedComplexes()"
+            class="conjunto-card"
+            [class.conjunto-card--active]="selectedGroupKey() === group.key"
+            [class.conjunto-card--suspended]="group.complexId != null && isComplexFullySuspended(group)"
+            (click)="selectComplexGroup(group.key)">
+            <div class="conjunto-card__icon">
+              <mat-icon>{{ group.complexId ? 'holiday_village' : 'apartment' }}</mat-icon>
+            </div>
+            <div class="conjunto-card__body min-w-0">
+              <div class="conjunto-card__title">{{ group.complexName }}</div>
+              <div *ngIf="group.complexAddress" class="conjunto-card__addr">{{ group.complexAddress }}</div>
+              <div class="conjunto-card__meta">
+                <span>{{ group.buildings.length }} edificios</span>
+                <span>{{ groupActiveCount(group) }} activos</span>
+                <span>{{ groupTotalUnits(group) }} unidades</span>
+              </div>
+            </div>
+            <mat-icon class="conjunto-card__chev">chevron_right</mat-icon>
+          </button>
         </div>
-    </mat-card>
+      </div>
 
+      <div class="conjunto-detail" *ngIf="selectedGroup() as group" [@panelSwap]="selectedGroupKey()">
+        <mat-card class="table-panel premium-card overflow-hidden !rounded-2xl">
+          <div class="table-panel__head table-panel__head--complex">
+            <div class="min-w-0 flex-1">
+              <h3 class="m-0 font-bold text-gray-900 truncate">{{ group.complexName }}</h3>
+              <p *ngIf="group.complexAddress" class="m-0 mt-1 text-xs text-gray-500 truncate">{{ group.complexAddress }}</p>
+            </div>
+            <div class="complex-head-actions">
+              <span class="complex-badge">{{ group.buildings.length }} edificio(s)</span>
+              @if (group.complexId != null) {
+                @if (!isComplexFullySuspended(group)) {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    class="complex-action-btn complex-action-btn--warn !rounded-xl"
+                    [disabled]="complexActionId() === group.complexId"
+                    (click)="suspendComplexGroup(group)">
+                    <mat-icon>block</mat-icon>
+                    Suspender conjunto
+                  </button>
+                }
+                @if (!isComplexFullyActive(group)) {
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    type="button"
+                    class="complex-action-btn !rounded-xl"
+                    [disabled]="complexActionId() === group.complexId"
+                    (click)="activateComplexGroup(group)">
+                    <mat-icon>check_circle</mat-icon>
+                    Activar conjunto
+                  </button>
+                }
+              }
+            </div>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table mat-table [dataSource]="group.buildings" class="w-full min-w-[880px]">
+              <ng-container matColumnDef="code">
+                <th mat-header-cell *matHeaderCellDef>Código</th>
+                <td mat-cell *matCellDef="let b" class="font-mono font-bold text-indigo-600">{{ b.code }}</td>
+              </ng-container>
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Edificio</th>
+                <td mat-cell *matCellDef="let b" class="font-semibold text-gray-900">{{ b.name }}</td>
+              </ng-container>
+              <ng-container matColumnDef="admin">
+                <th mat-header-cell *matHeaderCellDef>Administrador</th>
+                <td mat-cell *matCellDef="let b">
+                  <div class="admin-cell">
+                    <div class="admin-cell__row">
+                      <span class="text-sm text-gray-700">{{ b.adminName || 'Sin asignar' }}</span>
+                      @if (b.adminEmail && adminStatusLabel(b.adminStatus); as adminLabel) {
+                        <span
+                          class="admin-status-pill"
+                          [class.admin-status-pill--active]="b.adminStatus === 'ACTIVE'"
+                          [class.admin-status-pill--inactive]="b.adminStatus !== 'ACTIVE'"
+                          [matTooltip]="b.adminStatus === 'ACTIVE'
+                            ? 'La cuenta del administrador puede iniciar sesión'
+                            : 'Cuenta inactiva — no puede acceder al panel'">
+                          {{ adminLabel }}
+                        </span>
+                      }
+                    </div>
+                    <div class="text-xs text-gray-400">{{ b.adminEmail || '—' }}</div>
+                  </div>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="apartments">
+                <th mat-header-cell *matHeaderCellDef>Unidades</th>
+                <td mat-cell *matCellDef="let b" class="font-medium">{{ b.totalApartments }}</td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef matTooltip="Operación del edificio en la plataforma">Edificio</th>
+                <td mat-cell *matCellDef="let b">
+                  <span class="status-pill" [class.status-pill--active]="b.status === 'ACTIVE'">
+                    {{ b.status === 'ACTIVE' ? 'Activo' : 'Suspendido' }}
+                  </span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let b" class="text-right">
+                  <button mat-icon-button [matTooltip]="b.adminEmail ? 'Cambiar admin' : 'Asignar admin'"
+                    (click)="openAssignAdmin(b)">
+                    <mat-icon>{{ b.adminEmail ? 'manage_accounts' : 'person_add' }}</mat-icon>
+                  </button>
+                  <button mat-icon-button [matTooltip]="b.status === 'ACTIVE' ? 'Suspender' : 'Activar'"
+                    (click)="toggleStatus(b)">
+                    <mat-icon>{{ b.status === 'ACTIVE' ? 'block' : 'check_circle' }}</mat-icon>
+                  </button>
+                  <button mat-icon-button matTooltip="Editar" (click)="openDialog(b)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="groupedDetailColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: groupedDetailColumns" class="row-hover"></tr>
+            </table>
+          </div>
+        </mat-card>
+      </div>
+    </div>
+  </ng-container>
+
+  <mat-card *ngIf="!loading() && viewMode() === 'table' && filteredBuildings().length"
+    class="table-panel premium-card overflow-hidden !rounded-2xl">
+    <div class="table-panel__head">
+      <h3 class="m-0 font-bold text-gray-800">Listado general</h3>
+      <span class="text-xs text-gray-500">{{ totalFiltered() }} resultados</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table mat-table [dataSource]="paginatedTableRows()" class="w-full min-w-[1000px]">
+        <ng-container matColumnDef="code">
+          <th mat-header-cell *matHeaderCellDef>Código</th>
+          <td mat-cell *matCellDef="let b" class="font-mono font-bold text-indigo-600">{{ b.code }}</td>
+        </ng-container>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Edificio</th>
+          <td mat-cell *matCellDef="let b" class="font-semibold">{{ b.name }}</td>
+        </ng-container>
+        <ng-container matColumnDef="complex">
+          <th mat-header-cell *matHeaderCellDef>Conjunto residencial</th>
+          <td mat-cell *matCellDef="let b">
+            <div class="font-medium text-gray-800">{{ b.complexName || 'Sin conjunto' }}</div>
+            <div *ngIf="b.complexAddress" class="text-xs text-gray-400">{{ b.complexAddress }}</div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="admin">
+          <th mat-header-cell *matHeaderCellDef>Administrador</th>
+          <td mat-cell *matCellDef="let b">
+            <div class="admin-cell">
+              <div class="admin-cell__row">
+                <span class="text-sm">{{ b.adminName || 'Sin asignar' }}</span>
+                @if (b.adminEmail && adminStatusLabel(b.adminStatus); as adminLabel) {
+                  <span
+                    class="admin-status-pill"
+                    [class.admin-status-pill--active]="b.adminStatus === 'ACTIVE'"
+                    [class.admin-status-pill--inactive]="b.adminStatus !== 'ACTIVE'"
+                    [matTooltip]="b.adminStatus === 'ACTIVE'
+                      ? 'La cuenta del administrador puede iniciar sesión'
+                      : 'Cuenta inactiva — no puede acceder al panel'">
+                    {{ adminLabel }}
+                  </span>
+                }
+              </div>
+              <div class="text-xs text-gray-400">{{ b.adminEmail || '—' }}</div>
+            </div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="apartments">
+          <th mat-header-cell *matHeaderCellDef>Unidades</th>
+          <td mat-cell *matCellDef="let b">{{ b.totalApartments }}</td>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef matTooltip="Operación del edificio en la plataforma">Edificio</th>
+          <td mat-cell *matCellDef="let b">
+            <span class="status-pill" [class.status-pill--active]="b.status === 'ACTIVE'">
+              {{ b.status === 'ACTIVE' ? 'Activo' : 'Suspendido' }}
+            </span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let b" class="text-right">
+            <button mat-icon-button (click)="openAssignAdmin(b)"><mat-icon>manage_accounts</mat-icon></button>
+            <button mat-icon-button (click)="toggleStatus(b)"><mat-icon>sync</mat-icon></button>
+            <button mat-icon-button (click)="openDialog(b)"><mat-icon>edit</mat-icon></button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+    <mat-paginator
+      class="border-t border-gray-100"
+      [length]="totalFiltered()"
+      [pageIndex]="pageIndex()"
+      [pageSize]="pageSize()"
+      [pageSizeOptions]="[5, 10, 25, 50]"
+      (page)="onTablePage($event)"
+      showFirstLastButtons />
+  </mat-card>
+
+  <mat-card *ngIf="!loading() && viewMode() === 'table' && !filteredBuildings().length"
+    class="!rounded-2xl p-10 text-center text-gray-500">
+    <mat-icon class="!text-5xl !w-12 !h-12 mb-2 opacity-30">search_off</mat-icon>
+    <p class="m-0 font-medium">No hay edificios con estos filtros.</p>
+    <button mat-button color="primary" class="mt-3" (click)="clearFilters()">Limpiar filtros</button>
+  </mat-card>
+
+  <ng-template #emptyState>
+    <mat-card class="!rounded-2xl p-10 text-center text-gray-500">
+      <mat-icon class="!text-5xl !w-12 !h-12 mb-2 opacity-30">search_off</mat-icon>
+      <p class="m-0 font-medium">No hay edificios con estos filtros.</p>
+      <button mat-button color="primary" class="mt-3" (click)="clearFilters()">Limpiar filtros</button>
+    </mat-card>
+  </ng-template>
 </div>
