@@ -1,24 +1,5 @@
 <div class="landing-page">
-  <nav class="landing-nav" [class.is-scrolled]="navScrolled()">
-    <div class="landing-nav__inner">
-      <div class="landing-brand">
-        <img src="/LOGO_SN1.png" alt="Logo Condominio A Un Clic" />
-        <span>Condominio <em>A Un Clic</em></span>
-      </div>
-
-      <div class="landing-nav__links">
-        <a href="#features">Características</a>
-        <a href="#benefits">Beneficios</a>
-        <a href="#contact">Contacto</a>
-      </div>
-
-      <a routerLink="/login">
-        <button mat-flat-button color="primary" class="rounded-xl px-6 h-12 font-bold shadow-lg shadow-indigo-200">
-          Iniciar Sesión
-        </button>
-      </a>
-    </div>
-  </nav>
+  <app-landing-nav />
 
   <section class="landing-hero">
     <div class="landing-hero__bg"></div>

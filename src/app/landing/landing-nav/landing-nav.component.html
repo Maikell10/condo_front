@@ -1,0 +1,20 @@
+<nav class="landing-nav" [class.is-scrolled]="navScrolled()">
+  <div class="landing-nav__inner">
+    <a routerLink="/" class="landing-brand !no-underline">
+      <img src="/LOGO_SN1.png" alt="Logo Condominio A Un Clic" />
+      <span>Condominio <em>A Un Clic</em></span>
+    </a>
+
+    <div class="landing-nav__links">
+      <a routerLink="/" fragment="features">Características</a>
+      <a routerLink="/" fragment="benefits">Beneficios</a>
+      <a routerLink="/" fragment="contact">Contacto</a>
+    </div>
+
+    <a routerLink="/login">
+      <button mat-flat-button color="primary" class="rounded-xl px-6 h-12 font-bold shadow-lg shadow-indigo-200">
+        Iniciar Sesión
+      </button>
+    </a>
+  </div>
+</nav>

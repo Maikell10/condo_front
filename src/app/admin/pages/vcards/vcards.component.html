@@ -1,0 +1,155 @@
+<div class="vcards-page space-y-6 max-w-[1500px] mx-auto pb-12 px-4 sm:px-6">
+
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-black text-gray-900 m-0">Tarjetas digitales (vCard)</h1>
+      <p class="text-gray-500 mt-1 mb-0 max-w-2xl">
+        Crea tu tarjeta con foto, compártela o imprime el QR en material físico. Al escanear, el cliente abre
+        <strong class="text-indigo-700">condominioaunclic.online/vcard/id</strong> con la misma vista profesional.
+      </p>
+    </div>
+    <button mat-flat-button color="primary" class="!rounded-xl h-12 font-bold" (click)="startNewCard()">
+      <mat-icon>add</mat-icon> Nueva tarjeta
+    </button>
+  </div>
+
+  <div *ngIf="loadError()" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 text-sm">
+    {{ loadError() }}
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+
+    <mat-card class="xl:col-span-3 !rounded-2xl !shadow-sm border border-gray-100 overflow-hidden">
+      <div class="px-5 py-4 border-b bg-gray-50 flex justify-between items-center">
+        <h2 class="font-bold m-0">Mis tarjetas</h2>
+        <span class="text-xs text-gray-400 font-bold">{{ cards().length }}</span>
+      </div>
+      <div class="p-3 space-y-2 max-h-[640px] overflow-y-auto" *ngIf="!loading(); else listLoading">
+        <button type="button" *ngFor="let card of cards()" (click)="openCard(card)"
+          class="vcard-list-item w-full text-left p-4 rounded-xl border transition-all"
+          [class.vcard-list-item--active]="selectedId() === card.id && !isCreating()">
+          <div class="font-bold text-gray-900 truncate">{{ card.label }}</div>
+          <div class="text-sm text-gray-500 truncate">{{ card.contact.fullName }}</div>
+          <div class="text-xs text-indigo-600 mt-1 truncate" *ngIf="card.isPublished !== false">
+            /vcard/{{ card.id }}
+          </div>
+        </button>
+        <p *ngIf="!cards().length" class="text-sm text-gray-500 p-4 text-center m-0">
+          Crea tu primera tarjeta con tu foto y datos reales.
+        </p>
+      </div>
+      <ng-template #listLoading>
+        <p class="p-6 text-gray-400 text-sm m-0">Cargando…</p>
+      </ng-template>
+    </mat-card>
+
+    <mat-card class="xl:col-span-5 !rounded-2xl !shadow-sm border border-gray-100 p-6">
+      <h2 class="text-lg font-bold mt-0 mb-4">{{ isCreating() ? 'Nueva tarjeta' : 'Editar tarjeta' }}</h2>
+
+      <form [formGroup]="editorForm" class="space-y-3" (ngSubmit)="saveCard()">
+        <div class="photo-upload">
+          <div class="photo-upload__preview">
+            <img *ngIf="photoPreview(); else noPhoto" [src]="photoPreview()" alt="Foto perfil" />
+            <ng-template #noPhoto>
+              <mat-icon>account_circle</mat-icon>
+            </ng-template>
+          </div>
+          <div>
+            <label class="photo-upload__btn">
+              <input type="file" accept="image/jpeg,image/png,image/webp" hidden (change)="onPhotoSelected($event)" />
+              <mat-icon>upload</mat-icon> Subir mi foto
+            </label>
+            <button type="button" mat-button *ngIf="photoPreview()" (click)="clearPhoto()">Quitar foto</button>
+            <p class="text-xs text-gray-500 m-0 mt-1">Aparece en la tarjeta y en el contacto .vcf</p>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Nombre interno</mat-label>
+          <input matInput formControlName="label" />
+        </mat-form-field>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Uso</mat-label>
+            <mat-select formControlName="usage">
+              <mat-option *ngFor="let u of usageOptions" [value]="u">{{ usageLabels[u] }}</mat-option>
+            </mat-select>
+            <mat-hint>{{ usageHint() }}</mat-hint>
+          </mat-form-field>
+          <div class="flex items-center px-2">
+            <mat-slide-toggle formControlName="isPublished" color="primary">Publicada (QR activo)</mat-slide-toggle>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Nombre en tarjeta</mat-label>
+            <input matInput formControlName="fullName" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Organización</mat-label>
+            <input matInput formControlName="organization" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Cargo</mat-label>
+          <input matInput formControlName="title" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Frase / tagline</mat-label>
+          <input matInput formControlName="tagline" placeholder="Ej. mensaje aquí" />
+        </mat-form-field>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Correo</mat-label>
+            <input matInput type="email" formControlName="email" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Móvil</mat-label>
+            <input matInput formControlName="cellPhone" />
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Web</mat-label>
+          <input matInput formControlName="website" />
+        </mat-form-field>
+
+        <details class="social-details">
+          <summary>Redes sociales (opcional)</summary>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+            <mat-form-field appearance="outline" class="w-full"><mat-label>LinkedIn URL</mat-label><input matInput formControlName="linkedin" /></mat-form-field>
+            <mat-form-field appearance="outline" class="w-full"><mat-label>Instagram URL</mat-label><input matInput formControlName="instagram" /></mat-form-field>
+            <mat-form-field appearance="outline" class="w-full"><mat-label>TikTok URL</mat-label><input matInput formControlName="tiktok" /></mat-form-field>
+            <mat-form-field appearance="outline" class="w-full"><mat-label>GitHub URL</mat-label><input matInput formControlName="github" /></mat-form-field>
+          </div>
+        </details>
+
+        <div class="flex flex-wrap gap-2 justify-end pt-2">
+          <button mat-stroked-button type="button" (click)="duplicateSelected()" [disabled]="!selectedId()">Duplicar</button>
+          <button mat-stroked-button type="button" color="warn" (click)="deleteSelected()" [disabled]="!selectedId()">Eliminar</button>
+          <button mat-stroked-button type="button" (click)="downloadCurrent()">Descargar .vcf</button>
+          <button mat-stroked-button type="button" (click)="copyPublicLink()" [disabled]="selectedId() == null">Copiar enlace</button>
+          <button mat-stroked-button type="button" (click)="openPublicPage()" [disabled]="selectedId() == null">Ver pública</button>
+          <button mat-flat-button color="primary" type="submit" class="font-bold" [disabled]="editorForm.invalid || saving()">
+            {{ saving() ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </mat-card>
+
+    <div class="xl:col-span-4 xl:sticky xl:top-4">
+      <p class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 px-1">Vista previa + QR</p>
+      <div class="preview-frame rounded-2xl overflow-hidden">
+        <app-vcard-showcase
+          [contact]="previewContact()"
+          [cardId]="selectedId()"
+          [embedded]="true" />
+      </div>
+    </div>
+  </div>
+</div>

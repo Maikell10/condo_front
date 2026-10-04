@@ -2,7 +2,6 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
-  HostListener,
   OnDestroy,
   inject,
   signal
@@ -14,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { API_URL_BASE } from '../../core/constants';
+import { LandingNavComponent } from '../landing-nav/landing-nav.component';
 
 interface LandingSector {
   icon: string;
@@ -43,7 +43,7 @@ interface DashboardWidget {
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterModule, MatButtonModule, MatIconModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, MatButtonModule, MatIconModule, ReactiveFormsModule, LandingNavComponent],
   templateUrl: './landing.component.html'
 })
 export class LandingComponent implements AfterViewInit, OnDestroy {
@@ -52,7 +52,6 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
   private host = inject(ElementRef<HTMLElement>);
   private revealObserver?: IntersectionObserver;
 
-  navScrolled = signal(false);
   isSubmitting = signal(false);
   successMessage = signal('');
 
@@ -108,11 +107,6 @@ export class LandingComponent implements AfterViewInit, OnDestroy {
     email: ['', [Validators.required, Validators.email]],
     message: ['', Validators.required]
   });
-
-  @HostListener('window:scroll')
-  onWindowScroll() {
-    this.navScrolled.set(window.scrollY > 12);
-  }
 
   ngAfterViewInit() {
     this.revealObserver = new IntersectionObserver(

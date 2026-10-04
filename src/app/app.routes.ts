@@ -20,6 +20,11 @@ export const routes: Routes = [
             import('./home/home.component').then(m => m.HomeComponent)
     },
 
+    {
+        path: 'vcard/:id',
+        loadComponent: () =>
+            import('./public/vcard-public/vcard-public.component').then(m => m.VcardPublicComponent)
+    },
 
     // 👉 Rutas autenticadas (CON HEADER)
     {

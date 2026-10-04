@@ -52,6 +52,11 @@
                 class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
                 <mat-icon>history</mat-icon> Auditoría
             </a>
+
+            <a routerLink="/admin/vcards" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
+                class="flex items-center gap-3 w-full p-3 rounded-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition cursor-pointer">
+                <mat-icon>contact_page</mat-icon> vCard
+            </a>
         </ng-container>
 
         <ng-container *ngIf="role() === 'BUILDING_ADMIN'">

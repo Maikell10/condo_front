@@ -1,0 +1,33 @@
+<div class="landing-page public-vcard-page">
+  <app-landing-nav />
+
+  <main class="public-vcard-main">
+    <div class="public-vcard-main__bg" aria-hidden="true"></div>
+    <div class="public-vcard-main__blob public-vcard-main__blob--1" aria-hidden="true"></div>
+    <div class="public-vcard-main__blob public-vcard-main__blob--2" aria-hidden="true"></div>
+
+    <div *ngIf="loading()" class="public-vcard-state">
+      <mat-icon class="spin">hourglass_empty</mat-icon>
+      <span>Cargando tarjeta…</span>
+    </div>
+
+    <div *ngIf="error() && !loading()" class="public-vcard-state public-vcard-state--error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error() }}</span>
+      <a routerLink="/" class="public-vcard-home-link">Volver al inicio</a>
+    </div>
+
+    <div *ngIf="contact() as c" class="public-vcard-stage">
+      <p class="public-vcard-eyebrow">Tarjeta de contacto digital</p>
+      <app-vcard-showcase
+        [contact]="c"
+        [cardId]="cardId()"
+        [embedded]="true"
+        [isPublicPage]="true" />
+      <p class="public-vcard-footnote">
+        ¿Administras un condominio?
+        <a routerLink="/" fragment="contact">Conoce Condominio A Un Clic</a>
+      </p>
+    </div>
+  </main>
+</div>
