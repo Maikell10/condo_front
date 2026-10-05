@@ -1,0 +1,218 @@
+:host {
+  display: block;
+}
+
+.documents-hero {
+  background: linear-gradient(135deg, #312e81 0%, #5b21b6 48%, #7c3aed 100%);
+}
+
+.stat-cards-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1100px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.stat-card {
+  border-radius: 1.25rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  padding: 1.1rem 1.15rem 1.2rem !important;
+  box-shadow: 0 16px 40px -22px rgba(15, 23, 42, 0.35) !important;
+  min-height: 7.75rem;
+  color: #fff;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.stat-card--violet {
+  background: linear-gradient(145deg, #8b5cf6, #7c3aed);
+}
+
+.stat-card--blue {
+  background: linear-gradient(145deg, #3b82f6, #2563eb);
+}
+
+.stat-card--emerald {
+  background: linear-gradient(145deg, #10b981, #059669);
+}
+
+.stat-card--rose {
+  background: linear-gradient(145deg, #f43f5e, #e11d48);
+}
+
+.stat-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.stat-card__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.22);
+
+  mat-icon {
+    color: #fff;
+  }
+}
+
+.stat-card__chip {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.stat-card__value {
+  font-size: 1.65rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.stat-card__sub {
+  font-size: 0.7rem;
+  opacity: 0.88;
+  margin-top: 0.35rem;
+}
+
+.panel-card {
+  border-radius: 1.25rem !important;
+  border: 1px solid #f1f5f9 !important;
+  box-shadow: 0 10px 36px -14px rgba(15, 23, 42, 0.12) !important;
+}
+
+.step-badge {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 900;
+  background: #ede9fe;
+  color: #6d28d9;
+  flex-shrink: 0;
+}
+
+.doc-type-btn {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+  appearance: none;
+  border: 2px solid #f1f5f9;
+  border-radius: 1.25rem;
+  padding: 1rem;
+  text-align: left;
+  background: #fff;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: #c4b5fd;
+    background: #faf5ff;
+  }
+
+  &--active {
+    border-color: #7c3aed;
+    background: #f5f3ff;
+    box-shadow: 0 12px 28px -18px rgba(91, 33, 182, 0.55);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.doc-type-btn__check {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #7c3aed;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 0.875rem;
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+.doc-type-btn__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  background: #f1f5f9;
+  color: #94a3b8;
+
+  .doc-type-btn--active & {
+    background: #7c3aed;
+    color: #fff;
+  }
+}
+
+.summary-panel {
+  position: sticky;
+  top: 1.25rem;
+}
+
+.hero-building-select {
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0.75rem !important;
+  }
+
+  ::ng-deep .mat-mdc-select-value,
+  ::ng-deep .mat-mdc-select-arrow,
+  ::ng-deep .mdc-floating-label {
+    color: #fff !important;
+  }
+}
+
+.complex-chip {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  max-width: 100%;
+  margin-top: 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.875rem;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.dialog-premium {
+  padding: 0.25rem;
+}

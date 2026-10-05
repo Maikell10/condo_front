@@ -1,0 +1,113 @@
+.confirm-dialog {
+  padding: 0.25rem 0.15rem 0.5rem;
+  min-width: min(100%, 22rem);
+}
+
+.confirm-dialog__icon-wrap {
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem;
+  background: #eef2ff;
+  color: #4338ca;
+
+  mat-icon {
+    font-size: 1.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}
+
+.confirm-dialog--approve .confirm-dialog__icon-wrap {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.confirm-dialog--reject .confirm-dialog__icon-wrap {
+  background: #ffe4e6;
+  color: #e11d48;
+}
+
+.confirm-dialog__title {
+  margin: 0 !important;
+  padding: 0 0.5rem !important;
+  text-align: center;
+  font-size: 1.25rem !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.confirm-dialog__content {
+  padding: 0.75rem 0.5rem 0.25rem !important;
+  text-align: center;
+}
+
+.confirm-dialog__message {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: #475569;
+}
+
+.confirm-dialog__highlights {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0.75rem 1rem;
+  border-radius: 0.875rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.confirm-dialog__highlights li {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  padding: 0.2rem 0;
+
+  & + li {
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+    border-top: 1px dashed #e2e8f0;
+  }
+}
+
+.confirm-dialog__actions {
+  padding: 1rem 0.5rem 0.25rem !important;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center !important;
+}
+
+.confirm-dialog__cancel {
+  border-radius: 0.75rem !important;
+  min-width: 7rem;
+  font-weight: 700 !important;
+}
+
+.confirm-dialog__confirm {
+  border-radius: 0.75rem !important;
+  min-width: 8.5rem;
+  font-weight: 800 !important;
+  box-shadow: 0 10px 24px -12px rgba(15, 23, 42, 0.45) !important;
+}
+
+.confirm-dialog--approve .confirm-dialog__confirm {
+  background: #4f46e5 !important;
+  color: #fff !important;
+}
+
+.confirm-dialog--reject .confirm-dialog__confirm {
+  background: #e11d48 !important;
+  color: #fff !important;
+}
+
+.confirm-dialog--neutral .confirm-dialog__confirm {
+  background: #0f172a !important;
+  color: #fff !important;
+}

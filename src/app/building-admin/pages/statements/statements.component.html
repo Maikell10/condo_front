@@ -1,248 +1,248 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+<div class="statements-page space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
 
-    <!-- CABECERA PRINCIPAL -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Estado de Cuenta</h1>
-            <p class="text-gray-500 mt-1">Control de recibos emitidos y estatus de cobranza.</p>
+  <div class="statements-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+    <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5">
+      <div class="min-w-0 flex-1">
+        <div class="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-2">Cobranza</div>
+
+        @if (isComplex()) {
+          <mat-form-field appearance="outline" class="hero-building-select w-full max-w-md !mb-0">
+            <mat-label class="!text-emerald-100">Alcance</mat-label>
+            <mat-select [value]="selectedBuildingId()" (selectionChange)="onBuildingChange($event.value)">
+              <mat-option value="ALL">Todos los edificios</mat-option>
+              <mat-divider></mat-divider>
+              @for (b of buildingsList(); track b.id) {
+                <mat-option [value]="b.id">{{ b.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        } @else {
+          <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Estado de cuenta</h1>
+        }
+
+        <p class="text-emerald-50/90 mt-3 mb-0 max-w-2xl text-sm sm:text-base">
+          Recibos emitidos, pagos aplicados y saldos por cobrar. Exporta a Excel con los filtros actuales.
+        </p>
+        @if (scopeLabel()) {
+          <p class="text-emerald-100/80 text-xs mt-2 mb-0 font-medium">Vista: {{ scopeLabel() }}</p>
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-2 shrink-0">
+        <button mat-stroked-button type="button"
+          class="!border-white/40 !text-white !rounded-xl h-12 px-4 font-bold"
+          (click)="refreshList()" [disabled]="loading()">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-flat-button type="button"
+          class="!bg-white !text-emerald-900 !rounded-xl h-12 px-5 font-bold shadow-md"
+          [disabled]="filteredReceipts().length === 0 || loading()"
+          (click)="exportToExcel()">
+          <mat-icon>table_view</mat-icon>
+          Exportar Excel
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-cards-grid">
+    @for (card of statCards(); track card.id) {
+      <mat-card class="stat-card stat-card--{{ card.variant }}">
+        <div class="stat-card__top">
+          <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <span class="stat-card__chip">{{ card.chip }}</span>
         </div>
+        <div class="stat-card__value">{{ card.value }}</div>
+        @if (card.sub) {
+          <div class="stat-card__sub">{{ card.sub }}</div>
+        }
+        @if (card.showBar) {
+          <div class="stat-card__bar">
+            <div class="stat-card__bar-fill" [style.width.%]="card.barWidth"></div>
+          </div>
+        }
+      </mat-card>
+    }
+  </div>
 
-        <div class="flex items-center gap-3 w-full md:w-auto flex-wrap">
-            <button mat-stroked-button
-                class="h-14 px-6 rounded-xl font-bold border-emerald-500 text-emerald-700 hover:bg-emerald-50"
-                [disabled]="filteredReceipts().length === 0"
-                (click)="exportToExcel()">
-                <mat-icon class="mr-1 text-emerald-600">table_view</mat-icon>
-                Exportar Excel
-            </button>
+  <mat-card class="panel-card">
+    <div class="filters-bar flex flex-col xl:flex-row gap-3 xl:items-center xl:justify-between">
+      <div class="flex flex-col md:flex-row flex-wrap gap-3 items-stretch md:items-center">
+        <mat-form-field appearance="outline" class="w-full md:w-44 !mb-0">
+          <mat-label>Buscar por</mat-label>
+          <mat-select [value]="filterMode()" (selectionChange)="onFilterModeChange($event.value)">
+            <mat-option value="description">Período</mat-option>
+            <mat-option value="date">Fechas</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-            <ng-container *ngIf="isComplex()">
-                <mat-form-field appearance="outline" class="w-full md:w-[250px]">
-                    <mat-label>Vista actual</mat-label>
-                    <mat-icon matPrefix class="text-indigo-500 ml-2">business</mat-icon>
-                    <mat-select [value]="selectedBuildingId()" (selectionChange)="onBuildingChange($event.value)">
-                        <mat-option value="ALL" class="text-indigo-600 font-bold">Todos los Edificios</mat-option>
-                        <mat-divider></mat-divider>
-                        <mat-option *ngFor="let b of buildingsList()" [value]="b.id" class="text-slate-800">
-                            {{ b.name }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-            </ng-container>
-        </div>
+        @if (filterMode() === 'description') {
+          <mat-form-field appearance="outline" class="w-full md:w-56 !mb-0">
+            <mat-label>Período de facturación</mat-label>
+            <mat-select [value]="selectedDescription()"
+              (selectionChange)="onDescriptionChange($event.value)">
+              <mat-option value="ALL">Todos los períodos</mat-option>
+              <mat-divider></mat-divider>
+              @for (desc of uniqueDescriptions(); track desc) {
+                <mat-option [value]="desc">{{ desc }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        @if (filterMode() === 'date') {
+          <mat-form-field appearance="outline" class="w-full md:w-72 !mb-0">
+            <mat-label>Rango de fechas</mat-label>
+            <mat-date-range-input [formGroup]="dateRange" [rangePicker]="picker">
+              <input matStartDate formControlName="start" placeholder="Desde"
+                (dateChange)="onStartDateChange($event.value)" />
+              <input matEndDate formControlName="end" placeholder="Hasta"
+                (dateChange)="onEndDateChange($event.value)" />
+            </mat-date-range-input>
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-date-range-picker #picker></mat-date-range-picker>
+          </mat-form-field>
+        }
+
+        <mat-form-field appearance="outline" class="w-full md:w-44 !mb-0">
+          <mat-label>Estado</mat-label>
+          <mat-select [value]="selectedStatus()" (selectionChange)="onStatusChange($event.value)">
+            <mat-option value="ALL">Todos</mat-option>
+            <mat-option value="PAID">Pagado</mat-option>
+            <mat-option value="PENDING">Pendiente</mat-option>
+            <mat-option value="PARTIAL">Abono</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline" class="w-full xl:w-80 !mb-0">
+        <mat-label>Propietario, apto o recibo</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" autocomplete="off" />
+        @if (searchQuery()) {
+          <button matSuffix mat-icon-button type="button" (click)="onSearchChange('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
     </div>
 
-    <!-- TARJETAS DE KPIs -->
-    <div class="grid gap-6 grid-cols-2 md:grid-cols-4">
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl">
-            <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Recaudación</div>
-            <div class="text-3xl font-black text-indigo-600">{{ collectionRate() }}%</div>
-            <div class="w-full bg-gray-100 rounded-full h-1.5 mt-3">
-                <div class="bg-indigo-500 h-1.5 rounded-full" [style.width.%]="collectionRate()"></div>
-            </div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl">
-            <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Total Facturado</div>
-            <div class="text-2xl font-black text-gray-800">${{ totalExpected() | number:'1.2-2' }}</div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl">
-            <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Total Cobrado</div>
-            <div class="text-2xl font-black text-emerald-600">${{ totalCollected() | number:'1.2-2' }}</div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl">
-            <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Cuentas por Cobrar</div>
-            <div class="text-2xl font-black text-red-500">${{ totalPending() | number:'1.2-2' }}</div>
-        </mat-card>
+    <div class="table-panel__head">
+      <div>
+        <h3 class="m-0 font-bold text-gray-800">Detalle de recibos emitidos</h3>
+        <p class="m-0 mt-1 text-xs text-gray-500">
+          <strong class="text-gray-700">{{ filteredReceipts().length }}</strong> recibos con los filtros actuales
+        </p>
+      </div>
+      @if (hasActiveFilters()) {
+        <button mat-stroked-button type="button" color="warn" class="!rounded-xl" (click)="clearFilters()">
+          <mat-icon>filter_alt_off</mat-icon>
+          Limpiar filtros
+        </button>
+      }
     </div>
 
-    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white">
+    @if (loading()) {
+      <div class="table-panel__loading">
+        <mat-spinner diameter="44"></mat-spinner>
+      </div>
+    } @else if (filteredReceipts().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="text-5xl opacity-30 mb-2">search_off</mat-icon>
+        <h3 class="m-0 font-bold text-gray-600">Sin recibos en esta vista</h3>
+        <p class="text-sm m-0 mt-1">Ajusta filtros o cambia el alcance del edificio.</p>
+        <button mat-button color="primary" class="mt-3" type="button" (click)="clearFilters()">Limpiar filtros</button>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table mat-table [dataSource]="pagedReceipts()" class="w-full min-w-[1100px]">
 
-        <!-- BARRA DE FILTROS AVANZADOS -->
-        <div
-            class="bg-white px-6 py-4 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between flex-wrap">
+          <ng-container matColumnDef="buildingName">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Edificio</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="building-tag">{{ r.buildingName }}</span>
+            </td>
+          </ng-container>
 
-            <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto items-center flex-wrap">
+          <ng-container matColumnDef="issueDate">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Fecha</th>
+            <td mat-cell *matCellDef="let r" class="text-xs text-gray-500 font-medium">
+              {{ r.issueDate | dateOnly }}
+            </td>
+          </ng-container>
 
-                <!-- Selector de Modo -->
-                <mat-form-field appearance="outline" class="w-full md:w-[180px] mb-[-1.25em]">
-                    <mat-label>Buscar por</mat-label>
-                    <mat-select [value]="filterMode()" (selectionChange)="filterMode.set($event.value)">
-                        <mat-option value="description">Período</mat-option>
-                        <mat-option value="date">Fechas</mat-option>
-                    </mat-select>
-                </mat-form-field>
+          <ng-container matColumnDef="apartment">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Unidad</th>
+            <td mat-cell *matCellDef="let r" class="font-black text-gray-900">{{ r.apartment }}</td>
+          </ng-container>
 
-                <!-- Modo: Selector de Períodos -->
-                <mat-form-field *ngIf="filterMode() === 'description'" appearance="outline"
-                    class="w-full md:w-[220px] mb-[-1.25em]">
-                    <mat-label>Período de facturación</mat-label>
-                    <mat-select [value]="selectedDescription()"
-                        (selectionChange)="selectedDescription.set($event.value)">
-                        <mat-option value="ALL" class="font-bold text-indigo-600">Todos los períodos</mat-option>
-                        <mat-divider></mat-divider>
-                        <mat-option *ngFor="let desc of uniqueDescriptions()" [value]="desc">{{desc}}</mat-option>
-                    </mat-select>
-                </mat-form-field>
+          <ng-container matColumnDef="ownerName">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Propietario</th>
+            <td mat-cell *matCellDef="let r" class="text-sm font-medium text-gray-700">
+              {{ r.ownerName || 'Sin asignar' }}
+            </td>
+          </ng-container>
 
-                <!-- Modo: Selector de Rango de Fechas -->
-                <mat-form-field *ngIf="filterMode() === 'date'" appearance="outline"
-                    class="w-full md:w-[260px] mb-[-1.25em]">
-                    <mat-label>Rango de Fechas</mat-label>
-                    <mat-date-range-input [formGroup]="dateRange" [rangePicker]="picker">
-                        <!-- 🔥 El evento (dateChange) es la magia que avisa a los signals -->
-                        <input matStartDate formControlName="start" placeholder="Desde"
-                            (dateChange)="startDate.set($event.value)">
-                        <input matEndDate formControlName="end" placeholder="Hasta"
-                            (dateChange)="endDate.set($event.value)">
-                    </mat-date-range-input>
-                    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                    <mat-date-range-picker #picker></mat-date-range-picker>
-                </mat-form-field>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Descripción</th>
+            <td mat-cell *matCellDef="let r" class="text-xs text-gray-500">{{ r.description }}</td>
+          </ng-container>
 
-                <!-- 🔥 NUEVO: Selector de Estado -->
-                <mat-form-field appearance="outline" class="w-full md:w-[180px] mb-[-1.25em]">
-                    <mat-label>Estado de pago</mat-label>
-                    <mat-select [value]="selectedStatus()" (selectionChange)="selectedStatus.set($event.value)">
-                        <mat-option value="ALL" class="font-bold text-indigo-600">Todos</mat-option>
-                        <mat-option value="PAID">Pagado</mat-option>
-                        <mat-option value="PENDING">Pendiente</mat-option>
-                        <mat-option value="PARTIAL">Abono (Parcial)</mat-option>
-                    </mat-select>
-                </mat-form-field>
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Monto</th>
+            <td mat-cell *matCellDef="let r" class="text-sm font-medium">${{ r.amount | number:'1.2-2' }}</td>
+          </ng-container>
 
-            </div>
+          <ng-container matColumnDef="paid">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Pagado</th>
+            <td mat-cell *matCellDef="let r" class="text-sm font-bold text-emerald-600">${{ r.paid | number:'1.2-2' }}</td>
+          </ng-container>
 
-            <!-- Buscador Global Textual -->
-            <mat-form-field appearance="outline" class="w-full md:w-[280px] mb-[-1.25em]">
-                <mat-label>Propietario, Apto o Recibo</mat-label>
-                <mat-icon matPrefix class="text-gray-400 mr-2">search</mat-icon>
-                <input matInput [value]="searchQuery()" (input)="onSearch($event)">
-                <button *ngIf="searchQuery()" matSuffix mat-icon-button aria-label="Clear"
-                    (click)="searchQuery.set('')">
-                    <mat-icon>close</mat-icon>
+          <ng-container matColumnDef="balance">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Deuda</th>
+            <td mat-cell *matCellDef="let r" class="text-sm font-black"
+              [ngClass]="r.balance > 0 ? 'text-red-500' : 'text-gray-400'">
+              ${{ r.balance | number:'1.2-2' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Estado</th>
+            <td mat-cell *matCellDef="let r">
+              <span class="status-pill" [ngClass]="statusClass(r.status)">{{ statusDisplay(r.status) }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="text-right bg-gray-50"></th>
+            <td mat-cell *matCellDef="let r" class="text-right pr-2">
+              @if (r.status !== 'PAID') {
+                <button mat-icon-button type="button" (click)="openPaymentModal(r)"
+                  matTooltip="Registrar pago" class="text-gray-400 hover:text-emerald-600">
+                  <mat-icon>price_check</mat-icon>
                 </button>
-            </mat-form-field>
-        </div>
-
-        <div class="bg-gray-50/50 px-6 py-3 border-b border-gray-100 flex justify-between items-center gap-2">
-            <h3 class="font-bold text-gray-700 m-0 text-sm">Detalle de Recibos Emitidos</h3>
-
-            <div class="flex items-center gap-1">
-                <button mat-button color="warn" class="scale-90"
-                    *ngIf="searchQuery() || selectedDescription() !== 'ALL' || selectedStatus() !== 'ALL' || startDate()"
-                    (click)="clearFilters()">
-                    <mat-icon>filter_alt_off</mat-icon> Limpiar
+                <button mat-icon-button type="button" (click)="sendReminder(r)"
+                  matTooltip="Recordatorio de cobro" class="text-gray-400 hover:text-amber-600">
+                  <mat-icon>notification_important</mat-icon>
                 </button>
-            </div>
-        </div>
+              }
+            </td>
+          </ng-container>
 
-        <!-- TABLA DE DATOS -->
-        <div class="overflow-x-auto">
-            <table mat-table [dataSource]="filteredReceipts()" class="w-full">
+          <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns()" class="row-hover"></tr>
+        </table>
+      </div>
 
-                <ng-container matColumnDef="buildingName">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px] py-4"> Edificio </th>
-                    <td mat-cell *matCellDef="let r">
-                        <span
-                            class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-[10px] font-bold">{{r.buildingName}}</span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="issueDate">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px] py-4"> Fecha </th>
-                    <td mat-cell *matCellDef="let r" class="text-gray-500 text-xs"> {{r.issueDate | date:'dd/MM/yyyy'}}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="apartment">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Unidad </th>
-                    <td mat-cell *matCellDef="let r" class="font-black text-gray-900"> {{r.apartment}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="ownerName">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Propietario </th>
-                    <td mat-cell *matCellDef="let r" class="text-sm font-medium text-gray-700"> {{r.ownerName || 'Sin
-                        asignar'}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="description">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Descripción </th>
-                    <td mat-cell *matCellDef="let r" class="text-xs text-gray-500"> {{r.description}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="amount">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Monto </th>
-                    <td mat-cell *matCellDef="let r" class="text-sm font-medium"> ${{r.amount | number:'1.2-2'}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="paid">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Pagado </th>
-                    <td mat-cell *matCellDef="let r" class="text-sm font-bold text-emerald-600"> ${{r.paid |
-                        number:'1.2-2'}} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="balance">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Deuda </th>
-                    <td mat-cell *matCellDef="let r" class="text-sm font-black"
-                        [ngClass]="r.balance > 0 ? 'text-red-500' : 'text-gray-400'">
-                        ${{r.balance | number:'1.2-2'}}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Estado </th>
-                    <td mat-cell *matCellDef="let r">
-                        <span [ngClass]="{
-                                'bg-green-100 text-green-700': r.status === 'PAID',
-                                'bg-red-100 text-red-700': r.status === 'PENDING',
-                                'bg-amber-100 text-amber-700': r.status === 'PARTIAL'
-                              }" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase">
-                            {{ r.status === 'PAID' ? 'Pagado' : r.status === 'PENDING' ? 'Pendiente' : 'Abono' }}
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef class="text-right pr-6 bg-gray-50/30"></th>
-                    <td mat-cell *matCellDef="let r" class="text-right pr-4">
-
-                        <button mat-icon-button *ngIf="r.status !== 'PAID'" (click)="openPaymentModal(r)"
-                            matTooltip="Registrar Pago Directo"
-                            class="text-gray-400 hover:text-emerald-500 transition-colors">
-                            <mat-icon>price_check</mat-icon>
-                        </button>
-
-                        <button mat-icon-button *ngIf="r.status !== 'PAID'" (click)="sendReminder(r)"
-                            matTooltip="Enviar recordatorio de cobro"
-                            class="text-gray-400 hover:text-amber-500 transition-colors">
-                            <mat-icon>notification_important</mat-icon>
-                        </button>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns();"
-                    class="hover:bg-gray-50/50 transition-colors"></tr>
-            </table>
-
-            <div *ngIf="filteredReceipts().length === 0"
-                class="py-20 flex flex-col items-center justify-center text-gray-400">
-                <mat-icon class="text-6xl mb-4 opacity-20">search_off</mat-icon>
-                <p class="text-sm font-medium">No se encontraron recibos con los filtros actuales.</p>
-                <button mat-button color="primary" class="mt-2" (click)="clearFilters()">Limpiar filtros</button>
-            </div>
-        </div>
-    </mat-card>
+      <mat-paginator
+        [length]="filteredReceipts().length"
+        [pageIndex]="pageIndex()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [showFirstLastButtons]="true"
+        (page)="onPage($event)"
+        class="border-t border-gray-100">
+      </mat-paginator>
+    }
+  </mat-card>
 </div>

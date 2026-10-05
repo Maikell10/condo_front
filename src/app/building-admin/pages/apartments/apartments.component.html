@@ -1,185 +1,215 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+<div class="apartments-page space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
 
-    <!-- CABECERA -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div>
-            <ng-container *ngIf="isComplex(); else singleBuildingTpl">
-                <div class="flex items-center gap-2 mb-1">
-                    <mat-icon class="text-indigo-600">business</mat-icon>
-                    <mat-select [value]="selectedBuildingId()" (selectionChange)="onBuildingChange($event.value)"
-                        class="text-3xl font-black text-gray-900 tracking-tight outline-none">
-                        <mat-option *ngFor="let b of buildingsList()" [value]="b.id">
-                            {{ b.name }}
-                        </mat-option>
-                    </mat-select>
-                </div>
+  <div class="apt-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+      <div class="min-w-0 flex-1">
+        <div class="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-2">
+          Unidades habitacionales
+        </div>
+
+        @if (isComplex()) {
+          <mat-form-field appearance="outline" class="hero-building-select w-full max-w-md !mb-0">
+            <mat-label class="!text-indigo-100">Edificio</mat-label>
+            <mat-select [value]="selectedBuildingId()" (selectionChange)="onBuildingChange($event.value)">
+              @for (b of buildingsList(); track b.id) {
+                <mat-option [value]="b.id">{{ b.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        } @else {
+          <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Apartamentos</h1>
+        }
+
+        <p class="text-indigo-50/90 mt-3 mb-0 max-w-2xl text-sm sm:text-base">
+          Propietarios, códigos de acceso, alícuotas y estado de cobranza por unidad.
+        </p>
+        @if (selectedBuildingLabel()) {
+          <p class="text-indigo-100/80 text-xs mt-2 mb-0 font-medium">
+            Vista: {{ selectedBuildingLabel() }}
+          </p>
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-2 shrink-0">
+        <button mat-stroked-button type="button"
+          class="!border-white/40 !text-white !rounded-xl h-12 px-5 font-bold"
+          (click)="exportToExcel()">
+          <mat-icon>table_view</mat-icon>
+          Exportar Excel
+        </button>
+        <button mat-flat-button type="button"
+          class="!bg-white !text-indigo-900 !rounded-xl h-12 px-5 font-bold shadow-md"
+          (click)="openAddApartmentModal()">
+          <mat-icon>add_business</mat-icon>
+          Nuevo apartamento
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stat-cards-grid">
+    @for (card of statCards(); track card.id) {
+      <mat-card class="stat-card stat-card--{{ card.variant }}">
+        <div class="stat-card__top">
+          <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <span class="stat-card__chip">{{ card.chip }}</span>
+        </div>
+        <div class="stat-card__value">{{ card.value }}</div>
+        @if (card.sub) {
+          <div class="stat-card__sub">{{ card.sub }}</div>
+        }
+      </mat-card>
+    }
+  </div>
+
+  <mat-card class="!rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+    <div class="flex flex-col md:flex-row gap-3 md:items-center">
+      <mat-form-field appearance="outline" class="w-full md:flex-1 !mb-0">
+        <mat-label>Buscar apartamento o propietario</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
+          placeholder="Ej. 101, Juan Pérez, código de acceso..." />
+        @if (searchQuery()) {
+          <button matSuffix mat-icon-button type="button" (click)="onSearchChange('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <button mat-stroked-button type="button" class="!rounded-xl h-[56px] shrink-0"
+        (click)="refreshList()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    <p class="m-0 mt-3 text-sm text-gray-500">
+      <strong class="text-gray-800">{{ filteredApartments().length }}</strong>
+      unidades en la vista
+      @if (searchQuery()) {
+        <span> · filtro activo</span>
+      }
+    </p>
+  </mat-card>
+
+  <mat-card class="table-panel premium-card !rounded-2xl">
+    <div class="table-panel__head">
+      <h3 class="m-0 font-bold text-gray-800">Listado de unidades</h3>
+      <span class="text-xs text-gray-500">{{ total() }} registradas</span>
+    </div>
+
+    <div class="table-panel__body" [class.table-panel__body--loading]="loading()">
+      @if (loading()) {
+        <div class="table-panel__loading">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+      }
+
+      @if (!loading() && filteredApartments().length) {
+        <div class="overflow-x-auto">
+          <table mat-table [dataSource]="filteredApartments()" class="w-full min-w-[920px]">
+            <ng-container matColumnDef="number">
+              <th mat-header-cell *matHeaderCellDef>Unidad</th>
+              <td mat-cell *matCellDef="let a">
+                <div class="apt-number">{{ getBuildingName(a) }}-{{ a.number }}</div>
+                @if (isComplex()) {
+                  <div class="apt-building-tag mt-0.5">{{ getBuildingName(a) }}</div>
+                }
+              </td>
             </ng-container>
 
-            <ng-template #singleBuildingTpl>
-                <h1 class="text-3xl font-black text-gray-900 tracking-tight m-0">Gestión de Apartamentos</h1>
-            </ng-template>
+            <ng-container matColumnDef="accessCode">
+              <th mat-header-cell *matHeaderCellDef>Cód. acceso</th>
+              <td mat-cell *matCellDef="let a">
+                <div class="flex items-center gap-1 group">
+                  <span class="access-code">{{ a.access_code || 'PENDIENTE' }}</span>
+                  @if (a.access_code) {
+                    <button mat-icon-button type="button"
+                      class="!w-8 !h-8 opacity-60 group-hover:opacity-100 text-indigo-600"
+                      matTooltip="Copiar código"
+                      (click)="copyAccessCode(a.access_code)">
+                      <mat-icon class="!text-lg">content_copy</mat-icon>
+                    </button>
+                  }
+                </div>
+              </td>
+            </ng-container>
 
-            <p class="text-gray-500 mt-1">Administra propietarios, alícuotas y estados de cuenta.</p>
+            <ng-container matColumnDef="owner">
+              <th mat-header-cell *matHeaderCellDef>Propietario</th>
+              <td mat-cell *matCellDef="let a">
+                @if (a.ownerName) {
+                  <span class="font-medium text-gray-800">{{ a.ownerName }}</span>
+                } @else {
+                  <span class="text-gray-400 text-sm italic">Sin asignar</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="alicuota">
+              <th mat-header-cell *matHeaderCellDef>Alícuota</th>
+              <td mat-cell *matCellDef="let a">
+                <span class="inline-block bg-indigo-50 text-indigo-800 px-2 py-1 rounded-lg font-mono text-xs font-bold">
+                  {{ (a.alicuota * 100) | number:'1.2-4' }}%
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let a">
+                <span class="status-pill"
+                  [class.status-pill--debt]="a.balance > 0"
+                  [class.status-pill--ok]="a.balance <= 0">
+                  {{ a.balance > 0 ? 'Moroso' : 'Al día' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="balance">
+              <th mat-header-cell *matHeaderCellDef class="text-right">Saldo</th>
+              <td mat-cell *matCellDef="let a" class="text-right font-bold"
+                [class.text-rose-600]="a.balance > 0"
+                [class.text-emerald-600]="a.balance <= 0">
+                ${{ a.balance | number:'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef class="text-right"></th>
+              <td mat-cell *matCellDef="let a" class="text-right">
+                <button mat-icon-button type="button" matTooltip="Vincular propietario"
+                  (click)="openLinkOwnerModal(a)">
+                  <mat-icon class="text-gray-400 hover:text-indigo-600">person_add_alt</mat-icon>
+                </button>
+                <button mat-icon-button type="button" matTooltip="Ajustar alícuota"
+                  (click)="editAlicuota(a)">
+                  <mat-icon class="text-gray-400 hover:text-emerald-600">percent</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="row-hover"></tr>
+          </table>
         </div>
+      }
 
-        <div class="flex items-center gap-3">
-            <button mat-stroked-button
-                class="h-14 px-6 rounded-xl font-bold border-emerald-500 text-emerald-700 hover:bg-emerald-50"
-                (click)="exportToExcel()">
-                <mat-icon class="mr-1 text-emerald-600">table_view</mat-icon>
-                Exportar Excel
+      @if (!loading() && !filteredApartments().length) {
+        <div class="empty-state">
+          <mat-icon class="!text-5xl opacity-30 mb-2">apartment</mat-icon>
+          <p class="m-0 font-medium">
+            @if (searchQuery()) {
+              No hay unidades con ese filtro.
+            } @else {
+              No hay apartamentos en este edificio.
+            }
+          </p>
+          @if (searchQuery()) {
+            <button mat-button color="primary" class="mt-3" type="button" (click)="onSearchChange('')">
+              Limpiar búsqueda
             </button>
-
-            <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl shadow-lg font-bold"
-                (click)="openAddApartmentModal()">
-                <mat-icon class="mr-1">add_business</mat-icon>
-                Nuevo Apartamento
-            </button>
+          }
         </div>
+      }
     </div>
-
-    <!-- KPIs -->
-    <div class="grid gap-6 md:grid-cols-3">
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
-            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><mat-icon>domain</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Total Unidades</div>
-                <div class="text-2xl font-black text-gray-800">{{ total() }}</div>
-            </div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
-            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl"><mat-icon>verified</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Solventes</div>
-                <div class="text-2xl font-black text-gray-800">{{ upToDate() }}</div>
-            </div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
-            <div class="p-3 bg-red-50 text-red-600 rounded-xl"><mat-icon>priority_high</mat-icon></div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">En Mora</div>
-                <div class="text-2xl font-black text-gray-800">{{ delinquent() }}</div>
-            </div>
-        </mat-card>
-    </div>
-
-    <!-- 🔥 BARRA DE BÚSQUEDA -->
-    <div class="flex items-center gap-4 mt-2">
-        <mat-form-field appearance="outline" class="w-full sm:w-1/2 md:w-1/3 bg-white rounded-xl">
-            <mat-label>Buscar apartamento o propietario</mat-label>
-            <mat-icon matPrefix class="text-gray-400 ml-1 mr-2">search</mat-icon>
-            <input matInput (keyup)="applySearch($event)" placeholder="Ej. Apto 101, Juan Perez, o Cód. Acceso...">
-        </mat-form-field>
-    </div>
-
-    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white">
-        <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="font-bold text-gray-700 m-0">Listado de Unidades</h3>
-        </div>
-
-        <div class="overflow-x-auto">
-            <!-- 🔥 ACTUALIZADO: [dataSource] ahora apunta a filteredApartments() -->
-            <table mat-table [dataSource]="filteredApartments()" class="w-full">
-
-                <ng-container matColumnDef="number">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
-                        Apartamento</th>
-                    <td mat-cell *matCellDef="let a" class="font-bold text-gray-900"> {{getBuildingName(a)}}-{{
-                        a.number }} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="accessCode">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">
-                        Cód. Acceso
-                    </th>
-                    <td mat-cell *matCellDef="let a">
-                        <div class="flex items-center gap-1 group">
-                            <span
-                                class="bg-slate-100 text-slate-700 px-2 py-1 rounded font-mono font-bold text-xs tracking-widest border border-slate-200">
-                                {{ a.access_code || 'PENDIENTE' }}
-                            </span>
-                            <button *ngIf="a.access_code" mat-icon-button
-                                class="scale-75 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-500"
-                                matTooltip="Copiar Código" (click)="copyAccessCode(a.access_code)">
-                                <mat-icon>content_copy</mat-icon>
-                            </button>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="owner">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">
-                        Propietario</th>
-                    <td mat-cell *matCellDef="let a">
-                        <div class="flex items-center gap-2">
-                            <span *ngIf="a.ownerName" class="text-gray-700 font-medium">{{ a.ownerName }}</span>
-                            <span *ngIf="!a.ownerName" class="text-gray-300 italic text-xs">Sin asignar</span>
-                        </div>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="alicuota">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Alícuota
-                    </th>
-                    <td mat-cell *matCellDef="let a">
-                        <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded font-mono font-bold text-xs">
-                            {{ (a.alicuota * 100) | number:'1.2-4' }}%
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Estado
-                    </th>
-                    <td mat-cell *matCellDef="let a">
-                        <span [ngClass]="a.balance > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'"
-                            class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
-                            {{ a.balance > 0 ? 'Moroso' : 'Al día' }}
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="balance">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Saldo
-                        Pendiente</th>
-                    <td mat-cell *matCellDef="let a" class="font-black"
-                        [ngClass]="a.balance > 0 ? 'text-red-600' : 'text-emerald-600'">
-                        ${{ a.balance | number:'1.2-2' }}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="text-right pr-6 font-bold text-gray-500 uppercase text-[11px]">Acciones</th>
-                    <td mat-cell *matCellDef="let a" class="text-right pr-4">
-
-                        <button mat-icon-button (click)="openLinkOwnerModal(a)" matTooltip="Vincular Propietario"
-                            class="text-gray-400 hover:text-indigo-600 transition-colors">
-                            <mat-icon>person_add_alt</mat-icon>
-                        </button>
-
-                        <button mat-icon-button (click)="editAlicuota(a)" matTooltip="Ajustar Alícuota"
-                            class="text-gray-400 hover:text-emerald-600 transition-colors">
-                            <mat-icon>percent</mat-icon>
-                        </button>
-
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                    class="hover:bg-gray-50/50 transition-colors"></tr>
-            </table>
-
-            <!-- 🔥 ACTUALIZADO: Mensaje de "No hay resultados" basado en el filtro -->
-            <div *ngIf="filteredApartments().length === 0"
-                class="py-20 flex flex-col items-center justify-center text-gray-400">
-                <mat-icon class="text-6xl mb-4 opacity-30">search_off</mat-icon>
-                <p class="text-sm font-medium italic">No se encontraron apartamentos con esa búsqueda.</p>
-            </div>
-        </div>
-    </mat-card>
+  </mat-card>
 
 </div>

@@ -14,12 +14,31 @@ import { MatNativeDateModule, MAT_DATE_LOCALE, NativeDateAdapter, DateAdapter, M
 import { FormsModule, ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { DateOnlyPipe } from '../../../shared/date-only.pipe';
 import * as XLSX from 'xlsx';
 
 import { BillingService } from '../../../core/services/billing.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { AdminPaymentModalComponent } from '../../modal/admin-payment-modal/admin-payment-modal.component';
+
+function spanishPaginator(): MatPaginatorIntl {
+  const intl = new MatPaginatorIntl();
+  intl.itemsPerPageLabel = 'Recibos por página';
+  intl.nextPageLabel = 'Siguiente';
+  intl.previousPageLabel = 'Anterior';
+  intl.firstPageLabel = 'Primera página';
+  intl.lastPageLabel = 'Última página';
+  intl.getRangeLabel = (page, pageSize, length) => {
+    if (length === 0 || pageSize === 0) return `0 de ${length}`;
+    const start = page * pageSize + 1;
+    const end = Math.min((page + 1) * pageSize, length);
+    return `${start} – ${end} de ${length}`;
+  };
+  return intl;
+}
 
 class CustomDateAdapter extends NativeDateAdapter {
   override format(date: Date, displayFormat: Object): string {
@@ -40,9 +59,11 @@ class CustomDateAdapter extends NativeDateAdapter {
     CommonModule, MatTableModule, MatCardModule, MatButtonModule,
     MatIconModule, MatSelectModule, MatTooltipModule, MatDividerModule,
     MatInputModule, MatFormFieldModule, MatDatepickerModule, MatNativeDateModule,
-    FormsModule, ReactiveFormsModule, MatSnackBarModule
+    FormsModule, ReactiveFormsModule, MatSnackBarModule, MatProgressSpinnerModule,
+    MatPaginatorModule, DateOnlyPipe
   ],
   providers: [
+    { provide: MatPaginatorIntl, useValue: spanishPaginator() },
     { provide: MAT_DATE_LOCALE, useValue: 'es-ES' },
     { provide: DateAdapter, useClass: CustomDateAdapter },
     {
@@ -53,7 +74,8 @@ class CustomDateAdapter extends NativeDateAdapter {
       }
     }
   ],
-  templateUrl: './statements.component.html'
+  templateUrl: './statements.component.html',
+  styleUrl: './statements.component.scss'
 })
 export class StatementsComponent implements OnInit {
   private billingService = inject(BillingService);
@@ -67,6 +89,9 @@ export class StatementsComponent implements OnInit {
   selectedBuildingId = signal<number | 'ALL'>('ALL');
 
   receipts = signal<any[]>([]);
+  loading = signal(false);
+  pageIndex = signal(0);
+  pageSize = signal(10);
 
   searchQuery = signal<string>('');
   filterMode = signal<'description' | 'date'>('description');
@@ -158,6 +183,57 @@ export class StatementsComponent implements OnInit {
     return data;
   });
 
+  pagedReceipts = computed(() => {
+    const rows = this.filteredReceipts();
+    const size = this.pageSize();
+    const maxPage = Math.max(0, Math.ceil(rows.length / size) - 1);
+    const page = Math.min(this.pageIndex(), maxPage);
+    return rows.slice(page * size, page * size + size);
+  });
+
+  scopeLabel = computed(() => {
+    const id = this.selectedBuildingId();
+    if (id === 'ALL') return 'Todos los edificios';
+    return this.buildingsList().find((b) => b.id === id)?.name ?? 'Edificio';
+  });
+
+  statCards = computed(() => [
+    {
+      id: 'rate',
+      variant: 'indigo',
+      icon: 'insights',
+      chip: 'Recaudación',
+      value: `${this.collectionRate()}%`,
+      sub: `${this.filteredReceipts().length} recibos en vista`,
+      showBar: true,
+      barWidth: this.collectionRate()
+    },
+    {
+      id: 'expected',
+      variant: 'slate',
+      icon: 'receipt_long',
+      chip: 'Facturado',
+      value: `$${this.totalExpected().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      sub: 'Monto emitido (filtros)'
+    },
+    {
+      id: 'collected',
+      variant: 'emerald',
+      icon: 'payments',
+      chip: 'Cobrado',
+      value: `$${this.totalCollected().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      sub: 'Pagos aplicados'
+    },
+    {
+      id: 'pending',
+      variant: 'rose',
+      icon: 'account_balance_wallet',
+      chip: 'Por cobrar',
+      value: `$${this.totalPending().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      sub: 'Saldo pendiente'
+    }
+  ]);
+
   // --- FUNCIÓN AUXILIAR DE SUMA EXACTA ---
   private sumExact(data: any[], field: string): number {
     const sumInCents = data.reduce((acc, item) => {
@@ -200,12 +276,43 @@ export class StatementsComponent implements OnInit {
   onBuildingChange(buildingId: number | 'ALL') {
     this.selectedBuildingId.set(buildingId);
     this.receipts.set([]);
+    this.pageIndex.set(0);
     this.loadStatements();
   }
 
-  onSearch(event: Event) {
-    const target = event.target as HTMLInputElement;
-    this.searchQuery.set(target.value);
+  onSearchChange(value: string) {
+    this.searchQuery.set(value);
+    this.pageIndex.set(0);
+  }
+
+  onFilterModeChange(mode: 'description' | 'date') {
+    this.filterMode.set(mode);
+    this.pageIndex.set(0);
+  }
+
+  onDescriptionChange(value: string) {
+    this.selectedDescription.set(value);
+    this.pageIndex.set(0);
+  }
+
+  onStatusChange(value: 'ALL' | 'PAID' | 'PENDING' | 'PARTIAL') {
+    this.selectedStatus.set(value);
+    this.pageIndex.set(0);
+  }
+
+  onStartDateChange(value: Date | null) {
+    this.startDate.set(value);
+    this.pageIndex.set(0);
+  }
+
+  onEndDateChange(value: Date | null) {
+    this.endDate.set(value);
+    this.pageIndex.set(0);
+  }
+
+  onPage(event: PageEvent) {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 
   clearFilters() {
@@ -215,6 +322,11 @@ export class StatementsComponent implements OnInit {
     this.dateRange.reset();
     this.startDate.set(null);
     this.endDate.set(null);
+    this.pageIndex.set(0);
+  }
+
+  refreshList() {
+    this.loadStatements();
   }
 
   loadStatements() {
@@ -225,10 +337,43 @@ export class StatementsComponent implements OnInit {
       ? { isComplex: true, complexId: complexId }
       : { isComplex: false, buildingId: buildingId };
 
+    this.loading.set(true);
     this.billingService.getStatements(payload).subscribe({
-      next: (res: any) => this.receipts.set(res.data),
-      error: (err) => console.error(err)
+      next: (res: any) => {
+        this.receipts.set(res.data ?? []);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error(err);
+        this.loading.set(false);
+        this.snackBar.open('No se pudo cargar el estado de cuenta', 'Cerrar', {
+          duration: 3500,
+          horizontalPosition: 'end',
+          verticalPosition: 'bottom'
+        });
+      }
     });
+  }
+
+  statusClass(status: string): string {
+    if (status === 'PAID') return 'status-pill--paid';
+    if (status === 'PENDING') return 'status-pill--pending';
+    return 'status-pill--partial';
+  }
+
+  statusDisplay(status: string): string {
+    if (status === 'PAID') return 'Pagado';
+    if (status === 'PENDING') return 'Pendiente';
+    return 'Abono';
+  }
+
+  hasActiveFilters(): boolean {
+    return (
+      !!this.searchQuery() ||
+      this.selectedDescription() !== 'ALL' ||
+      this.selectedStatus() !== 'ALL' ||
+      !!this.startDate()
+    );
   }
 
   sendReminder(receipt: any) {
@@ -243,12 +388,6 @@ export class StatementsComponent implements OnInit {
     // 🔥 Safety check: Find the apartment ID regardless of the backend's naming convention
     const aptId = receipt.apartmentId || receipt.apartment_id;
 
-    if (!aptId) {
-      console.warn("Missing apartment ID in receipt data:", receipt);
-      // If you absolutely need it, you might have to alert the user or stop the modal,
-      // but typically fixing the backend is required if this is truly missing.
-    }
-
     const dialogData = {
       ...receipt,
       apartmentId: aptId, // Force the property to exist
@@ -256,8 +395,6 @@ export class StatementsComponent implements OnInit {
       buildingId: currentBuildingId,
       complex_id: this.authService.userSignal()?.complexId
     };
-
-    console.log("Dialog Data Prepared:", dialogData);
 
     const dialogRef = this.dialog.open(AdminPaymentModalComponent, {
       width: '500px',

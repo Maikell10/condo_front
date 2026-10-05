@@ -9,11 +9,18 @@
           Suscripciones de administradores de conjuntos y edificios. Tarifas, estado del mes y registro de pagos.
         </p>
       </div>
-      <button mat-stroked-button type="button"
-        class="!border-white/40 !text-white !rounded-xl h-12 px-5 font-bold shrink-0">
-        <mat-icon>insights</mat-icon>
-        Reporte de ingresos
-      </button>
+      <div class="flex flex-wrap gap-2 shrink-0">
+        <a mat-flat-button routerLink="/admin/administration/history"
+          class="!bg-white !text-teal-900 !rounded-xl h-12 px-5 font-bold">
+          <mat-icon>history</mat-icon>
+          Historial de pagos
+        </a>
+        <button mat-stroked-button type="button"
+          class="!border-white/40 !text-white !rounded-xl h-12 px-5 font-bold">
+          <mat-icon>insights</mat-icon>
+          Reporte
+        </button>
+      </div>
     </div>
   </div>
 
@@ -83,8 +90,11 @@
 
   <mat-card *ngIf="!loadError()" class="table-panel premium-card !rounded-2xl">
     <div class="table-panel__head">
-      <h3 class="m-0 font-bold text-gray-800">Cartera de administradores</h3>
-      <span class="text-xs text-gray-500">{{ adminsList().length }} suscripciones</span>
+      <div>
+        <h3 class="m-0 font-bold text-gray-800">Cartera de administradores</h3>
+        <p class="m-0 mt-1 text-xs text-gray-500">Orden: último pago registrado (más reciente arriba)</p>
+      </div>
+      <span class="text-xs text-gray-500 shrink-0">{{ adminsList().length }} suscripciones</span>
     </div>
 
     <div class="table-panel__body" [class.table-panel__body--loading]="loading()">
@@ -97,8 +107,36 @@
           <ng-container matColumnDef="client">
             <th mat-header-cell *matHeaderCellDef>Cliente</th>
             <td mat-cell *matCellDef="let admin">
-              <div class="font-semibold text-gray-900">{{ admin.name }}</div>
-              <div class="text-xs text-gray-400">{{ admin.email }}</div>
+              <div class="client-cell">
+                <div class="client-cell__row">
+                  <span class="font-semibold text-gray-900">{{ admin.name }}</span>
+                  <span class="text-[10px] font-mono text-gray-400">#{{ admin.id }}</span>
+                </div>
+                <div class="client-cell__badges">
+                  @if (isTestClient(admin)) {
+                    <span class="account-badge account-badge--test"
+                      matTooltip="Cuenta de prueba — visible en cartera pero fuera de MRR y totales">
+                      Testing
+                    </span>
+                  }
+                  @if (accountStatus(admin) !== 'ACTIVE') {
+                    <span class="account-badge account-badge--inactive"
+                      matTooltip="Usuario BUILDING_ADMIN suspendido (no puede iniciar sesión)">
+                      Admin inactivo
+                    </span>
+                  } @else {
+                    <span class="account-badge account-badge--active">Admin activo</span>
+                  }
+                </div>
+                <div class="text-xs text-gray-400">{{ admin.email }}</div>
+                @if (admin.lastPaymentDate) {
+                  <div class="text-[10px] text-teal-700 font-semibold mt-1">
+                    Último pago: {{ admin.lastPaymentDate | dateOnly:'short' }}
+                  </div>
+                } @else {
+                  <div class="text-[10px] text-gray-400 mt-1">Sin pagos registrados</div>
+                }
+              </div>
             </td>
           </ng-container>
 
@@ -118,31 +156,70 @@
             <th mat-header-cell *matHeaderCellDef>Tarifa</th>
             <td mat-cell *matCellDef="let admin">
               <div class="plan-cell__fee">
-                {{ admin.billingConfig.feeAmount | number:'1.2-2' }}
-                {{ admin.billingConfig.currency }} / mes
+                @if (isTestClient(admin) && !admin.hasSubscription) {
+                  <span class="text-gray-500 text-sm">Sin tarifa SaaS (testing)</span>
+                } @else {
+                  {{ admin.billingConfig.feeAmount | number:'1.2-2' }}
+                  {{ admin.billingConfig.currency }} / mes
+                }
               </div>
-              <button mat-button color="primary" class="plan-cell__link" (click)="openConfigModal(admin)">
-                <mat-icon>settings</mat-icon> Modificar
-              </button>
+              @if (!isTestClient(admin) || admin.hasSubscription !== false) {
+                <button mat-button color="primary" class="plan-cell__link" (click)="openConfigModal(admin)">
+                  <mat-icon>settings</mat-icon> Modificar
+                </button>
+              }
             </td>
           </ng-container>
 
           <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>Estado actual</th>
+            <th mat-header-cell *matHeaderCellDef>Mes en curso</th>
             <td mat-cell *matCellDef="let admin">
               <span class="status-pill"
                 [class.status-pill--paid]="admin.currentPeriod.status === 'PAID'"
                 [class.status-pill--pending]="admin.currentPeriod.status === 'PENDING'"
-                [class.status-pill--overdue]="admin.currentPeriod.status === 'OVERDUE'">
+                [class.status-pill--overdue]="admin.currentPeriod.status === 'OVERDUE'"
+                [class.status-pill--muted]="admin.currentPeriod.status === 'INACTIVE' || admin.currentPeriod.status === 'NONE'">
                 {{ periodStatusLabel(admin.currentPeriod.status) }}
               </span>
+              <div class="text-[10px] text-gray-500 mt-1 uppercase tracking-wide">
+                {{ admin.currentPeriod.month }}
+              </div>
               <div *ngIf="admin.currentPeriod.status === 'PAID'"
-                class="text-[10px] text-emerald-600 font-bold mt-1">
-                Pagado {{ admin.currentPeriod.paymentDate | date:'dd/MM/yy' }}
+                class="text-[10px] text-emerald-600 font-bold mt-0.5">
+                Pagado {{ admin.currentPeriod.paymentDate | dateOnly:'short' }}
               </div>
-              <div *ngIf="admin.currentPeriod.status !== 'PAID'" class="text-[10px] text-gray-400 mt-1">
-                Vence {{ admin.currentPeriod.dueDate | date:'dd/MM/yy' }}
+              <div *ngIf="admin.currentPeriod.status !== 'PAID'
+                  && admin.currentPeriod.status !== 'INACTIVE'
+                  && admin.currentPeriod.status !== 'NONE'
+                  && admin.currentPeriod.dueDate"
+                class="text-[10px] text-gray-400 mt-0.5">
+                Vence {{ admin.currentPeriod.dueDate | dateOnly:'short' }}
               </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="debt">
+            <th mat-header-cell *matHeaderCellDef>Deuda abierta</th>
+            <td mat-cell *matCellDef="let admin">
+              @if (debtDisplay(admin).kind === 'open') {
+                <div class="font-bold text-amber-800">
+                  {{ openInvoiceCount(admin) }}
+                  {{ openInvoiceCount(admin) === 1 ? 'factura' : 'facturas' }}
+                </div>
+                <div class="text-sm font-semibold text-gray-800">
+                  {{ openInvoiceTotal(admin) | number:'1.2-2' }}
+                  {{ admin.openInvoices?.currency || admin.billingConfig.currency }}
+                </div>
+                @if (nextInvoiceLabel(admin)) {
+                  <div class="text-[10px] text-gray-500 mt-0.5">
+                    Siguiente pago: {{ nextInvoiceLabel(admin) }}
+                  </div>
+                }
+              } @else if (debtDisplay(admin).kind === 'ok') {
+                <span class="text-sm text-emerald-600 font-semibold">{{ debtDisplay(admin).label }}</span>
+              } @else {
+                <span class="text-sm text-gray-500 font-medium">{{ debtDisplay(admin).label }}</span>
+              }
             </td>
           </ng-container>
 
@@ -164,15 +241,24 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef class="text-right"></th>
             <td mat-cell *matCellDef="let admin" class="text-right">
-              <button mat-icon-button matTooltip="Historial de pagos" (click)="openHistoryModal(admin)">
+              <button mat-icon-button matTooltip="Historial de este cliente" (click)="openClientHistory(admin)">
                 <mat-icon class="text-gray-400">history</mat-icon>
               </button>
               <button mat-icon-button
-                matTooltip="Registrar pago"
-                [disabled]="admin.currentPeriod.status === 'PAID'"
+                [matTooltip]="accountStatus(admin) === 'ACTIVE' ? 'Suspender cuenta admin' : 'Activar cuenta admin'"
+                (click)="toggleAccountStatus(admin)">
+                <mat-icon
+                  [class.text-rose-500]="accountStatus(admin) === 'ACTIVE'"
+                  [class.text-emerald-600]="accountStatus(admin) !== 'ACTIVE'">
+                  {{ accountStatus(admin) === 'ACTIVE' ? 'person_off' : 'person_add' }}
+                </mat-icon>
+              </button>
+              <button mat-icon-button
+                matTooltip="Registrar pago (elige factura)"
+                [disabled]="!canRegisterPayment(admin)"
                 (click)="registerSaaSPayment(admin)">
-                <mat-icon [class.text-teal-600]="admin.currentPeriod.status !== 'PAID'"
-                  [class.opacity-30]="admin.currentPeriod.status === 'PAID'">
+                <mat-icon [class.text-teal-600]="canRegisterPayment(admin)"
+                  [class.opacity-30]="!canRegisterPayment(admin)">
                   payments
                 </mat-icon>
               </button>

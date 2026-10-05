@@ -1,0 +1,173 @@
+<div class="saas-history-page space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
+
+  <div class="history-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+      <div>
+        <div class="text-teal-100 text-xs font-bold uppercase tracking-wider mb-2">Cobranza SaaS</div>
+        <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Historial de pagos</h1>
+        <p class="text-teal-50/90 mt-2 mb-0 max-w-2xl">
+          Pagos registrados por administrador o vista global de toda la cartera.
+        </p>
+      </div>
+      <a mat-stroked-button routerLink="/admin/administration"
+        class="!border-white/40 !text-white !rounded-xl h-12 px-5 font-bold shrink-0">
+        <mat-icon>arrow_back</mat-icon>
+        Volver a cartera
+      </a>
+    </div>
+  </div>
+
+  <mat-card class="!rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+    <div class="flex flex-col md:flex-row gap-3 md:items-center">
+      <mat-form-field appearance="outline" class="w-full md:max-w-md !mb-0">
+        <mat-label>Cliente (admin_id)</mat-label>
+        <mat-select [ngModel]="selectedAdminId()" (ngModelChange)="onAdminFilterChange($event)">
+          <mat-option [value]="'ALL'">Todos los clientes</mat-option>
+          @for (c of clients(); track c.id) {
+            <mat-option [value]="c.id">{{ c.name }} · #{{ c.id }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <button mat-stroked-button type="button" class="!rounded-xl h-[56px] md:ml-auto" (click)="loadHistory()">
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+    <p class="m-0 mt-3 text-sm text-gray-500">
+      <strong class="text-gray-800">{{ filteredRows().length }}</strong> pagos en la vista actual
+    </p>
+  </mat-card>
+
+  <div *ngIf="loadError()" class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 text-sm">
+    {{ loadError() }}
+  </div>
+
+  @if (selectedAdminId() !== 'ALL') {
+    <mat-card class="table-panel premium-card !rounded-2xl">
+      <div class="table-panel__head">
+        <h3 class="m-0 font-bold text-gray-800">Facturas del cliente #{{ selectedAdminId() }}</h3>
+        <span class="text-xs text-gray-500">{{ invoices().length }} registros</span>
+      </div>
+
+      <div *ngIf="invoicesError()" class="p-4 text-sm text-amber-800">{{ invoicesError() }}</div>
+
+      <div *ngIf="invoicesLoading()" class="flex justify-center py-12">
+        <mat-spinner diameter="36"></mat-spinner>
+      </div>
+
+      <div class="overflow-x-auto" *ngIf="!invoicesLoading() && invoices().length">
+        <table mat-table [dataSource]="invoices()" class="w-full min-w-[720px]">
+          <ng-container matColumnDef="period">
+            <th mat-header-cell *matHeaderCellDef>Periodo</th>
+            <td mat-cell *matCellDef="let inv" class="font-mono font-semibold">{{ invoicePeriodLabel(inv) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="issue">
+            <th mat-header-cell *matHeaderCellDef>Emisión</th>
+            <td mat-cell *matCellDef="let inv">{{ inv.issue_date | dateOnly }}</td>
+          </ng-container>
+          <ng-container matColumnDef="due">
+            <th mat-header-cell *matHeaderCellDef>Vence</th>
+            <td mat-cell *matCellDef="let inv">{{ inv.due_date | dateOnly }}</td>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef>Monto</th>
+            <td mat-cell *matCellDef="let inv" class="font-bold">
+              {{ inv.fee_amount | number:'1.2-2' }} {{ inv.currency }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let inv">{{ invoiceStatusLabel(inv.status) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="paidOn">
+            <th mat-header-cell *matHeaderCellDef>Pagada</th>
+            <td mat-cell *matCellDef="let inv">
+              @if (inv.payment_date) {
+                {{ inv.payment_date | dateOnly }}
+              } @else {
+                —
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="pdf">
+            <th mat-header-cell *matHeaderCellDef class="text-center">PDF</th>
+            <td mat-cell *matCellDef="let inv" class="text-center">
+              <button mat-icon-button type="button"
+                [matTooltip]="invoicePdfTooltip(inv)"
+                (click)="printInvoice(inv)">
+                <mat-icon class="text-rose-600">picture_as_pdf</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="invoiceColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: invoiceColumns" class="row-hover"></tr>
+        </table>
+      </div>
+
+      <div *ngIf="!invoicesLoading() && !invoices().length && !invoicesError()" class="empty-state py-10">
+        <p class="m-0 text-gray-500">Este administrador aún no tiene facturas SaaS.</p>
+      </div>
+    </mat-card>
+  }
+
+  <mat-card class="table-panel premium-card !rounded-2xl">
+    <div class="table-panel__head">
+      <h3 class="m-0 font-bold text-gray-800">Registro de cobros</h3>
+    </div>
+
+    <div *ngIf="loading()" class="flex justify-center py-16">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <div class="overflow-x-auto" *ngIf="!loading() && filteredRows().length; else emptyState">
+      <table mat-table [dataSource]="filteredRows()" class="w-full min-w-[900px]">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let r">{{ r.payment_date | dateOnly }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="client">
+          <th mat-header-cell *matHeaderCellDef>Cliente</th>
+          <td mat-cell *matCellDef="let r">
+            <div class="font-semibold text-gray-900">{{ r.admin_name }}</div>
+            <div class="text-xs text-gray-400">#{{ r.admin_id }} · {{ r.admin_email }}</div>
+            <div class="text-xs text-gray-500 mt-0.5">{{ clientScopeLabel(r) }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="period">
+          <th mat-header-cell *matHeaderCellDef>Periodo</th>
+          <td mat-cell *matCellDef="let r" class="font-mono text-sm">{{ periodLabel(r) }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="amount">
+          <th mat-header-cell *matHeaderCellDef>Monto</th>
+          <td mat-cell *matCellDef="let r" class="font-bold">
+            {{ r.amount_paid | number:'1.2-2' }} {{ r.currency }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="method">
+          <th mat-header-cell *matHeaderCellDef>Método</th>
+          <td mat-cell *matCellDef="let r" class="text-sm text-gray-600">{{ r.payment_method }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="reference">
+          <th mat-header-cell *matHeaderCellDef>Referencia</th>
+          <td mat-cell *matCellDef="let r" class="text-xs font-mono text-gray-500">{{ r.reference_number || '—' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns" class="row-hover"></tr>
+      </table>
+    </div>
+
+    <ng-template #emptyState>
+      <div *ngIf="!loading()" class="empty-state">
+        <mat-icon class="!text-5xl opacity-30 mb-2">receipt_long</mat-icon>
+        <p class="m-0">No hay pagos registrados para este filtro.</p>
+      </div>
+    </ng-template>
+  </mat-card>
+
+</div>

@@ -1,146 +1,195 @@
-<div class="space-y-6 max-w-5xl mx-auto pb-10">
+<div class="polls-page space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
 
-    <!-- CABECERA -->
-    <div class="flex items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div class="p-4 bg-indigo-50 rounded-2xl text-indigo-600">
-            <mat-icon class="scale-150">how_to_vote</mat-icon>
+  <div class="polls-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+      <div class="min-w-0 flex-1">
+        <div class="text-purple-100 text-xs font-bold uppercase tracking-wider mb-2">Democracia digital</div>
+        <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Asambleas y encuestas</h1>
+        <p class="text-purple-50/90 mt-3 mb-0 max-w-2xl text-sm sm:text-base">
+          Publica propuestas Sí/No, consulta resultados en tiempo real y genera actas al cierre.
+        </p>
+      </div>
+      <button mat-stroked-button type="button"
+        class="!border-white/40 !text-white !rounded-xl h-12 px-5 font-bold shrink-0"
+        (click)="refreshList()" [disabled]="loading()">
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="stat-cards-grid">
+    @for (card of statCards(); track card.id) {
+      <mat-card class="stat-card stat-card--{{ card.variant }}">
+        <div class="stat-card__top">
+          <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <span class="stat-card__chip">{{ card.chip }}</span>
         </div>
-        <div>
-            <h1 class="text-3xl font-black text-gray-900 m-0">Asambleas y Encuestas</h1>
-            <p class="text-gray-500 font-medium mt-1 m-0">Somete propuestas a votación digital y genera actas
-                automáticamente.</p>
-        </div>
+        <div class="stat-card__value">{{ card.value }}</div>
+        @if (card.sub) {
+          <div class="stat-card__sub">{{ card.sub }}</div>
+        }
+      </mat-card>
+    }
+  </div>
+
+  <mat-card class="panel-card">
+    <div class="panel-card__head">
+      <h2 class="text-lg font-bold text-violet-900 m-0 flex items-center gap-2">
+        <mat-icon>add_task</mat-icon>
+        Nueva propuesta
+      </h2>
     </div>
 
-    <!-- FORMULARIO DE CREACIÓN -->
-    <mat-card class="shadow-md border border-gray-100 rounded-2xl bg-white overflow-hidden">
-        <div class="p-5 border-b bg-indigo-50/50">
-            <h2 class="text-lg font-bold text-indigo-900 m-0 flex items-center gap-2">
-                <mat-icon>add_task</mat-icon> Nueva Propuesta
-            </h2>
-        </div>
+    <form [formGroup]="pollForm" (ngSubmit)="createPoll()" class="p-5 sm:p-6 flex flex-col gap-4">
+      <mat-form-field appearance="outline" class="w-full !mb-0">
+        <mat-label>Pregunta o propuesta a votación</mat-label>
+        <textarea matInput formControlName="question" rows="3"
+          placeholder="Ej. ¿Está de acuerdo con pintar la fachada del edificio?"></textarea>
+        <mat-hint>Respuesta binaria: Sí o No.</mat-hint>
+      </mat-form-field>
 
-        <form [formGroup]="pollForm" (ngSubmit)="createPoll()" class="p-6 flex flex-col gap-4">
-            <mat-form-field appearance="outline" class="w-full">
-                <mat-label>Pregunta o propuesta a someter a votación</mat-label>
-                <textarea matInput formControlName="question" rows="3"
-                    placeholder="Ej. ¿Está de acuerdo con pintar la fachada del edificio color azul cobalto?"></textarea>
-                <mat-hint>Escribe la propuesta de forma clara para que se responda con SÍ o NO.</mat-hint>
-            </mat-form-field>
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-between">
+        <mat-form-field appearance="outline" class="w-full sm:w-72 !mb-0">
+          <mat-label>Duración</mat-label>
+          <mat-icon matPrefix class="text-violet-500">timer</mat-icon>
+          <mat-select formControlName="durationDays">
+            <mat-option [value]="1">24 horas (urgente)</mat-option>
+            <mat-option [value]="3">3 días</mat-option>
+            <mat-option [value]="5">5 días</mat-option>
+            <mat-option [value]="7">7 días</mat-option>
+            <mat-option [value]="15">15 días</mat-option>
+          </mat-select>
+        </mat-form-field>
 
-            <div class="flex flex-col sm:flex-row items-center gap-4 justify-between">
-                <mat-form-field appearance="outline" class="w-full sm:w-64">
-                    <mat-label>Duración de la encuesta</mat-label>
-                    <mat-select formControlName="durationDays">
-                        <mat-option [value]="1">24 Horas (Urgente)</mat-option>
-                        <mat-option [value]="3">3 Días</mat-option>
-                        <mat-option [value]="5">5 Días</mat-option>
-                        <mat-option [value]="7">7 Días</mat-option>
-                        <mat-option [value]="15">15 Días</mat-option>
-                    </mat-select>
-                    <mat-icon matPrefix class="mr-2 text-gray-400">timer</mat-icon>
-                </mat-form-field>
+        <button mat-flat-button color="primary" type="submit"
+          class="h-14 px-8 rounded-xl font-bold w-full sm:w-auto !bg-violet-700"
+          [disabled]="pollForm.invalid || isSubmitting()">
+          <mat-icon>campaign</mat-icon>
+          Publicar encuesta
+        </button>
+      </div>
+    </form>
+  </mat-card>
 
-                <button mat-flat-button color="primary" type="submit"
-                    class="h-14 px-8 rounded-xl font-bold w-full sm:w-auto"
-                    [disabled]="pollForm.invalid || isSubmitting()">
-                    <mat-icon>campaign</mat-icon> Publicar Encuesta
-                </button>
+  <mat-card class="panel-card p-4 sm:p-5">
+    <div class="flex flex-col lg:flex-row gap-3 lg:items-center">
+      <mat-form-field appearance="outline" class="w-full lg:flex-1 !mb-0">
+        <mat-label>Buscar en consultas</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
+          placeholder="Texto de la propuesta..." autocomplete="off" />
+        @if (searchQuery()) {
+          <button matSuffix mat-icon-button type="button" (click)="onSearchChange('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full lg:w-56 !mb-0">
+        <mat-label>Estado</mat-label>
+        <mat-select [value]="statusFilter()" (selectionChange)="onStatusFilterChange($event.value)">
+          <mat-option value="ALL">Todas</mat-option>
+          <mat-option value="ACTIVE">En curso</mat-option>
+          <mat-option value="CLOSED">Cerradas</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <p class="m-0 mt-3 text-sm text-gray-500">
+      <strong class="text-gray-800">{{ filteredPolls().length }}</strong> encuestas en la vista
+    </p>
+  </mat-card>
+
+  @if (loading()) {
+    <div class="flex justify-center py-16">
+      <mat-spinner diameter="44"></mat-spinner>
+    </div>
+  } @else if (polls().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="text-5xl opacity-30 mb-2">inbox</mat-icon>
+      <h3 class="m-0 font-bold text-gray-600">Sin encuestas aún</h3>
+      <p class="text-sm m-0 mt-1">Publica la primera propuesta arriba.</p>
+    </div>
+  } @else if (filteredPolls().length === 0) {
+    <div class="empty-state">
+      <mat-icon class="text-5xl opacity-30 mb-2">search_off</mat-icon>
+      <h3 class="m-0 font-bold text-gray-600">Nada coincide con los filtros</h3>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+      @for (poll of filteredPolls(); track poll.id) {
+        <mat-card class="poll-card"
+          [class.poll-card--active]="!poll.isClosed"
+          [class.poll-card--closed]="poll.isClosed">
+          <div class="p-5 flex flex-col h-full">
+            <div class="flex justify-between items-start gap-2 mb-3">
+              <span class="status-pill" [class.status-pill--live]="!poll.isClosed"
+                [class.status-pill--closed]="poll.isClosed">
+                <mat-icon>{{ poll.isClosed ? 'lock' : 'hourglass_top' }}</mat-icon>
+                {{ poll.isClosed ? 'Cerrada' : 'En curso' }}
+              </span>
+              <span class="text-xs text-gray-400 font-semibold whitespace-nowrap">
+                Cierra: {{ poll.end_date | dateOnly }}
+              </span>
             </div>
-        </form>
-    </mat-card>
 
-    <mat-divider class="my-4"></mat-divider>
+            <p class="font-bold text-gray-800 text-base leading-snug mb-4 flex-1">
+              “{{ poll.question }}”
+            </p>
 
-    <!-- LISTADO DE ENCUESTAS -->
-    <h2 class="text-xl font-black text-gray-800 mb-4">Historial de Consultas</h2>
+            @if (poll.resultsLoaded) {
+              <div class="pt-4 border-t border-gray-100 space-y-3">
+                <div class="text-[11px] font-black text-gray-400 uppercase tracking-wider">
+                  Votos emitidos: {{ poll.results.total }}
+                </div>
 
-    <div *ngIf="polls().length === 0" class="text-center py-10 bg-gray-50 rounded-2xl border border-gray-100">
-        <mat-icon class="text-5xl text-gray-300 mb-2">inbox</mat-icon>
-        <p class="text-gray-500 font-medium">No se han realizado encuestas en este edificio.</p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <mat-card *ngFor="let poll of polls()" class="rounded-2xl shadow-sm border border-gray-200"
-            [ngClass]="poll.isClosed ? 'bg-gray-50' : 'bg-white border-l-4 border-l-indigo-500'">
-
-            <div class="p-5 flex flex-col h-full justify-between">
-                <div>
-                    <div class="flex justify-between items-start mb-3">
-                        <span
-                            [ngClass]="poll.isClosed ? 'bg-gray-200 text-gray-600' : 'bg-indigo-100 text-indigo-700 animate-pulse'"
-                            class="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                            <mat-icon class="scale-75 w-4 h-4">{{ poll.isClosed ? 'lock' : 'hourglass_top' }}</mat-icon>
-                            {{ poll.isClosed ? 'Cerrada' : 'En Curso' }}
+                @if (poll.results.total === 0) {
+                  <div class="text-center py-3 px-2 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                    <span class="text-xs text-gray-400 italic">Esperando participación…</span>
+                  </div>
+                } @else {
+                  <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-gray-100">
+                    <div class="chart-ring"
+                      [style.background]="'conic-gradient(#10b981 0% ' + yesPercent(poll) + '%, #ef4444 ' + yesPercent(poll) + '% 100%)'">
+                    </div>
+                    <div class="flex flex-col gap-2 w-full text-sm font-bold">
+                      <div class="flex justify-between items-center text-emerald-600">
+                        <span class="flex items-center gap-1.5">
+                          <span class="w-2.5 h-2.5 bg-emerald-500 rounded-sm"></span> Sí
                         </span>
-                        <span class="text-xs text-gray-400 font-medium">Cierra: {{ poll.end_date | date:'dd/MM/yy'
-                            }}</span>
+                        <span class="text-xs bg-emerald-50 px-2 py-0.5 rounded">
+                          {{ poll.results.si }} ({{ poll.results.si / poll.results.total * 100 | number:'1.0-0' }}%)
+                        </span>
+                      </div>
+                      <div class="flex justify-between items-center text-red-600">
+                        <span class="flex items-center gap-1.5">
+                          <span class="w-2.5 h-2.5 bg-red-500 rounded-sm"></span> No
+                        </span>
+                        <span class="text-xs bg-red-50 px-2 py-0.5 rounded">
+                          {{ poll.results.no }} ({{ poll.results.no / poll.results.total * 100 | number:'1.0-0' }}%)
+                        </span>
+                      </div>
                     </div>
+                  </div>
+                }
 
-                    <p class="font-bold text-gray-800 text-base leading-snug mb-4">
-                        "{{ poll.question }}"
-                    </p>
-                </div>
-
-                <!-- 🔥 RESULTADOS EN TIEMPO REAL (AUTO-CARGADOS) -->
-                <div *ngIf="poll.resultsLoaded"
-                    class="mt-2 pt-4 border-t border-gray-100 space-y-4 flex-1 flex flex-col justify-end">
-
-                    <div class="flex justify-between text-[11px] font-black text-gray-400 uppercase tracking-widest">
-                        <span>Votos Emitidos: {{ poll.results.total }}</span>
-                    </div>
-
-                    <!-- ESTADO CUANDO NO HAY VOTOS -->
-                    <div *ngIf="poll.results.total === 0"
-                        class="flex items-center justify-center p-4 bg-gray-100 rounded-xl border border-dashed border-gray-300">
-                        <span class="text-xs font-medium text-gray-400 italic">Esperando participación...</span>
-                    </div>
-
-                    <!-- 🔥 GRÁFICO DE TORTA Y LEYENDA (CSS PURO) -->
-                    <div class="flex items-center gap-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm"
-                        *ngIf="poll.results.total > 0">
-
-                        <!-- El Gráfico de Torta -->
-                        <div class="w-16 h-16 rounded-full shadow-inner flex-shrink-0 border-4 border-gray-50 transform transition-transform hover:scale-105"
-                            [style.background]="'conic-gradient(#10b981 0% ' + (poll.results.si / poll.results.total * 100) + '%, #ef4444 ' + (poll.results.si / poll.results.total * 100) + '% 100%)'">
-                        </div>
-
-                        <!-- Leyenda Detallada -->
-                        <div class="flex flex-col gap-3 w-full">
-                            <div class="flex justify-between items-center text-sm font-black text-emerald-600">
-                                <div class="flex items-center gap-1.5">
-                                    <div class="w-3 h-3 bg-emerald-500 rounded-sm shadow-sm"></div> SÍ
-                                </div>
-                                <span class="bg-emerald-50 px-2 py-0.5 rounded text-xs">{{ poll.results.si }} ({{
-                                    (poll.results.si / poll.results.total * 100) | number:'1.0-0' }}%)</span>
-                            </div>
-
-                            <div class="flex justify-between items-center text-sm font-black text-red-600">
-                                <div class="flex items-center gap-1.5">
-                                    <div class="w-3 h-3 bg-red-500 rounded-sm shadow-sm"></div> NO
-                                </div>
-                                <span class="bg-red-50 px-2 py-0.5 rounded text-xs">{{ poll.results.no }} ({{
-                                    (poll.results.no / poll.results.total * 100) | number:'1.0-0' }}%)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 🔥 BOTÓN DE ACTA (Solo se muestra si la encuesta finalizó) -->
-                    <button *ngIf="poll.isClosed" mat-flat-button color="accent"
-                        class="w-full rounded-xl mt-2 font-bold !bg-slate-800 !text-white shadow-md hover:!bg-slate-900"
-                        (click)="exportActa(poll)">
-                        <mat-icon>description</mat-icon> Extraer Libro de Actas
-                    </button>
-
-                    <!-- Mensaje para las activas -->
-                    <div *ngIf="!poll.isClosed" class="text-center mt-2">
-                        <span class="text-[10px] text-indigo-400 font-medium italic">El acta estará disponible al
-                            cierre.</span>
-                    </div>
-
-                </div>
-
-            </div>
+                @if (poll.isClosed) {
+                  <button mat-flat-button type="button"
+                    class="w-full rounded-xl font-bold !bg-slate-800 !text-white"
+                    (click)="exportActa(poll)">
+                    <mat-icon>description</mat-icon>
+                    Extraer libro de actas
+                  </button>
+                } @else {
+                  <p class="text-[10px] text-violet-500 font-medium italic text-center m-0">
+                    El acta estará disponible al cierre.
+                  </p>
+                }
+              </div>
+            }
+          </div>
         </mat-card>
+      }
     </div>
+  }
 </div>

@@ -24,6 +24,11 @@ export const ADMIN_ROUTES: Routes = [
             import('./pages/administration/administration.component').then(m => m.AdministrationComponent)
     },
     {
+        path: 'administration/history',
+        loadComponent: () =>
+            import('./pages/saas-history/saas-history.component').then(m => m.SaasHistoryComponent)
+    },
+    {
         path: 'vcards',
         loadComponent: () =>
             import('./pages/vcards/vcards.component').then(m => m.VcardsComponent)

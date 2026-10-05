@@ -7,6 +7,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
@@ -17,9 +19,11 @@ import { ApartmentService } from '../../../core/services/apartment.service';
   standalone: true,
   imports: [
     CommonModule, MatCardModule, MatIconModule, MatButtonModule,
-    MatSelectModule, MatFormFieldModule, FormsModule, MatInputModule, MatDialogModule
+    MatSelectModule, MatFormFieldModule, FormsModule, MatInputModule, MatDialogModule,
+    MatProgressSpinnerModule, MatTooltipModule
   ],
-  templateUrl: './documents.component.html'
+  templateUrl: './documents.component.html',
+  styleUrl: './documents.component.scss'
 })
 export class DocumentsComponent implements OnInit {
   private authService = inject(AuthService);
@@ -39,6 +43,8 @@ export class DocumentsComponent implements OnInit {
   adminName = computed(() => this.authService.userSignal()?.name || 'Junta de Condominio');
   buildingsList = signal<any[]>([]);
   apartmentsList = signal<any[]>([]);
+  apartmentsLoading = signal(false);
+  apartmentSearch = signal('');
   complexInfo = signal<{ name: string; direccion: string }>({ name: '', direccion: '' });
 
   selectedDoc = signal<string>('');
@@ -60,6 +66,59 @@ export class DocumentsComponent implements OnInit {
   });
 
   canGenerate = computed(() => !!this.selectedDoc() && !!this.selectedOwner());
+
+  filteredApartments = computed(() => {
+    const q = this.apartmentSearch().trim().toLowerCase();
+    const list = this.apartmentsList();
+    if (!q) return list;
+    return list.filter(
+      (a) =>
+        String(a.number ?? '').toLowerCase().includes(q) ||
+        String(a.ownerName ?? '').toLowerCase().includes(q)
+    );
+  });
+
+  unitsWithOwner = computed(
+    () => this.apartmentsList().filter((a) => !!a.ownerName).length
+  );
+  delinquentUnits = computed(
+    () => this.apartmentsList().filter((a) => Number(a.balance) > 0).length
+  );
+
+  statCards = computed(() => [
+    {
+      id: 'templates',
+      variant: 'violet',
+      icon: 'description',
+      chip: 'Plantillas',
+      value: String(this.documentTypes.length),
+      sub: 'Cartas oficiales'
+    },
+    {
+      id: 'units',
+      variant: 'blue',
+      icon: 'apartment',
+      chip: 'Unidades',
+      value: String(this.apartmentsList().length),
+      sub: this.selectedBuildingName() || 'Selecciona torre'
+    },
+    {
+      id: 'owners',
+      variant: 'emerald',
+      icon: 'person',
+      chip: 'Con propietario',
+      value: String(this.unitsWithOwner()),
+      sub: 'Listos para emitir'
+    },
+    {
+      id: 'debt',
+      variant: 'rose',
+      icon: 'warning',
+      chip: 'Morosos',
+      value: String(this.delinquentUnits()),
+      sub: 'Revisar solvencia'
+    }
+  ]);
 
   docData = {
     cedula: '',
@@ -109,13 +168,28 @@ export class DocumentsComponent implements OnInit {
   }
 
   loadApartments(buildingId: number) {
+    this.apartmentsLoading.set(true);
     this.apartmentService.getApartments(buildingId).subscribe({
       next: (res: any) => {
-        const sortedApts = res.data.sort((a: any, b: any) => a.number.localeCompare(b.number, undefined, { numeric: true }));
+        const sortedApts = (res.data ?? []).sort((a: any, b: any) =>
+          String(a.number).localeCompare(String(b.number), undefined, { numeric: true })
+        );
         this.apartmentsList.set(sortedApts);
+        this.apartmentsLoading.set(false);
       },
-      error: (err) => console.error("Error cargando apartamentos", err)
+      error: (err) => {
+        console.error('Error cargando apartamentos', err);
+        this.apartmentsLoading.set(false);
+      }
     });
+  }
+
+  onApartmentSearchChange(value: string) {
+    this.apartmentSearch.set(value);
+  }
+
+  selectDocument(id: string) {
+    this.selectedDoc.set(id);
   }
 
   generateDocument() {

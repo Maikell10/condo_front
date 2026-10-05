@@ -1,33 +1,203 @@
 :host {
   display: block;
-  padding: 30px;
-  background: #f1f5f9;
-  min-height: 100vh;
 }
 
-mat-card {
-  margin-bottom: 25px;
-  padding: 25px;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.1);
+.apt-hero {
+  background: linear-gradient(135deg, #312e81 0%, #4338ca 45%, #3730a3 100%);
+}
 
-  h2,
-  h3 {
-    color: #1a2b4b;
-    margin-bottom: 15px;
+.stat-cards-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  mat-form-field {
-    width: 100%;
-    margin-bottom: 15px;
+  @media (min-width: 1100px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  padding: 1.1rem 1.15rem 1.2rem !important;
+  box-shadow: 0 16px 40px -22px rgba(15, 23, 42, 0.35) !important;
+  min-height: 7.75rem;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.28s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 22px 44px -18px rgba(15, 23, 42, 0.4) !important;
+  }
+}
+
+.stat-card--indigo {
+  background: linear-gradient(145deg, #6366f1, #4f46e5);
+  color: #fff;
+}
+
+.stat-card--emerald {
+  background: linear-gradient(145deg, #10b981, #059669);
+  color: #fff;
+}
+
+.stat-card--rose {
+  background: linear-gradient(145deg, #f43f5e, #e11d48);
+  color: #fff;
+}
+
+.stat-card--violet {
+  background: linear-gradient(145deg, #8b5cf6, #7c3aed);
+  color: #fff;
+}
+
+.stat-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.stat-card__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.22);
+
+  mat-icon {
+    color: #fff;
+  }
+}
+
+.stat-card__chip {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.stat-card__value {
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.stat-card__sub {
+  font-size: 0.7rem;
+  opacity: 0.88;
+  margin-top: 0.35rem;
+}
+
+::ng-deep .premium-card {
+  border-radius: 1.25rem !important;
+  border: 1px solid #f1f5f9 !important;
+  box-shadow: 0 10px 36px -14px rgba(15, 23, 42, 0.12) !important;
+  background: #fff;
+}
+
+.table-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.table-panel__body {
+  position: relative;
+}
+
+.table-panel__loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.row-hover:hover {
+  background: #f8fafc !important;
+}
+
+.apt-number {
+  font-weight: 800;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+
+.apt-building-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6366f1;
+}
+
+.access-code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 0.22rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+
+  &--ok {
+    background: #d1fae5;
+    color: #047857;
   }
 
-  button {
-    margin-bottom: 20px;
+  &--debt {
+    background: #ffe4e6;
+    color: #be123c;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3.5rem 1rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.hero-building-select {
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
   }
 
-  mat-list-item {
-    border-bottom: 1px solid #e2e8f0;
-    padding: 10px 0;
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-radius: 0.75rem !important;
+  }
+
+  ::ng-deep .mat-mdc-select-value,
+  ::ng-deep .mat-mdc-select-arrow,
+  ::ng-deep .mdc-floating-label {
+    color: #fff !important;
   }
 }

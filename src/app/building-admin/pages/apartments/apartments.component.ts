@@ -10,6 +10,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 // 🔥 Importamos los módulos para el buscador
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { ApartmentService } from '../../../core/services/apartment.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -31,17 +34,22 @@ import * as XLSX from 'xlsx';
     MatButtonModule,
     MatSelectModule,
     MatTooltipModule,
-    MatFormFieldModule, // <-- Añadido
-    MatInputModule,     // <-- Añadido
+    MatFormFieldModule,
+    MatInputModule,
+    FormsModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
     DecimalPipe
   ],
-  templateUrl: './apartments.component.html'
+  templateUrl: './apartments.component.html',
+  styleUrl: './apartments.component.scss'
 })
 export class ApartmentsComponent implements OnInit {
   private apartmentService = inject(ApartmentService);
   private authService = inject(AuthService);
   private dashboardService = inject(DashboardService);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
 
   // --- SEÑALES DEL CONJUNTO RESIDENCIAL ---
   isComplex = computed(() => !!this.authService.userSignal()?.complexId);
@@ -49,8 +57,8 @@ export class ApartmentsComponent implements OnInit {
   selectedBuildingId = signal<number | null>(null);
 
   apartments = signal<any[]>([]);
+  loading = signal(false);
 
-  // 🔥 1. Señal para almacenar el texto de búsqueda
   searchQuery = signal('');
 
   // 🔥 2. Computed que filtra los apartamentos en tiempo real
@@ -73,6 +81,53 @@ export class ApartmentsComponent implements OnInit {
   total = computed(() => this.apartments().length);
   delinquent = computed(() => this.apartments().filter(a => a.balance > 0).length);
   upToDate = computed(() => this.apartments().filter(a => a.balance <= 0).length);
+  withOwner = computed(() => this.apartments().filter(a => !!a.ownerName).length);
+  occupancyRate = computed(() => {
+    const t = this.total();
+    return t ? Math.round((this.withOwner() / t) * 100) : 0;
+  });
+
+  selectedBuildingLabel = computed(() => {
+    const id = this.selectedBuildingId();
+    if (!id) return '';
+    const b = this.buildingsList().find(x => x.id === id);
+    return b?.name || '';
+  });
+
+  statCards = computed(() => [
+    {
+      id: 'total',
+      variant: 'indigo',
+      icon: 'domain',
+      chip: 'Unidades',
+      value: this.total(),
+      sub: this.selectedBuildingLabel() || 'Edificio actual'
+    },
+    {
+      id: 'ok',
+      variant: 'emerald',
+      icon: 'verified',
+      chip: 'Solventes',
+      value: this.upToDate(),
+      sub: 'Sin saldo pendiente'
+    },
+    {
+      id: 'debt',
+      variant: 'rose',
+      icon: 'priority_high',
+      chip: 'En mora',
+      value: this.delinquent(),
+      sub: 'Con deuda activa'
+    },
+    {
+      id: 'occ',
+      variant: 'violet',
+      icon: 'person',
+      chip: 'Ocupación',
+      value: `${this.occupancyRate()}%`,
+      sub: `${this.withOwner()} con propietario`
+    }
+  ]);
 
   ngOnInit() {
     this.initView();
@@ -98,10 +153,29 @@ export class ApartmentsComponent implements OnInit {
   }
 
   loadApartments(buildingId: number) {
+    this.loading.set(true);
     this.apartmentService.getApartments(buildingId).subscribe({
-      next: (res) => this.apartments.set(res.data),
-      error: (err) => console.error(err)
+      next: (res) => {
+        this.apartments.set(res.data ?? []);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error(err);
+        this.loading.set(false);
+        this.snackBar.open('No se pudieron cargar los apartamentos', 'Cerrar', {
+          duration: 4000
+        });
+      }
     });
+  }
+
+  refreshList(): void {
+    const id = this.selectedBuildingId();
+    if (id) this.loadApartments(id);
+  }
+
+  onSearchChange(value: string): void {
+    this.searchQuery.set(String(value || '').trim().toLowerCase());
   }
 
   onBuildingChange(buildingId: number) {
@@ -109,12 +183,6 @@ export class ApartmentsComponent implements OnInit {
     this.apartments.set([]);
     this.searchQuery.set(''); // Reseteamos la búsqueda al cambiar de edificio
     this.loadApartments(buildingId);
-  }
-
-  // 🔥 3. Método disparado por el keyup del input
-  applySearch(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.searchQuery.set(filterValue.trim().toLowerCase());
   }
 
   editAlicuota(apt: any) {
@@ -166,10 +234,10 @@ export class ApartmentsComponent implements OnInit {
   }
 
   copyAccessCode(code: string) {
-    if (code) {
-      navigator.clipboard.writeText(code);
-      console.log('Código copiado:', code);
-    }
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(() => {
+      this.snackBar.open('Código copiado', 'Cerrar', { duration: 2000 });
+    });
   }
 
   getBuildingName(apt: any): string {

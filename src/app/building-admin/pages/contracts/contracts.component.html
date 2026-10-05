@@ -1,150 +1,190 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+<div class="contracts-page space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div>
-            <ng-container *ngIf="isComplex(); else singleBuildingTpl">
-                <div class="flex items-center gap-2 mb-1">
-                    <mat-icon class="text-indigo-600">business</mat-icon>
-                    <mat-select [value]="selectedBuildingId()" (selectionChange)="onBuildingChange($event.value)"
-                        class="text-3xl font-black text-gray-900 tracking-tight outline-none">
-                        <mat-option value="ALL">Contratos del Conjunto (Todos)</mat-option>
-                        <mat-option *ngFor="let b of buildingsList()" [value]="b.id">
-                            {{ b.name }}
-                        </mat-option>
-                    </mat-select>
-                </div>
-            </ng-container>
-
-            <ng-template #singleBuildingTpl>
-                <h1 class="text-3xl font-black text-gray-900 tracking-tight m-0">Contratos de Servicio</h1>
-            </ng-template>
-
-            <p class="text-gray-500 mt-1">Gestión de gastos fijos y mantenimiento recurrente del edificio.</p>
+  <div class="contracts-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+    <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+      <div class="min-w-0 flex-1">
+        <div class="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">
+          Gastos recurrentes
         </div>
 
-        <button mat-flat-button color="primary" class="h-14 px-6 rounded-xl shadow-lg font-bold"
+        @if (isComplex()) {
+          <mat-form-field appearance="outline" class="hero-building-select w-full max-w-lg !mb-0">
+            <mat-label class="!text-blue-100">Alcance</mat-label>
+            <mat-select [value]="selectedBuildingId()" (selectionChange)="onBuildingChange($event.value)">
+              <mat-option value="ALL">Todo el conjunto</mat-option>
+              @for (b of buildingsList(); track b.id) {
+                <mat-option [value]="b.id">{{ b.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        } @else {
+          <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Contratos de servicio</h1>
+        }
+
+        <p class="text-blue-50/90 mt-3 mb-0 max-w-2xl text-sm sm:text-base">
+          Proveedores, costos mensuales fijos y vigencia. Se cargan al cierre de facturación del mes.
+        </p>
+        @if (scopeLabel()) {
+          <p class="text-blue-100/80 text-xs mt-2 mb-0 font-medium">Vista: {{ scopeLabel() }}</p>
+        }
+      </div>
+
+      <button mat-flat-button type="button"
+        class="!bg-white !text-blue-900 !rounded-xl h-12 px-5 font-bold shadow-md shrink-0"
+        (click)="openNewContractDialog()">
+        <mat-icon>add_task</mat-icon>
+        Nuevo contrato
+      </button>
+    </div>
+  </div>
+
+  <div class="stat-cards-grid">
+    @for (card of statCards(); track card.id) {
+      <mat-card class="stat-card stat-card--{{ card.variant }}">
+        <div class="stat-card__top">
+          <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <span class="stat-card__chip">{{ card.chip }}</span>
+        </div>
+        <div class="stat-card__value">{{ card.value }}</div>
+        @if (card.sub) {
+          <div class="stat-card__sub">{{ card.sub }}</div>
+        }
+      </mat-card>
+    }
+  </div>
+
+  <mat-card class="!rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
+    <div class="flex flex-col md:flex-row gap-3 md:items-center">
+      <mat-form-field appearance="outline" class="w-full md:flex-1 !mb-0">
+        <mat-label>Buscar proveedor o servicio</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
+          placeholder="Ej. Ascensor, limpieza, proveedor..." />
+        @if (searchQuery()) {
+          <button matSuffix mat-icon-button type="button" (click)="onSearchChange('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <button mat-stroked-button type="button" class="!rounded-xl h-[56px] shrink-0" (click)="refreshList()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    <p class="m-0 mt-3 text-sm text-gray-500">
+      <strong class="text-gray-800">{{ filteredContracts().length }}</strong> contratos en la vista
+    </p>
+  </mat-card>
+
+  <mat-card class="table-panel premium-card !rounded-2xl">
+    <div class="table-panel__head">
+      <div>
+        <h3 class="m-0 font-bold text-gray-800">Servicios contratados</h3>
+        <p class="m-0 mt-1 text-xs text-gray-500 hidden sm:block">
+          Montos recurrentes aplicados al cierre mensual
+        </p>
+      </div>
+      <span class="text-xs font-semibold text-indigo-600">
+        Carga fija: ${{ totalMonthlyCost() | number:'1.2-2' }}
+      </span>
+    </div>
+
+    @if (loading()) {
+      <div class="table-panel__loading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    }
+
+    @if (!loading() && filteredContracts().length) {
+      <div class="overflow-x-auto">
+        <table mat-table [dataSource]="filteredContracts()" class="w-full min-w-[960px]">
+          <ng-container matColumnDef="buildingName">
+            <th mat-header-cell *matHeaderCellDef>Edificio</th>
+            <td mat-cell *matCellDef="let c">
+              <span class="building-tag">{{ c.buildingName || 'Conjunto' }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="provider">
+            <th mat-header-cell *matHeaderCellDef>Proveedor</th>
+            <td mat-cell *matCellDef="let c">
+              <span class="provider-name">{{ c.provider }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="service">
+            <th mat-header-cell *matHeaderCellDef>Servicio</th>
+            <td mat-cell *matCellDef="let c" class="text-sm text-gray-600">{{ c.service }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="monthlyCost">
+            <th mat-header-cell *matHeaderCellDef class="text-right">Costo / mes</th>
+            <td mat-cell *matCellDef="let c" class="text-right font-bold text-indigo-700">
+              ${{ c.monthlyCost | number:'1.2-2' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="startDate">
+            <th mat-header-cell *matHeaderCellDef>Inicio</th>
+            <td mat-cell *matCellDef="let c" class="text-sm text-gray-600">
+              {{ c.startDate | dateOnly }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="endDate">
+            <th mat-header-cell *matHeaderCellDef>Fin</th>
+            <td mat-cell *matCellDef="let c" class="text-sm text-gray-600">
+              {{ c.endDate | dateOnly }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let c">
+              <span class="status-pill"
+                [class.status-pill--active]="c.status === 'ACTIVE'"
+                [class.status-pill--expired]="c.status !== 'ACTIVE'">
+                {{ statusLabel(c.status) }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="text-right"></th>
+            <td mat-cell *matCellDef="let c" class="text-right">
+              <button mat-icon-button type="button" matTooltip="Editar (próximamente)" disabled>
+                <mat-icon class="opacity-40">edit_note</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns()" class="row-hover"></tr>
+        </table>
+      </div>
+    }
+
+    @if (!loading() && !filteredContracts().length) {
+      <div class="empty-state">
+        <mat-icon class="!text-5xl opacity-30 mb-2">assignment_late</mat-icon>
+        <p class="m-0 font-medium">
+          @if (searchQuery()) {
+            No hay contratos con ese filtro.
+          } @else {
+            No hay contratos para esta selección.
+          }
+        </p>
+        @if (!searchQuery()) {
+          <button mat-flat-button color="primary" class="mt-4 !rounded-xl" type="button"
             (click)="openNewContractDialog()">
-            <mat-icon class="mr-1">add_task</mat-icon>
-            Nuevo Contrato
-        </button>
-    </div>
+            Registrar primer contrato
+          </button>
+        } @else {
+          <button mat-button color="primary" class="mt-3" type="button" (click)="onSearchChange('')">
+            Limpiar búsqueda
+          </button>
+        }
+      </div>
+    }
+  </mat-card>
 
-    <div class="grid gap-6 md:grid-cols-3">
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
-            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-                <mat-icon>verified_user</mat-icon>
-            </div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Contratos Activos</div>
-                <div class="text-2xl font-black text-gray-800">{{ activeContracts() }}</div>
-            </div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
-            <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
-                <mat-icon>event_busy</mat-icon>
-            </div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Vencidos / Por Vencer</div>
-                <div class="text-2xl font-black text-gray-800">{{ expiredContracts() }}</div>
-            </div>
-        </mat-card>
-
-        <mat-card class="p-6 border-none shadow-sm bg-white rounded-2xl flex items-center gap-4">
-            <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
-                <mat-icon>account_balance</mat-icon>
-            </div>
-            <div>
-                <div class="text-[10px] uppercase font-bold text-gray-400">Carga Mensual Fija</div>
-                <div class="text-2xl font-black text-gray-800">${{ totalMonthlyCost() | number:'1.2-2' }}</div>
-            </div>
-        </mat-card>
-    </div>
-
-    <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white">
-        <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-            <h3 class="font-bold text-gray-700 m-0">Relación de Servicios Contratados</h3>
-            <span class="text-xs text-gray-400 font-medium hidden md:block">Estos montos se cargan automáticamente al
-                cierre del mes</span>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table mat-table [dataSource]="contracts()" class="w-full">
-
-                <ng-container matColumnDef="buildingName">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
-                        Edificio Destino</th>
-                    <td mat-cell *matCellDef="let c">
-                        <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded font-bold text-xs whitespace-nowrap">
-                            {{ c.buildingName || 'Conjunto General' }}
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="provider">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px] py-5">
-                        Proveedor</th>
-                    <td mat-cell *matCellDef="let c" class="font-bold text-gray-900"> {{ c.provider }} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="service">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Servicio
-                    </th>
-                    <td mat-cell *matCellDef="let c" class="text-gray-600 text-sm"> {{ c.service }} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="monthlyCost">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Costo
-                        Mensual</th>
-                    <td mat-cell *matCellDef="let c" class="font-black text-indigo-600">
-                        ${{ c.monthlyCost | number:'1.2-2' }}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="startDate">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Inicio
-                    </th>
-                    <td mat-cell *matCellDef="let c" class="text-gray-500 text-xs"> {{ c.startDate | date:'dd/MM/yyyy'
-                        }} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="endDate">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Fin</th>
-                    <td mat-cell *matCellDef="let c" class="text-gray-500 text-xs"> {{ c.endDate | date:'dd/MM/yyyy' }}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="status">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">Estado
-                    </th>
-                    <td mat-cell *matCellDef="let c">
-                        <span
-                            [ngClass]="c.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
-                            class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full">
-                            {{ c.status === 'ACTIVE' ? 'Activo' : 'Vencido' }}
-                        </span>
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="text-right pr-6 font-bold text-gray-500 uppercase text-[11px]"></th>
-                    <td mat-cell *matCellDef="let c" class="text-right pr-4">
-                        <button mat-icon-button color="primary" class="text-gray-400 hover:text-indigo-600">
-                            <mat-icon>edit_note</mat-icon>
-                        </button>
-                    </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns();"
-                    class="hover:bg-gray-50/50 transition-colors"></tr>
-            </table>
-
-            <div *ngIf="contracts().length === 0" class="py-20 flex flex-col items-center justify-center text-gray-400">
-                <mat-icon class="text-6xl mb-4 opacity-10">assignment_late</mat-icon>
-                <p class="text-sm font-medium italic">No hay contratos registrados para esta selección.</p>
-            </div>
-        </div>
-    </mat-card>
 </div>

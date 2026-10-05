@@ -1,0 +1,42 @@
+:host {
+  display: block;
+}
+
+.history-hero {
+  background: linear-gradient(135deg, #134e4a 0%, #0f766e 50%, #115e59 100%);
+}
+
+::ng-deep .premium-card {
+  border-radius: 1.25rem !important;
+  border: none !important;
+  box-shadow: 0 10px 40px -12px rgba(15, 23, 42, 0.12) !important;
+  background: #fff;
+}
+
+.table-panel {
+  padding: 0 !important;
+
+  .table-panel__head {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    background: linear-gradient(180deg, #fafafa 0%, #fff 100%);
+  }
+}
+
+.row-hover:hover {
+  background: #f8fafc;
+}
+
+.empty-state {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: #64748b;
+}
+
+th.mat-mdc-header-cell {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  font-weight: 800;
+}

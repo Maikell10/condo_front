@@ -12,17 +12,20 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { PollService } from '../../../core/services/poll.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { MatDividerModule } from '@angular/material/divider';
+import { FormsModule } from '@angular/forms';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { DateOnlyPipe } from '../../../shared/date-only.pipe';
 
 @Component({
   selector: 'app-polls',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule,
+    CommonModule, ReactiveFormsModule, FormsModule, MatCardModule, MatFormFieldModule,
     MatInputModule, MatSelectModule, MatButtonModule, MatIconModule,
-    MatSnackBarModule, MatProgressBarModule, MatDividerModule
+    MatSnackBarModule, MatProgressSpinnerModule, DateOnlyPipe
   ],
-  templateUrl: './polls.component.html'
+  templateUrl: './polls.component.html',
+  styleUrl: './polls.component.scss'
 })
 export class PollsComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -32,6 +35,9 @@ export class PollsComponent implements OnInit {
 
   polls = signal<any[]>([]);
   isSubmitting = signal(false);
+  loading = signal(false);
+  searchQuery = signal('');
+  statusFilter = signal<'ALL' | 'ACTIVE' | 'CLOSED'>('ALL');
 
   pollForm: FormGroup = this.fb.group({
     question: ['', [Validators.required, Validators.minLength(10)]],
@@ -40,6 +46,61 @@ export class PollsComponent implements OnInit {
 
   buildingId = computed(() => Number(this.authService.userSignal()?.buildingId));
 
+  activePolls = computed(() => this.polls().filter((p) => !p.isClosed).length);
+  closedPolls = computed(() => this.polls().filter((p) => p.isClosed).length);
+  totalVotes = computed(() =>
+    this.polls().reduce((acc, p) => acc + (p.results?.total ?? 0), 0)
+  );
+
+  filteredPolls = computed(() => {
+    let rows = this.polls();
+    const status = this.statusFilter();
+    const q = this.searchQuery().trim().toLowerCase();
+
+    if (status === 'ACTIVE') rows = rows.filter((p) => !p.isClosed);
+    if (status === 'CLOSED') rows = rows.filter((p) => p.isClosed);
+
+    if (q) {
+      rows = rows.filter((p) => String(p.question ?? '').toLowerCase().includes(q));
+    }
+    return rows;
+  });
+
+  statCards = computed(() => [
+    {
+      id: 'active',
+      variant: 'indigo',
+      icon: 'hourglass_top',
+      chip: 'En curso',
+      value: String(this.activePolls()),
+      sub: 'Abiertas a votación'
+    },
+    {
+      id: 'closed',
+      variant: 'slate',
+      icon: 'lock',
+      chip: 'Cerradas',
+      value: String(this.closedPolls()),
+      sub: 'Listas para acta'
+    },
+    {
+      id: 'total',
+      variant: 'violet',
+      icon: 'how_to_vote',
+      chip: 'Encuestas',
+      value: String(this.polls().length),
+      sub: 'Histórico del edificio'
+    },
+    {
+      id: 'votes',
+      variant: 'emerald',
+      icon: 'groups',
+      chip: 'Participación',
+      value: String(this.totalVotes()),
+      sub: 'Votos registrados'
+    }
+  ]);
+
   ngOnInit() {
     this.loadPolls();
   }
@@ -47,19 +108,41 @@ export class PollsComponent implements OnInit {
   loadPolls() {
     if (!this.buildingId()) return;
 
+    this.loading.set(true);
     this.pollService.getPollsByBuilding(this.buildingId()).subscribe({
       next: (res) => {
-        const enrichedPolls = res.data.map((p: any) => {
+        const enrichedPolls = (res.data ?? []).map((p: any) => {
           const isClosed = new Date() > new Date(p.end_date) || p.status === 'CLOSED';
           return { ...p, isClosed, resultsLoaded: false, results: null };
         });
 
         this.polls.set(enrichedPolls);
-
-        // 🔥 Novedad: Auto-cargamos los resultados de TODAS las encuestas para el Admin
+        this.loading.set(false);
         enrichedPolls.forEach((poll: any) => this.loadResults(poll));
+      },
+      error: () => {
+        this.loading.set(false);
+        this.snackBar.open('No se pudieron cargar las encuestas', 'Cerrar', { duration: 3500 });
       }
     });
+  }
+
+  refreshList() {
+    this.loadPolls();
+  }
+
+  onSearchChange(value: string) {
+    this.searchQuery.set(value);
+  }
+
+  onStatusFilterChange(value: 'ALL' | 'ACTIVE' | 'CLOSED') {
+    this.statusFilter.set(value);
+  }
+
+  yesPercent(poll: { results: { si: number; total: number } }): number {
+    const total = poll.results?.total ?? 0;
+    if (!total) return 0;
+    return (poll.results.si / total) * 100;
   }
 
   createPoll() {
@@ -73,13 +156,13 @@ export class PollsComponent implements OnInit {
 
       this.pollService.createPoll(payload).subscribe({
         next: () => {
-          this.snackBar.open('✅ Encuesta publicada con éxito', 'Cerrar', { duration: 3000 });
+          this.snackBar.open('Encuesta publicada con éxito', 'Cerrar', { duration: 3000 });
           this.pollForm.reset({ durationDays: 3 });
           this.loadPolls();
           this.isSubmitting.set(false);
         },
         error: () => {
-          this.snackBar.open('❌ Error al publicar la encuesta', 'Cerrar', { duration: 3000 });
+          this.snackBar.open('Error al publicar la encuesta', 'Cerrar', { duration: 3000 });
           this.isSubmitting.set(false);
         }
       });
@@ -138,7 +221,7 @@ Generado automáticamente por el Sistema.
 
     // Copiar al portapapeles
     navigator.clipboard.writeText(actaText).then(() => {
-      this.snackBar.open('📋 Acta copiada al portapapeles lista para pegar', 'Cerrar', { duration: 4000 });
+      this.snackBar.open('Acta copiada al portapapeles', 'Cerrar', { duration: 4000 });
     });
   }
 }
