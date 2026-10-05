@@ -1,6 +1,11 @@
-<div class="space-y-6 max-w-[1200px] mx-auto pb-12">
+<div class="owner-page owner-dashboard space-y-6 max-w-[1200px] mx-auto pb-12 px-4 sm:px-6">
 
-    <div class="relative overflow-hidden rounded-3xl shadow-xl p-8 text-white"
+    @if (loading()) {
+        <app-owner-data-loader message="Cargando tu panel…" submessage="Resumen financiero y accesos rápidos" />
+    } @else {
+    <div class="owner-page__content space-y-6">
+
+    <div class="owner-hero-animate relative overflow-hidden rounded-3xl shadow-xl p-8 text-white"
         [ngClass]="financialStatus().status === 'DEBT' ? 'bg-gradient-to-r from-rose-900 to-red-800' : 'bg-gradient-to-r from-emerald-900 to-green-800'">
 
         <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-5 rounded-full blur-2xl"></div>
@@ -38,7 +43,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="owner-stagger grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <div class="lg:col-span-2 space-y-6">
 
@@ -159,4 +164,7 @@
 
         </div>
     </div>
+
+    </div>
+    }
 </div>

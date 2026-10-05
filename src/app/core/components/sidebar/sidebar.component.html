@@ -1,4 +1,4 @@
-<button class="md:hidden fixed top-4 left-4 z-50 p-2 bg-indigo-600 text-white rounded-md shadow-md"
+<button class="sidebar-menu-fab md:hidden fixed top-4 left-4 z-50 p-2 text-white rounded-md shadow-md"
     (click)="toggleMenu()">
     <mat-icon>menu</mat-icon>
 </button>
@@ -8,22 +8,22 @@
 </div>
 
 <aside
-    class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r h-screen flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
+    class="app-sidebar fixed inset-y-0 left-0 z-50 w-64 h-screen flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0"
     [ngClass]="isMobileMenuOpen() ? 'translate-x-0' : '-translate-x-full'">
 
-    <div class="p-4 flex items-center gap-2 border-b mt-12 md:mt-0">
+    <div class="app-sidebar__brand p-4 flex items-center gap-2 mt-12 md:mt-0">
         <!-- <mat-icon class="text-indigo-600">apartment</mat-icon> -->
         <div
             class="w-7 h-7 rounded-xl overflow-hidden flex items-center justify-center bg-white shadow-md shadow-indigo-100 border border-slate-100">
             <img src="/LOGO_SN1.png" alt="Logo Condominio A Un Clic" class="w-full h-full object-cover">
         </div>
-        <span class="font-semibold text-lg text-gray-800">Condominio a un Clic</span>
+        <span class="app-sidebar__brand-title font-semibold text-lg">Condominio a un Clic</span>
     </div>
 
-    <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+    <nav class="app-sidebar__nav flex-1 p-4 space-y-1 overflow-y-auto">
 
         <ng-container *ngIf="role() === 'SUPER_ADMIN'">
-            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Administración Global
+            <div class="app-sidebar__section-label text-[10px] font-bold uppercase tracking-wider px-3 mb-2">Administración Global
             </div>
 
             <a routerLink="/admin" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
@@ -60,7 +60,7 @@
         </ng-container>
 
         <ng-container *ngIf="role() === 'BUILDING_ADMIN'">
-            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Gestión de Edificio
+            <div class="app-sidebar__section-label text-[10px] font-bold uppercase tracking-wider px-3 mb-2">Gestión de Edificio
             </div>
             <a routerLink="/building-admin" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 [routerLinkActiveOptions]="{exact: true}"
@@ -119,7 +119,7 @@
         </ng-container>
 
         <ng-container *ngIf="role() === 'OWNER'">
-            <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">Mi Residencia</div>
+            <div class="app-sidebar__section-label text-[10px] font-bold uppercase tracking-wider px-3 mb-2">Mi Residencia</div>
 
             <a routerLink="/owner" (click)="closeMenu()" routerLinkActive="bg-indigo-50 text-indigo-700"
                 [routerLinkActiveOptions]="{exact: true}"
@@ -177,7 +177,7 @@
 
     </nav>
 
-    <button class="p-4 flex items-center gap-2 text-red-600 hover:bg-red-50 border-t transition" (click)="logout()">
+    <button class="app-sidebar__logout p-4 flex items-center gap-2 text-red-600 hover:bg-red-50/80 transition w-full" (click)="logout()">
         <mat-icon>logout</mat-icon> Cerrar sesión
     </button>
 </aside>

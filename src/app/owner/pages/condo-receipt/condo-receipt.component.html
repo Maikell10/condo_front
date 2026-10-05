@@ -1,104 +1,165 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12 print:p-0 print:m-0">
+<div class="owner-page condo-receipt-page space-y-6 max-w-[1200px] mx-auto pb-12 px-4 sm:px-6 print:px-0">
 
-    <div
-        class="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 print:shadow-none print:border-none print:p-0">
-        <div>
-            <div class="flex items-center gap-2 text-indigo-600 mb-1">
-                <mat-icon class="scale-75">receipt</mat-icon>
-                <span class="text-xs font-bold uppercase tracking-wider">Detalle Mensual</span>
-            </div>
-            <div class="flex flex-wrap items-center gap-4">
-                <h1 class="text-2xl font-black text-gray-900 tracking-tight m-0">
-                    Recibo Apt {{ currentApt() }}
-                </h1>
-                <span
-                    class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-bold border border-indigo-100">
-                    Alícuota: {{ currentAlicuota() | number:'1.2-4' }} %
-                </span>
-            </div>
-            <p class="text-gray-500 mt-2 text-sm">Desglose de gastos del periodo <strong>{{ currentPeriodName()
-                    }}</strong> y tu cuota correspondiente.</p>
+  @if (showPageLoader()) {
+    <app-owner-data-loader message="Cargando recibos…" submessage="Desglose de condominio" />
+  } @else {
+  <div class="owner-page__content space-y-6">
+
+  <div class="owner-hero-animate receipt-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl print:hidden">
+    <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-5">
+      <div>
+        <div class="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Detalle mensual</div>
+        <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Recibo de condominio</h1>
+        <p class="text-blue-50/90 mt-3 mb-0 max-w-xl text-sm sm:text-base">
+          Desglose de gastos y tu cuota parte para el periodo seleccionado.
+        </p>
+        <div class="unit-badge">
+          <mat-icon class="!text-[18px] !w-[18px] !h-[18px]">home</mat-icon>
+          Apt {{ currentApt() }}
+          <span class="opacity-80">·</span>
+          Alícuota {{ currentAlicuota() | number:'1.2-4' }}%
+          <span class="opacity-80">·</span>
+          <span class="status-pill"
+            [ngClass]="receiptStatus() === 'PAID' ? 'status-pill--paid' : 'status-pill--pending'">
+            {{ statusLabel() }}
+          </span>
         </div>
-
-        <div class="flex items-center gap-3">
-            <mat-form-field appearance="outline" class="w-56 hide-subscript print:hidden">
-                <mat-label>Seleccionar Recibo</mat-label>
-                <mat-select [value]="selectedPeriod()" (selectionChange)="onPeriodChange($event.value)">
-                    <mat-option *ngFor="let p of availablePeriods()" [value]="p.value">
-                        {{ p.name }}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
-
-            <button mat-flat-button color="primary" class="h-[52px] px-6 rounded-xl font-bold shadow-md print:hidden"
-                (click)="printReceipt()">
-                <mat-icon class="mr-2">print</mat-icon>
-                Imprimir
-            </button>
+      </div>
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+        <mat-form-field appearance="outline" class="hero-period-field hide-subscript !mb-0">
+          <mat-label>Recibo</mat-label>
+          <mat-select [value]="selectedPeriod()" (selectionChange)="onPeriodChange($event.value)"
+            [disabled]="loadingPeriods() || availablePeriods().length === 0">
+            @for (p of availablePeriods(); track p.value) {
+              <mat-option [value]="p.value">{{ p.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <div class="flex gap-2">
+          <button mat-stroked-button type="button" class="hero-btn--stroked h-12 px-4 font-bold"
+            (click)="refresh()" [disabled]="loadingDetail() || loadingPeriods()">
+            <mat-icon>refresh</mat-icon>
+            Actualizar
+          </button>
+          <button mat-flat-button type="button" class="hero-btn--primary h-12 px-5 font-bold"
+            (click)="openReceiptPreview()" [disabled]="receiptData().length === 0"
+            matTooltip="Abrir vista previa e imprimir">
+            <mat-icon>picture_as_pdf</mat-icon>
+            Ver recibo
+          </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="owner-stagger stat-cards-grid print:hidden">
+    @for (card of statCards(); track card.id) {
+      <mat-card class="stat-card stat-card--{{ card.variant }}">
+        <div class="stat-card__top">
+          <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <span class="stat-card__chip">{{ card.chip }}</span>
+        </div>
+        <div class="stat-card__value">{{ card.value }}</div>
+        @if (card.sub) {
+          <div class="stat-card__sub">{{ card.sub }}</div>
+        }
+      </mat-card>
+    }
+  </div>
+
+  <mat-card class="panel-card print:shadow-none print:border-none">
+    <div class="table-panel__head print:hidden">
+      <div>
+        <h2 class="m-0 font-bold text-gray-800">Desglose de gastos</h2>
+        <p class="m-0 mt-1 text-xs text-gray-500">{{ currentPeriodName() }}</p>
+      </div>
+      <mat-form-field appearance="outline" class="w-full sm:w-72 !mb-0">
+        <mat-label>Buscar concepto</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" autocomplete="off" />
+        @if (searchQuery()) {
+          <button matSuffix mat-icon-button type="button" (click)="onSearchChange('')">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
     </div>
 
-    <mat-card
-        class="overflow-hidden border-none shadow-xl rounded-2xl bg-white premium-card print:shadow-none print:rounded-none">
-        <div class="overflow-x-auto">
-            <table mat-table [dataSource]="receiptData()" class="w-full">
+    @if (loadingDetail()) {
+      <div class="table-panel__loading print:hidden">
+        <mat-spinner diameter="44"></mat-spinner>
+      </div>
+    } @else if (availablePeriods().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="text-5xl opacity-30 mb-2">receipt_long</mat-icon>
+        <h3 class="m-0 font-bold text-gray-600">Sin recibos disponibles</h3>
+        <p class="text-sm m-0 mt-1">Cuando se genere tu primera cuota aparecerá aquí.</p>
+      </div>
+    } @else if (receiptData().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="text-5xl opacity-30 mb-2">find_in_page</mat-icon>
+        <p class="text-sm m-0">No hay desglose para este periodo.</p>
+      </div>
+    } @else if (searchQuery() && filteredLines().length === 0) {
+      <div class="empty-state">
+        <mat-icon class="text-5xl opacity-30 mb-2">search_off</mat-icon>
+        <p class="text-sm m-0">Ningún concepto coincide con la búsqueda.</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table mat-table [dataSource]="tableRows()" class="w-full min-w-[640px]">
+          <ng-container matColumnDef="code">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase pl-6 w-20">Código</th>
+            <td mat-cell *matCellDef="let row" class="pl-6 font-mono text-xs text-gray-400">
+              {{ row.isTotal ? '' : row.code }}
+            </td>
+          </ng-container>
 
-                <ng-container matColumnDef="code">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="font-bold text-gray-500 uppercase text-[11px] py-4 w-20 pl-6">Código</th>
-                    <td mat-cell *matCellDef="let row" class="font-mono text-gray-400 text-xs pl-6">
-                        {{ row.isTotal ? '' : row.code }}
-                    </td>
-                </ng-container>
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Descripción</th>
+            <td mat-cell *matCellDef="let row" [ngClass]="{
+              'font-black text-gray-800 text-right pr-6': row.isTotal && !row.isFinal,
+              'font-black text-indigo-900 text-right pr-6 text-sm': row.isFinal,
+              'font-medium text-gray-700': !row.isTotal
+            }">
+              {{ row.description }}
+            </td>
+          </ng-container>
 
-                <ng-container matColumnDef="description">
-                    <th mat-header-cell *matHeaderCellDef class="font-bold text-gray-500 uppercase text-[11px]">
-                        Descripción</th>
-                    <td mat-cell *matCellDef="let row" [ngClass]="{
-                                'font-black text-gray-800 text-right pr-6': row.isTotal, 
-                                'font-medium text-gray-700': !row.isTotal,
-                                'text-indigo-900 text-sm': row.isFinal
-                            }">
-                        {{ row.description }}
-                    </td>
-                </ng-container>
+          <ng-container matColumnDef="totalAmount">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase text-right">Monto base</th>
+            <td mat-cell *matCellDef="let row" class="text-right font-medium"
+              [ngClass]="{
+                'font-black text-gray-800': row.isTotal && !row.isFinal,
+                'text-gray-500': !row.isTotal,
+                'opacity-0': row.isFinal
+              }">
+              {{ row.totalAmount != null ? (row.totalAmount | currency:'USD':'symbol':'1.2-2') : '' }}
+            </td>
+          </ng-container>
 
-                <ng-container matColumnDef="totalAmount">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="font-bold text-gray-500 uppercase text-[11px] text-right">Monto Base</th>
-                    <td mat-cell *matCellDef="let row" class="text-right font-medium"
-                        [ngClass]="{'font-black text-gray-800': row.isTotal, 'text-gray-500': !row.isTotal,'opacity-0': row.isFinal}">
-                        {{ row.totalAmount ? (row.totalAmount | currency:'$':'symbol':'1.2-2') : '' }}
-                    </td>
-                </ng-container>
+          <ng-container matColumnDef="share">
+            <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase text-right pr-6">Cuota parte</th>
+            <td mat-cell *matCellDef="let row" class="text-right pr-6 font-bold" [ngClass]="{
+              'text-gray-900': row.isTotal && !row.isFinal,
+              'text-gray-700': !row.isTotal,
+              'text-indigo-600 text-xl': row.isFinal
+            }">
+              {{ row.share != null ? (row.share | currency:'USD':'symbol':'1.2-2') : '' }}
+            </td>
+          </ng-container>
 
-                <ng-container matColumnDef="share">
-                    <th mat-header-cell *matHeaderCellDef
-                        class="font-bold text-gray-500 uppercase text-[11px] text-right pr-6">Cuota Parte</th>
-                    <td mat-cell *matCellDef="let row" class="text-right pr-6 font-bold" [ngClass]="{
-                                'text-gray-900': row.isTotal && !row.isFinal, 
-                                'text-gray-700': !row.isTotal,
-                                'text-indigo-600 text-xl': row.isFinal
-                            }">
-                        {{ row.share ? (row.share | currency:'$':'symbol':'1.2-2') : '' }}
-                    </td>
-                </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns" [ngClass]="{
+            'row-subtotal': row.isTotal && !row.isFinal,
+            'row-final': row.isFinal,
+            'row-hover': !row.isTotal
+          }"></tr>
+        </table>
+      </div>
+    }
+  </mat-card>
 
-                <tr mat-header-row *matHeaderRowDef="displayedColumns" class="bg-gray-50/50"></tr>
-                <tr mat-row *matRowDef="let row; columns: displayedColumns;" [ngClass]="{
-                            'bg-gray-100/60 border-t border-gray-200': row.isTotal && !row.isFinal, 
-                            'bg-indigo-50/50 border-t-2 border-indigo-200': row.isFinal,
-                            'hover:bg-gray-50/50 transition-colors': !row.isTotal
-                        }">
-                </tr>
-            </table>
-
-            <div *ngIf="receiptData().length === 0"
-                class="py-16 flex flex-col items-center justify-center text-gray-400">
-                <mat-icon class="text-5xl mb-4 opacity-20">receipt_long</mat-icon>
-                <p class="font-medium">No hay desglose de recibo disponible para este periodo.</p>
-            </div>
-        </div>
-    </mat-card>
-
+  </div>
+  }
 </div>

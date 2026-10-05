@@ -1,59 +1,157 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { CurrencyPipe, DecimalPipe, NgClass } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog'; // 🔥 Agregado
+import { MatInputModule } from '@angular/material/input';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BillingService } from '../../../core/services/billing.service';
 import { ReceiptPreviewDialogComponent } from '../../../modals/receipt-preview-dialog/receipt-preview-dialog.component';
-
+import { OwnerDataLoaderComponent } from '../../shared/owner-data-loader/owner-data-loader.component';
 
 @Component({
   selector: 'app-condo-receipt',
   standalone: true,
   imports: [
-    CommonModule, MatCardModule, MatTableModule, MatIconModule,
-    MatButtonModule, MatSelectModule, MatFormFieldModule, MatDialogModule
+    CurrencyPipe,
+    DecimalPipe,
+    NgClass,
+    FormsModule,
+    MatCardModule,
+    MatTableModule,
+    MatIconModule,
+    MatButtonModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatDialogModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule,
+    MatTooltipModule,
+    OwnerDataLoaderComponent
   ],
   templateUrl: './condo-receipt.component.html',
-  styles: [`
-    ::ng-deep .hide-subscript .mat-mdc-form-field-subscript-wrapper {
-        display: none;
-    }
-  `]
+  styleUrl: './condo-receipt.component.scss'
 })
 export class CondoReceiptComponent implements OnInit {
   private billingService = inject(BillingService);
-  private dialog = inject(MatDialog); // 🔥 Inyectamos el Modal
+  private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
 
   displayedColumns: string[] = ['code', 'description', 'totalAmount', 'share'];
 
   availablePeriods = signal<any[]>([]);
-  selectedPeriod = signal<string>('');
-
+  selectedPeriod = signal('');
   receiptData = signal<any[]>([]);
+  loadingPeriods = signal(false);
+  loadingDetail = signal(false);
+  searchQuery = signal('');
 
-  // Señales de soporte para guardar la metadata del recibo seleccionado
-  currentApt = signal<string>('...');
-  currentAlicuota = signal<number>(0);
-  currentPeriodName = signal<string>('...');
-  currentPeriodMeta = signal<any>(null); // 🔥 Guarda toda la info del dropdown
-  currentReceiptMeta = signal<any>(null); // 🔥 Guarda la info extra del detalle
+  currentApt = signal('—');
+  currentAlicuota = signal(0);
+  currentPeriodName = signal('—');
+  currentPeriodMeta = signal<any>(null);
+  currentReceiptMeta = signal<any>(null);
 
-  monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+  monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  showPageLoader = computed(
+    () => this.loadingPeriods() && this.availablePeriods().length === 0
+  );
+
+  detailLines = computed(() => this.receiptData().filter((r) => !r.isTotal));
+
+  totalCommon = computed(() => {
+    const row = this.receiptData().find((r) => r.isTotal && !r.isFinal);
+    return row?.totalAmount ?? 0;
+  });
+
+  amountDue = computed(() => {
+    const row = this.receiptData().find((r) => r.isFinal);
+    return row?.share ?? 0;
+  });
+
+  receiptStatus = computed(() => {
+    const period = this.currentPeriodMeta();
+    const meta = this.currentReceiptMeta();
+    const raw = (period?.status || meta?.status || 'PENDING').toString().toUpperCase();
+    if (raw.includes('PAID') || raw.includes('PAG')) return 'PAID';
+    return 'PENDING';
+  });
+
+  statusLabel = computed(() => (this.receiptStatus() === 'PAID' ? 'Pagado' : 'Pendiente'));
+
+  filteredLines = computed(() => {
+    const q = this.searchQuery().trim().toLowerCase();
+    const lines = this.detailLines();
+    if (!q) return lines;
+    return lines.filter(
+      (r) =>
+        String(r.code ?? '').toLowerCase().includes(q) ||
+        String(r.description ?? '').toLowerCase().includes(q)
+    );
+  });
+
+  tableRows = computed(() => {
+    if (this.receiptData().length === 0) return [];
+    if (this.searchQuery()) return this.filteredLines();
+    return this.receiptData();
+  });
+
+  statCards = computed(() => [
+    {
+      id: 'due',
+      variant: 'blue',
+      icon: 'payments',
+      chip: 'Tu recibo',
+      value: this.formatMoney(this.amountDue()),
+      sub: this.currentPeriodName()
+    },
+    {
+      id: 'common',
+      variant: 'indigo',
+      icon: 'account_balance',
+      chip: 'Gasto común',
+      value: this.formatMoney(Number(this.totalCommon())),
+      sub: 'Total del edificio'
+    },
+    {
+      id: 'quota',
+      variant: 'emerald',
+      icon: 'percent',
+      chip: 'Alícuota',
+      value: `${this.currentAlicuota().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}%`,
+      sub: `Unidad ${this.currentApt()}`
+    },
+    {
+      id: 'status',
+      variant: 'amber',
+      icon: 'verified',
+      chip: 'Estado',
+      value: this.statusLabel(),
+      sub: `${this.detailLines().length} conceptos`
+    }
+  ]);
 
   ngOnInit() {
     this.loadPeriods();
   }
 
   loadPeriods() {
+    this.loadingPeriods.set(true);
     this.billingService.getOwnerReceiptPeriods().subscribe({
       next: (res: any) => {
-        const periods = res.data.map((p: any) => {
-
+        const periods = (res.data ?? []).map((p: any) => {
           let formattedIssueDate = 'N/A';
           const rawDate = p.issueDate || p.issue_date || p.created_at;
           if (rawDate) {
@@ -68,9 +166,7 @@ export class CondoReceiptComponent implements OnInit {
             value: `${p.apartmentId}-${p.month}-${p.year}`,
             name: `Apt ${p.apartmentNumber} - ${this.monthNames[p.month - 1]} ${p.year}`,
             monthName: `${this.monthNames[p.month - 1]} ${p.year}`,
-            formattedIssueDate: formattedIssueDate,
-
-            // 🔥 CAPTURAMOS EL STATUS EXPLÍCITAMENTE
+            formattedIssueDate,
             status: p.status
           };
         });
@@ -80,44 +176,61 @@ export class CondoReceiptComponent implements OnInit {
         if (periods.length > 0) {
           this.selectedPeriod.set(periods[0].value);
           this.onPeriodChange(periods[0].value);
+        } else {
+          this.receiptData.set([]);
         }
+        this.loadingPeriods.set(false);
       },
-      error: (err) => console.error("Error al cargar periodos", err)
+      error: () => {
+        this.loadingPeriods.set(false);
+        this.snackBar.open('No se pudieron cargar tus recibos', 'Cerrar', { duration: 3500 });
+      }
     });
+  }
+
+  refresh() {
+    const value = this.selectedPeriod();
+    if (value) {
+      this.onPeriodChange(value);
+    } else {
+      this.loadPeriods();
+    }
   }
 
   onPeriodChange(value: string) {
     this.selectedPeriod.set(value);
-    const [apartmentId, month, year] = value.split('-');
+    this.searchQuery.set('');
+    const parts = value.split('-');
+    const year = Number(parts.pop());
+    const month = Number(parts.pop());
+    const apartmentId = Number(parts.join('-'));
 
-    // Guardamos el objeto completo del periodo seleccionado
-    const found = this.availablePeriods().find(p => p.value === value);
+    const found = this.availablePeriods().find((p) => p.value === value);
     this.currentPeriodMeta.set(found);
     this.currentPeriodName.set(found ? found.monthName : `${month}-${year}`);
 
-    this.loadReceiptDetail(Number(apartmentId), Number(month), Number(year));
+    this.loadReceiptDetail(apartmentId, month, year);
+  }
+
+  onSearchChange(value: string) {
+    this.searchQuery.set(value);
   }
 
   loadReceiptDetail(apartmentId: number, month: number, year: number) {
+    this.loadingDetail.set(true);
     this.billingService.getOwnerReceiptDetail(apartmentId, month, year).subscribe({
       next: (res: any) => {
-        this.currentReceiptMeta.set(res); // 🔥 Guardamos data extra
+        this.currentReceiptMeta.set(res);
 
-        const data = res.data;
+        const data = res.data ?? [];
         const alicuota = Number(res.alicuota);
 
         this.currentAlicuota.set(alicuota * 100);
-        this.currentApt.set(res.apartmentNumber);
+        this.currentApt.set(res.apartmentNumber ?? '—');
 
         if (data.length > 0) {
           const totalCommon = data.reduce((acc: number, curr: any) => acc + Number(curr.totalAmount), 0);
-          const reservePercentage = 0.0; // Cambiar a 0.15 si usas fondo de reserva activo
-          const reserveFund = totalCommon * reservePercentage;
-          const grandTotal = totalCommon + reserveFund;
-
           const shareCommon = totalCommon * alicuota;
-          const shareReserve = reserveFund * alicuota;
-          const shareGrandTotal = grandTotal * alicuota;
 
           const mappedData = data.map((d: any) => ({
             ...d,
@@ -127,68 +240,83 @@ export class CondoReceiptComponent implements OnInit {
 
           const formattedData = [
             ...mappedData,
-            { code: '', description: 'TOTAL GASTOS COMUNES:', totalAmount: totalCommon, share: shareCommon, isTotal: true },
-            { code: '', description: 'TOTAL RECIBO A PAGAR:', totalAmount: null, share: shareCommon, isTotal: true, isFinal: true }
+            {
+              code: '',
+              description: 'TOTAL GASTOS COMUNES:',
+              totalAmount: totalCommon,
+              share: shareCommon,
+              isTotal: true
+            },
+            {
+              code: '',
+              description: 'TOTAL RECIBO A PAGAR:',
+              totalAmount: null,
+              share: shareCommon,
+              isTotal: true,
+              isFinal: true
+            }
           ];
 
           this.receiptData.set(formattedData);
         } else {
           this.receiptData.set([]);
         }
+        this.loadingDetail.set(false);
       },
-      error: (err) => console.error("Error al cargar recibo", err)
+      error: () => {
+        this.loadingDetail.set(false);
+        this.receiptData.set([]);
+        this.snackBar.open('No se pudo cargar el desglose del recibo', 'Cerrar', { duration: 3500 });
+      }
     });
   }
 
-  // 🔥 NUEVA FUNCIÓN PARA ABRIR EL MODAL
-  printReceipt() {
+  openReceiptPreview() {
     const period = this.currentPeriodMeta();
     const meta = this.currentReceiptMeta();
 
     if (!period || this.receiptData().length === 0) {
-      alert("No hay datos cargados para imprimir.");
+      this.snackBar.open('No hay datos para ver el recibo', 'Cerrar', { duration: 3000 });
       return;
     }
 
-    // 1. Extraemos solo los items facturados (sin las sumatorias)
-    const lineItems = this.receiptData().filter(r => !r.isTotal).map(r => ({
-      concept: r.description,
-      commonExpense: r.totalAmount,
-      individualShare: r.share
-    }));
+    const lineItems = this.receiptData()
+      .filter((r) => !r.isTotal)
+      .map((r) => ({
+        concept: r.description,
+        commonExpense: r.totalAmount,
+        individualShare: r.share
+      }));
 
-    // 2. Buscamos los totales calculados
-    const totalsRow = this.receiptData().find(r => r.isFinal);
+    const totalsRow = this.receiptData().find((r) => r.isFinal);
     const finalBill = totalsRow ? totalsRow.share : 0;
 
-    const commonTotalRow = this.receiptData().find(r => r.isTotal && !r.isFinal);
+    const commonTotalRow = this.receiptData().find((r) => r.isTotal && !r.isFinal);
     const finalTotalCommon = commonTotalRow ? commonTotalRow.totalAmount : 0;
 
-    // 3. Armamos el Payload idéntico al de administración
     const payload = {
       buildingName: meta?.buildingName || period?.buildingName || 'Edificio Principal',
       unit: this.currentApt(),
       issueDate: period?.formattedIssueDate || 'N/A',
       monthYear: this.currentPeriodName(),
       ownerName: meta?.ownerName || period?.ownerName || 'Propietario',
-      quota: (this.currentAlicuota()).toFixed(4) + '%',
-      lineItems: lineItems,
+      quota: this.currentAlicuota().toFixed(4) + '%',
+      lineItems,
       totalGastoComun: finalTotalCommon,
       totalGastoIndividual: finalBill,
-      totalBill: period?.amount || finalBill, // Toma el monto total crudo si existe
+      totalBill: period?.amount || finalBill,
       accessCode: meta?.access_code || period?.access_code || 'PENDIENTE',
-
-      // 🔥 STATUS DINÁMICO DE LA BD (PAGADO o PENDIENTE)
       status: period?.status || meta?.status || 'PENDING'
     };
 
-    console.log(meta, period)
-
-    // 4. Abrimos el modal
     this.dialog.open(ReceiptPreviewDialogComponent, {
       width: '900px',
       maxWidth: '95vw',
       data: payload
     });
+  }
+
+  private formatMoney(value: number): string {
+    return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 }

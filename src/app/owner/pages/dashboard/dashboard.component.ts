@@ -8,6 +8,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { RouterModule } from '@angular/router';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { OwnerDataLoaderComponent } from '../../shared/owner-data-loader/owner-data-loader.component';
 
 @Component({
   selector: 'app-owner-dashboard',
@@ -19,7 +21,9 @@ import { RouterModule } from '@angular/router';
     MatButtonModule,
     MatChipsModule,
     MatDividerModule,
-    RouterModule
+    MatSnackBarModule,
+    RouterModule,
+    OwnerDataLoaderComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -27,6 +31,9 @@ import { RouterModule } from '@angular/router';
 export class DashboardComponent implements OnInit {
   private auth = inject(AuthService);
   private dashboardService = inject(DashboardService);
+  private snackBar = inject(MatSnackBar);
+
+  loading = signal(true);
 
   // Leemos el usuario usando la Señal moderna
   user = this.auth.userSignal;
@@ -85,11 +92,17 @@ export class DashboardComponent implements OnInit {
   }
 
   loadDashboardData() {
+    this.loading.set(true);
     this.dashboardService.getOwnerDashboard().subscribe({
       next: (res: any) => {
         this.owner.set(res.owner);
         this.financialStatus.set(res.financialStatus);
         this.lastPayment.set(res.lastPayment);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.snackBar.open('No se pudo cargar tu panel', 'Cerrar', { duration: 3500 });
       }
     });
   }

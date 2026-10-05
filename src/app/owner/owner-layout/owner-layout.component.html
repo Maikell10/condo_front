@@ -1,0 +1,12 @@
+<div class="owner-layout">
+  @if (routeLoading()) {
+    <app-owner-data-loader
+      class="owner-layout__nav-loader"
+      message="Cargando vista…"
+      submessage="Portal del propietario" />
+  }
+
+  <div class="owner-layout__outlet" [@ownerRoute]="routeAnimKey()">
+    <router-outlet />
+  </div>
+</div>

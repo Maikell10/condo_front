@@ -8,7 +8,8 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterModule, MatIconModule],
-  templateUrl: './sidebar.component.html'
+  templateUrl: './sidebar.component.html',
+  styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent {
   private authService = inject(AuthService);

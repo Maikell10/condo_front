@@ -12,6 +12,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { FormsModule } from '@angular/forms';
+import { DateOnlyPipe } from '../../../shared/date-only.pipe';
+import {
+  ConfirmActionDialogComponent,
+  ConfirmActionDialogData
+} from '../../../shared/confirm-action-dialog/confirm-action-dialog.component';
 
 import { BillingService } from '../../../core/services/billing.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -43,10 +51,12 @@ function spanishPaginator(): MatPaginatorIntl {
   imports: [
     CommonModule, MatTableModule, MatCardModule, MatButtonModule,
     MatIconModule, MatDialogModule, MatSelectModule, MatTabsModule, MatDividerModule,
-    MatFormFieldModule, MatInputModule, MatPaginatorModule, MatTooltipModule
+    MatFormFieldModule, MatInputModule, MatPaginatorModule, MatTooltipModule,
+    MatProgressSpinnerModule, MatSnackBarModule, FormsModule, DateOnlyPipe
   ],
   providers: [{ provide: MatPaginatorIntl, useValue: spanishPaginator() }],
-  templateUrl: './invoices.component.html'
+  templateUrl: './invoices.component.html',
+  styleUrl: './invoices.component.scss'
 })
 export class InvoicesComponent implements OnInit {
   private billingService = inject(BillingService);
@@ -54,6 +64,7 @@ export class InvoicesComponent implements OnInit {
   private dashboardService = inject(DashboardService);
   private configService = inject(ConfigService);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
 
   readonly monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
@@ -64,6 +75,7 @@ export class InvoicesComponent implements OnInit {
   currentTabIndex = signal<number>(0);
 
   invoices = signal<any[]>([]);
+  loading = signal(false);
   searchQuery = signal('');
   pageIndex = signal(0);
   pageSize = signal(10);
@@ -129,6 +141,50 @@ export class InvoicesComponent implements OnInit {
     return sumInCents / 100;
   });
 
+  scopeLabel = computed(() => {
+    const id = this.selectedBuildingId();
+    if (id === 'ALL') return 'Todos los edificios';
+    return this.buildingsList().find((b) => b.id === id)?.name ?? 'Edificio';
+  });
+
+  statCards = computed(() => {
+    const open = this.monthStatus() === 'OPEN';
+    return [
+      {
+        id: 'count',
+        variant: 'blue',
+        icon: 'description',
+        chip: 'Documentos',
+        value: String(this.invoices().length),
+        sub: this.currentPeriodLabel()
+      },
+      {
+        id: 'total',
+        variant: 'indigo',
+        icon: 'account_balance_wallet',
+        chip: 'Acumulado',
+        value: `$${this.totalMonth().toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        sub: 'Gastos del periodo'
+      },
+      {
+        id: 'cycle',
+        variant: open ? 'amber' : 'emerald',
+        icon: open ? 'pending_actions' : 'check_circle',
+        chip: 'Ciclo',
+        value: open ? 'Abierto' : 'Cerrado',
+        sub: open ? 'Puedes cargar gastos' : 'Periodo liquidado'
+      },
+      {
+        id: 'view',
+        variant: 'slate',
+        icon: 'filter_alt',
+        chip: 'En tabla',
+        value: String(this.filteredInvoices().length),
+        sub: this.searchQuery() ? 'Con búsqueda' : 'Sin filtro texto'
+      }
+    ];
+  });
+
   monthStatus = signal<string>('OPEN');
   canClosePeriod = signal<boolean>(false);
   closedPeriods = signal<any[]>([]);
@@ -190,10 +246,28 @@ export class InvoicesComponent implements OnInit {
     this.onPeriodSelect(next.key);
   }
 
-  onSearch(event: Event) {
-    const target = event.target as HTMLInputElement;
-    this.searchQuery.set(target.value);
+  onSearchChange(value: string) {
+    this.searchQuery.set(value);
     this.pageIndex.set(0);
+  }
+
+  refreshList() {
+    this.refreshCurrentView();
+  }
+
+  providerLabel(element: {
+    provider?: string;
+    concept_description?: string;
+  }): string {
+    return (
+      element.provider ||
+      element.concept_description ||
+      'Ahorro automático del edificio'
+    );
+  }
+
+  isReserveLine(element: { provider?: string }): boolean {
+    return element.provider === 'Fondo de Reserva';
   }
 
   onPage(event: PageEvent) {
@@ -222,12 +296,18 @@ export class InvoicesComponent implements OnInit {
       ? { isComplex: true, complexId: complexId }
       : { isComplex: false, buildingId: buildingId };
 
+    this.loading.set(true);
     this.billingService.getExpenses(payload, this.selectedMonth(), this.selectedYear()).subscribe({
       next: (res: any) => {
-        this.invoices.set(res.data);
+        this.invoices.set(res.data ?? []);
         this.monthStatus.set(res.status);
         this.canClosePeriod.set(res.canClose);
         this.pageIndex.set(0);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.snackBar.open('No se pudieron cargar los gastos', 'Cerrar', { duration: 3500 });
       }
     });
   }
@@ -258,10 +338,12 @@ export class InvoicesComponent implements OnInit {
 
         this.billingService.addExpense(payload).subscribe({
           next: (res: any) => {
-            alert(res.message || 'Gasto registrado con éxito.');
+            this.snackBar.open(res.message || 'Gasto registrado con éxito', 'Cerrar', { duration: 3500 });
             this.loadExpenses();
           },
-          error: (err: any) => alert('Error: ' + err.error?.message)
+          error: (err: any) => {
+            this.snackBar.open(err.error?.message || 'Error al registrar gasto', 'Cerrar', { duration: 4000 });
+          }
         });
       }
     });
@@ -277,28 +359,67 @@ export class InvoicesComponent implements OnInit {
       year: this.selectedYear()
     };
 
-    const confirmMsg = `¿Deseas cerrar ${this.currentPeriodLabel()}? Se generarán los recibos.`;
-
-    if (confirm(confirmMsg)) {
+    this.openConfirm({
+      variant: 'approve',
+      title: `¿Cerrar ${this.currentPeriodLabel()}?`,
+      message: 'Se generarán los recibos de condominio para las unidades según alícuota y contratos vigentes.',
+      confirmLabel: 'Sí, cerrar mes',
+      cancelLabel: 'Volver',
+      highlights: [
+        `Alcance: ${this.scopeLabel()}`,
+        `Gastos cargados: ${this.invoices().length}`,
+        `Monto acumulado: $${this.totalMonth().toFixed(2)}`
+      ]
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
       this.billingService.generateBilling(payload).subscribe({
         next: (res: any) => {
-          alert(res.message);
+          this.snackBar.open(res.message || 'Mes cerrado correctamente', 'Cerrar', { duration: 4000 });
           this.loadExpenses();
         },
-        error: (err: any) => alert('Error en facturación: ' + err.error?.message)
-      });
-    }
-  }
-
-  deleteExpense(id: number) {
-    if (confirm('¿Estás seguro de eliminar este gasto?')) {
-      this.billingService.deleteExpense(id).subscribe({
-        next: () => {
-          alert('Gasto eliminado');
-          this.loadExpenses();
+        error: (err: any) => {
+          this.snackBar.open(err.error?.message || 'Error en facturación', 'Cerrar', { duration: 4000 });
         }
       });
-    }
+    });
+  }
+
+  deleteExpense(element: { id: number; code?: string; provider?: string; amount?: number }) {
+    this.openConfirm({
+      variant: 'reject',
+      title: '¿Eliminar este gasto?',
+      message: 'Se quitará del periodo abierto. Esta acción no se puede deshacer.',
+      confirmLabel: 'Sí, eliminar',
+      cancelLabel: 'Cancelar',
+      highlights: [
+        element.code ? `Código: ${element.code}` : '',
+        this.providerLabel(element),
+        element.amount != null ? `Monto: $${Number(element.amount).toFixed(2)}` : ''
+      ].filter(Boolean)
+    }).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.billingService.deleteExpense(element.id).subscribe({
+        next: () => {
+          this.snackBar.open('Gasto eliminado', 'Cerrar', { duration: 3000 });
+          this.loadExpenses();
+        },
+        error: () => {
+          this.snackBar.open('No se pudo eliminar el gasto', 'Cerrar', { duration: 3500 });
+        }
+      });
+    });
+  }
+
+  private openConfirm(data: ConfirmActionDialogData) {
+    return this.dialog
+      .open(ConfirmActionDialogComponent, {
+        width: '440px',
+        maxWidth: '95vw',
+        panelClass: 'premium-confirm-dialog',
+        autoFocus: 'dialog',
+        data
+      })
+      .afterClosed();
   }
 
   viewReport(period: any) {

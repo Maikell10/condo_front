@@ -1,4 +1,6 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -20,6 +22,7 @@ import { ReceiptService, Receipt } from '../../../core/services/receipt.service'
 import { PaymentService } from '../../../core/services/payment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApartmentService } from '../../../core/services/apartment.service';
+import { OwnerDataLoaderComponent } from '../../shared/owner-data-loader/owner-data-loader.component';
 
 export interface Movement {
   fecha: string;
@@ -35,7 +38,7 @@ export interface Movement {
     CommonModule, ReactiveFormsModule, MatCardModule, MatTableModule,
     MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatRadioModule, MatButtonModule, MatIconModule, MatDatepickerModule,
-    MatNativeDateModule, MatTabsModule
+    MatNativeDateModule, MatTabsModule, OwnerDataLoaderComponent
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }
@@ -45,6 +48,7 @@ export interface Movement {
 export class PaymentsComponent implements OnInit {
   maxDate: Date = new Date();
   isSubmitting = signal<boolean>(false);
+  pageLoading = signal(true);
 
   private fb = inject(FormBuilder);
   private receiptService = inject(ReceiptService);
@@ -100,74 +104,58 @@ export class PaymentsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.refreshData();
-    this.loadBuildingBanks();
-    this.loadExchangeRate(); // Cargamos la tasa al iniciar
     const user = this.authService.userSignal();
     if (user) this.paymentForm.patchValue({ email: user.email });
+    this.refreshData(true);
   }
 
-  // 🔥 FUNCIÓN PARA CARGAR LA TASA
-  loadExchangeRate() {
-    this.paymentService.getLatestExchangeRate().subscribe({
-      next: (res: any) => {
-        if (res.success && res.data) {
-          this.tasaDelDia.set(Number(res.data.rate));
+  refreshData(initial = false) {
+    if (initial) {
+      this.pageLoading.set(true);
+    }
+    const buildingId = Number(this.authService.userSignal()?.buildingId);
 
-          // Cortamos solo los primeros 10 caracteres ("2026-07-20") para ignorar las horas
-          const rawDate = res.data.rate_date ? res.data.rate_date.split('T')[0] : '';
+    forkJoin({
+      rate: this.paymentService.getLatestExchangeRate().pipe(catchError(() => of(null))),
+      receipts: this.receiptService.getPendingReceipts().pipe(catchError(() => of({ data: [] }))),
+      payments: this.paymentService.getRecentPayments().pipe(catchError(() => of({ data: [] }))),
+      banks: buildingId
+        ? this.apartmentService.getBankAccounts(buildingId).pipe(catchError(() => of({ data: [] })))
+        : of({ data: [] })
+    })
+      .pipe(finalize(() => this.pageLoading.set(false)))
+      .subscribe(({ rate, receipts, payments, banks }) => {
+        const rateRes = rate as any;
+        if (rateRes?.success && rateRes.data) {
+          this.tasaDelDia.set(Number(rateRes.data.rate));
+          const rawDate = rateRes.data.rate_date ? rateRes.data.rate_date.split('T')[0] : '';
           this.fechaTasa.set(rawDate);
         }
-      },
-      error: (err) => console.error("Error al cargar la tasa oficial", err)
-    });
-  }
 
-  refreshData() {
-    this.loadPendingReceipts();
-    this.loadRecentPayments();
-  }
-
-  loadBuildingBanks() {
-    const buildingId = this.authService.userSignal()?.buildingId;
-    if (buildingId) {
-      this.apartmentService.getBankAccounts(Number(buildingId)).subscribe({
-        next: (res) => this.banks.set(res.data),
-        error: (err) => console.error("Error al cargar bancos", err)
-      });
-    }
-  }
-
-  loadPendingReceipts() {
-    this.receiptService.getPendingReceipts().subscribe({
-      next: (res) => {
-        const sanitized = res.data.map(r => ({
+        const receiptRows = (receipts as any).data ?? [];
+        const sanitized = receiptRows.map((r: Receipt) => ({
           ...r,
           monto: Number(r.monto) || 0,
           paid: Number(r.paid) || 0
         }));
         this.receipts.set(sanitized);
-        const total = sanitized.reduce((acc, curr) => acc + (curr.monto - curr.paid), 0);
-        this.totalDebt.set(total);
-      }
-    });
-  }
+        this.totalDebt.set(sanitized.reduce((acc: number, curr: Receipt) => acc + (curr.monto - curr.paid), 0));
 
-  loadRecentPayments() {
-    this.paymentService.getRecentPayments().subscribe({
-      next: (res) => {
-        this.recentPayments.set(res.data);
-        const approved = res.data
-          .filter((p: any) => p.status === 'APPROVED')
-          .map((p: any) => ({
-            fecha: p.payment_date,
-            detalle: `Pago Verificado - Ref: ${p.reference}`,
-            monto: p.amount,
-            status: p.status
-          }));
-        this.movements.set(approved);
-      }
-    });
+        const paymentRows = (payments as any).data ?? [];
+        this.recentPayments.set(paymentRows);
+        this.movements.set(
+          paymentRows
+            .filter((p: any) => p.status === 'APPROVED')
+            .map((p: any) => ({
+              fecha: p.payment_date,
+              detalle: `Pago Verificado - Ref: ${p.reference}`,
+              monto: p.amount,
+              status: p.status
+            }))
+        );
+
+        this.banks.set((banks as any).data ?? []);
+      });
   }
 
   toggleSelection(row: Receipt) {
@@ -204,7 +192,7 @@ export class PaymentsComponent implements OnInit {
         next: (res) => {
           alert(res.message);
           this.resetUI();
-          this.refreshData();
+          this.refreshData(false);
           this.isSubmitting.set(false);
         },
         error: (err) => {

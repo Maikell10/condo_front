@@ -1,0 +1,63 @@
+@keyframes ownerFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ownerFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ownerShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.owner-page__content {
+  animation: ownerFadeUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.owner-stagger > * {
+  animation: ownerFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.owner-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.owner-stagger > *:nth-child(2) {
+  animation-delay: 65ms;
+}
+.owner-stagger > *:nth-child(3) {
+  animation-delay: 130ms;
+}
+.owner-stagger > *:nth-child(4) {
+  animation-delay: 195ms;
+}
+.owner-stagger > *:nth-child(5) {
+  animation-delay: 260ms;
+}
+.owner-stagger > *:nth-child(6) {
+  animation-delay: 325ms;
+}
+
+.owner-hero-animate {
+  animation: ownerFadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.owner-panel-animate {
+  animation: ownerFadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}

@@ -1,317 +1,282 @@
-<div class="p-6 space-y-6 max-w-7xl mx-auto pb-12">
+<div class="invoices-page space-y-6 max-w-[1400px] mx-auto pb-12 px-4 sm:px-6">
 
-    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Gestión de Facturas</h1>
-            <p class="text-gray-500 mt-1">Control de gastos mensuales del edificio y cierre de periodos.</p>
+  <div class="invoices-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+    <div class="flex flex-col gap-5">
+      <div class="flex flex-col xl:flex-row xl:items-start justify-between gap-5">
+        <div class="min-w-0 flex-1">
+          <div class="text-blue-100 text-xs font-bold uppercase tracking-wider mb-2">Facturación mensual</div>
+
+          @if (isComplex()) {
+            <mat-form-field appearance="outline" class="hero-building-select w-full max-w-md !mb-0">
+              <mat-label class="!text-blue-100">Alcance</mat-label>
+              <mat-select [value]="selectedBuildingId()" (selectionChange)="onBuildingChange($event.value)">
+                <mat-option value="ALL">Todos los edificios</mat-option>
+                <mat-divider></mat-divider>
+                @for (b of buildingsList(); track b.id) {
+                  <mat-option [value]="b.id">{{ b.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          } @else {
+            <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Gestión de facturas</h1>
+          }
+
+          <p class="text-blue-50/90 mt-3 mb-0 max-w-2xl text-sm sm:text-base">
+            Carga gastos del periodo, revisa el acumulado y cierra el mes para emitir recibos.
+          </p>
+          @if (scopeLabel()) {
+            <p class="text-blue-100/80 text-xs mt-2 mb-0 font-medium">Vista: {{ scopeLabel() }}</p>
+          }
         </div>
 
-        <div class="flex flex-wrap items-center gap-3 w-full xl:w-auto">
-
-            <ng-container *ngIf="isComplex()">
-                <mat-form-field appearance="outline" class="w-full sm:w-[220px]">
-                    <mat-label>Vista actual</mat-label>
-                    <mat-icon matPrefix class="text-indigo-500 ml-2">business</mat-icon>
-                    <mat-select [value]="selectedBuildingId()" (selectionChange)="onBuildingChange($event.value)">
-                        <mat-option value="ALL" class="text-indigo-600 font-bold">
-                            Todos los Edificios
-                        </mat-option>
-                        <mat-divider></mat-divider>
-                        <mat-option *ngFor="let b of buildingsList()" [value]="b.id" class="text-slate-800">
-                            {{ b.name }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-            </ng-container>
-
-            <div class="flex items-center gap-1 w-full sm:w-auto">
-                <button mat-icon-button type="button" (click)="goPeriod(-1)" [disabled]="!canGoPrev()"
-                    matTooltip="Periodo anterior">
-                    <mat-icon>chevron_left</mat-icon>
-                </button>
-                <mat-form-field appearance="outline" class="w-full sm:w-[210px]">
-                    <mat-label>Periodo</mat-label>
-                    <mat-icon matPrefix class="text-indigo-500 ml-2">calendar_month</mat-icon>
-                    <mat-select [value]="currentPeriodKey()" (selectionChange)="onPeriodSelect($event.value)">
-                        <mat-option *ngFor="let p of availablePeriods" [value]="p.key">
-                            {{ p.label }}
-                        </mat-option>
-                    </mat-select>
-                </mat-form-field>
-                <button mat-icon-button type="button" (click)="goPeriod(1)" [disabled]="!canGoNext()"
-                    matTooltip="Periodo siguiente">
-                    <mat-icon>chevron_right</mat-icon>
-                </button>
-            </div>
-
-            <button mat-stroked-button color="primary" class="py-6 rounded-xl font-bold w-full sm:w-auto"
-                (click)="openAddExpenseModal()" [disabled]="monthStatus() === 'CLOSED' || !selectedBuildingId()">
-                <mat-icon>add_circle_outline</mat-icon> Cargar factura
-            </button>
-
-            <button mat-flat-button color="primary" class="py-6 rounded-xl shadow-lg font-bold w-full sm:w-auto"
-                (click)="closeMonth()"
-                [disabled]="!canClosePeriod() || invoices().length === 0 || !selectedBuildingId()">
-                <mat-icon>lock_reset</mat-icon> Cerrar mes
-            </button>
+        <div class="hero-actions flex flex-wrap gap-2 shrink-0">
+          <button mat-stroked-button type="button" class="hero-btn hero-btn--stroked"
+            (click)="refreshList()" [disabled]="loading()">
+            <mat-icon>refresh</mat-icon>
+          </button>
+          <button mat-stroked-button type="button" class="hero-btn hero-btn--stroked"
+            (click)="openAddExpenseModal()"
+            [disabled]="monthStatus() === 'CLOSED' || !selectedBuildingId()">
+            <mat-icon>add_circle_outline</mat-icon>
+            Cargar factura
+          </button>
+          <button mat-flat-button type="button" class="hero-btn hero-btn--primary"
+            (click)="closeMonth()"
+            [disabled]="!canClosePeriod() || invoices().length === 0 || !selectedBuildingId() || selectedBuildingId() === 'ALL'">
+            <mat-icon>lock_reset</mat-icon>
+            Cerrar mes
+          </button>
         </div>
+      </div>
+
+      <div class="period-nav flex flex-wrap items-center gap-2">
+        <button mat-icon-button type="button" class="period-nav__btn" (click)="goPeriod(-1)" [disabled]="!canGoPrev()">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <mat-form-field appearance="outline" class="hero-period-select w-full sm:w-56 !mb-0">
+          <mat-label class="!text-blue-100">Periodo</mat-label>
+          <mat-select [value]="currentPeriodKey()" (selectionChange)="onPeriodSelect($event.value)">
+            @for (p of availablePeriods; track p.key) {
+              <mat-option [value]="p.key">{{ p.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button type="button" class="period-nav__btn" (click)="goPeriod(1)" [disabled]="!canGoNext()">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
     </div>
+  </div>
 
-            <div *ngIf="isComplex() && selectedBuildingId() === 'ALL' && expenseSplitByApartment()"
-                class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3">
-                <mat-icon class="text-amber-600 flex-shrink-0">account_tree</mat-icon>
-                <p class="text-xs text-amber-900 leading-relaxed font-medium m-0">
-                    Este conjunto prorratea las facturas globales <strong>por apartamento</strong>.
-                    Las torres con menos unidades reciben menos cuota; no bajes las alícuotas o quedaría gasto sin asignar.
-                </p>
-            </div>
-
-    <!-- 🔥 BANNER FONDO DE RESERVA -->
-    <div *ngIf="hasReserveFund()"
-        class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl flex items-center gap-3 mb-6 shadow-sm">
-        <div class="p-2 bg-emerald-500 text-white rounded-full flex-shrink-0">
-            <mat-icon class="scale-90 w-5 h-5">savings</mat-icon>
+  <div class="stat-cards-grid">
+    @for (card of statCards(); track card.id) {
+      <mat-card class="stat-card stat-card--{{ card.variant }}">
+        <div class="stat-card__top">
+          <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+          <span class="stat-card__chip">{{ card.chip }}</span>
         </div>
-        <div>
-            <p class="text-emerald-900 font-bold m-0 text-sm">Fondo de Reserva Activado ({{ reserveFundPercentage() }}%)
+        <div class="stat-card__value">{{ card.value }}</div>
+        @if (card.sub) {
+          <div class="stat-card__sub">{{ card.sub }}</div>
+        }
+      </mat-card>
+    }
+  </div>
+
+  @if (isComplex() && selectedBuildingId() === 'ALL' && expenseSplitByApartment()) {
+    <div class="alert-banner alert-banner--amber">
+      <mat-icon class="shrink-0">account_tree</mat-icon>
+      <p class="text-xs leading-relaxed font-medium m-0">
+        Este conjunto prorratea facturas globales <strong>por apartamento</strong>.
+        Las torres con menos unidades reciben menos cuota; no bajes alícuotas sin revisar el reparto.
+      </p>
+    </div>
+  }
+
+  @if (hasReserveFund()) {
+    <div class="alert-banner alert-banner--emerald">
+      <mat-icon class="shrink-0">savings</mat-icon>
+      <div>
+        <p class="font-bold m-0 text-sm">Fondo de reserva ({{ reserveFundPercentage() }}%)</p>
+        <p class="text-xs m-0 mt-1 opacity-90">
+          Al cerrar el mes se agrega este porcentaje sobre gastos ordinarios al generar recibos.
+        </p>
+      </div>
+    </div>
+  }
+
+  <mat-tab-group (selectedTabChange)="onTabChange($event.index)" color="primary" class="invoices-tabs">
+
+    <mat-tab label="Mes en curso">
+      <mat-card class="panel-card mt-4">
+        <div class="table-panel__head">
+          <div>
+            <h3 class="m-0 font-bold text-gray-800">Relación de gastos del mes</h3>
+            <p class="m-0 mt-1 text-xs text-gray-500">
+              {{ currentPeriodLabel() }} · {{ filteredInvoices().length }} de {{ invoices().length }} gastos
             </p>
-            <p class="text-emerald-600 text-xs font-medium m-0">El sistema agregará automáticamente este porcentaje
-                sobre el total de gastos ordinarios al momento de cerrar el mes y generar los recibos.</p>
+          </div>
+          <mat-form-field appearance="outline" class="w-full lg:w-72 !mb-0">
+            <mat-label>Buscar gasto</mat-label>
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
+              placeholder="Código, proveedor..." autocomplete="off" />
+            @if (searchQuery()) {
+              <button matSuffix mat-icon-button type="button" (click)="onSearchChange('')">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </mat-form-field>
         </div>
-    </div>
 
-    <mat-tab-group (selectedTabChange)="onTabChange($event.index)" color="primary" class="bg-transparent">
+        @if (loading()) {
+          <div class="table-panel__loading">
+            <mat-spinner diameter="44"></mat-spinner>
+          </div>
+        } @else if (invoices().length === 0) {
+          <div class="empty-state">
+            <mat-icon class="text-5xl opacity-30 mb-2">inventory_2</mat-icon>
+            <h3 class="m-0 font-bold text-gray-600">Sin gastos en {{ currentPeriodLabel() }}</h3>
+            <button mat-flat-button color="primary" class="mt-3 !rounded-xl" type="button"
+              (click)="openAddExpenseModal()">Cargar la primera factura</button>
+          </div>
+        } @else if (filteredInvoices().length === 0) {
+          <div class="empty-state">
+            <mat-icon class="text-5xl opacity-30 mb-2">search_off</mat-icon>
+            <p class="text-sm m-0">No hay coincidencias para “{{ searchQuery() }}”.</p>
+          </div>
+        } @else {
+          <div class="table-scroll">
+            <table mat-table [dataSource]="pagedInvoices()" class="w-full min-w-[720px]">
 
-        <mat-tab label="Mes en curso">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6">
-                <mat-card
-                    class="p-6 border-none shadow-sm bg-white rounded-2xl flex flex-col items-center justify-center text-center">
-                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-full mb-3">
-                        <mat-icon>description</mat-icon>
-                    </div>
-                    <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Documentos Cargados
-                    </div>
-                    <div class="text-3xl font-black text-gray-800">{{ invoices().length }}</div>
-                </mat-card>
+              <ng-container matColumnDef="buildingName">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Edificio</th>
+                <td mat-cell *matCellDef="let element">
+                  <span class="building-tag">{{ element.buildingName || 'Conjunto' }}</span>
+                </td>
+              </ng-container>
 
-                <mat-card
-                    class="p-6 border-none shadow-sm bg-white rounded-2xl flex flex-col items-center justify-center text-center">
-                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-full mb-3">
-                        <mat-icon>account_balance_wallet</mat-icon>
-                    </div>
-                    <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Monto Total
-                        Acumulado
-                    </div>
-                    <div class="text-3xl font-black text-gray-800">${{ totalMonth() | number:'1.2-2' }}</div>
-                </mat-card>
+              <ng-container matColumnDef="code">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Cód.</th>
+                <td mat-cell *matCellDef="let element" class="font-mono text-indigo-700 font-bold">{{ element.code }}</td>
+              </ng-container>
 
-                <mat-card
-                    class="p-6 text-center shadow-sm bg-white rounded-2xl flex flex-col items-center justify-center">
-                    <div class="p-3 mb-3 rounded-full"
-                        [ngClass]="monthStatus() === 'OPEN' ? 'bg-amber-50 text-amber-600' : 'bg-green-50 text-green-600'">
-                        <mat-icon>{{ monthStatus() === 'OPEN' ? 'pending_actions' : 'check_circle' }}</mat-icon>
-                    </div>
-                    <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1">Estado del Ciclo
-                    </div>
-                    <div class="mt-2 px-4 py-1 rounded-full text-xs font-black uppercase"
-                        [ngClass]="monthStatus() === 'OPEN' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'">
-                        Periodo {{ monthStatus() === 'OPEN' ? 'Abierto' : 'Cerrado' }}
-                    </div>
-                </mat-card>
-            </div>
+              <ng-container matColumnDef="provider">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Concepto</th>
+                <td mat-cell *matCellDef="let element" class="text-gray-700 font-medium">{{ providerLabel(element) }}</td>
+              </ng-container>
 
-            <mat-card class="overflow-hidden border-none shadow-xl rounded-2xl bg-white mt-6">
-                <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                    <div>
-                        <h3 class="font-bold text-gray-700 m-0 flex items-center gap-2">
-                            <mat-icon class="text-gray-400 scale-75">list_alt</mat-icon>
-                            Relación de Gastos del Mes
-                        </h3>
-                        <p class="text-xs text-gray-400 m-0 mt-1">
-                            {{ currentPeriodLabel() }}
-                            · {{ filteredInvoices().length }} de {{ invoices().length }} gastos
-                            <span class="italic hidden sm:inline"> · se facturará según alícuota al cierre</span>
-                        </p>
-                    </div>
-                    <mat-form-field appearance="outline" class="w-full lg:w-[280px] mb-[-1.25em]">
-                        <mat-label>Buscar gasto</mat-label>
-                        <mat-icon matPrefix class="text-gray-400 ml-2">search</mat-icon>
-                        <input matInput (keyup)="onSearch($event)" placeholder="Código, proveedor, edificio..."
-                            autocomplete="off">
-                    </mat-form-field>
-                </div>
+              <ng-container matColumnDef="amount">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Monto</th>
+                <td mat-cell *matCellDef="let element" class="font-black text-gray-900">${{ element.amount | number:'1.2-2' }}</td>
+              </ng-container>
 
-                <div class="overflow-x-auto">
-                    <table mat-table [dataSource]="pagedInvoices()" class="w-full min-w-[600px]">
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Fecha</th>
+                <td mat-cell *matCellDef="let element" class="text-gray-500 text-sm">{{ element.date | dateOnly }}</td>
+              </ng-container>
 
-                        <ng-container matColumnDef="code">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px] py-4"> Cód. </th>
-                            <td mat-cell *matCellDef="let element" class="font-mono text-indigo-600 font-bold">
-                                {{element.code}}
-                            </td>
-                        </ng-container>
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Tipo</th>
+                <td mat-cell *matCellDef="let element">
+                  <span class="type-pill" [class.type-pill--fixed]="isReserveLine(element)"
+                    [class.type-pill--default]="!isReserveLine(element)">
+                    {{ isReserveLine(element) ? 'FIJO' : element.type }}
+                  </span>
+                </td>
+              </ng-container>
 
-                        <ng-container matColumnDef="provider">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Concepto /
-                                Proveedor </th>
-                            <td mat-cell *matCellDef="let element" class="text-gray-700 font-medium">
-                                <!-- Si no hay proveedor, mostramos el nombre del concepto o un texto por defecto -->
-                                {{ element.provider || element.concept_description || 'Ahorro Automático del Edificio'
-                                }}
-                            </td>
-                        </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="text-right bg-gray-50 text-[11px] uppercase">Acciones</th>
+                <td mat-cell *matCellDef="let element" class="text-right pr-2">
+                  <button mat-icon-button type="button" [disabled]="monthStatus() === 'CLOSED'"
+                    (click)="deleteExpense(element)"
+                    [class.text-red-400]="monthStatus() === 'OPEN'"
+                    [class.text-gray-300]="monthStatus() === 'CLOSED'">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
 
-                        <ng-container matColumnDef="amount">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Monto </th>
-                            <td mat-cell *matCellDef="let element" class="font-black text-gray-900"> ${{element.amount |
-                                number:'1.2-2'}} </td>
-                        </ng-container>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns()" class="row-hover"></tr>
+            </table>
+          </div>
 
-                        <ng-container matColumnDef="date">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Fecha Factura </th>
-                            <td mat-cell *matCellDef="let element" class="text-gray-500 text-sm"> {{element.date |
-                                date:'dd/MM/yyyy'}} </td>
-                        </ng-container>
+          <mat-paginator
+            [length]="filteredInvoices().length"
+            [pageIndex]="pageIndex()"
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="[10, 25, 50, 100]"
+            [showFirstLastButtons]="true"
+            (page)="onPage($event)"
+            class="border-t border-gray-100">
+          </mat-paginator>
+        }
+      </mat-card>
 
-                        <ng-container matColumnDef="type">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Tipo </th>
-                            <td mat-cell *matCellDef="let element">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tighter"
-                                    [ngClass]="element.provider === 'Fondo de Reserva' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'">
-                                    {{ element.provider === 'Fondo de Reserva' ? 'FIJO' : element.type }}
-                                </span>
-                            </td>
-                        </ng-container>
+      <div class="alert-banner alert-banner--info mt-4">
+        <mat-icon class="shrink-0">info</mat-icon>
+        <p class="text-xs leading-relaxed font-medium m-0">
+          Al cerrar el mes se suman estos gastos más los <strong>contratos</strong> vigentes; el total se prorratea por alícuota.
+        </p>
+      </div>
+    </mat-tab>
 
-                        <ng-container matColumnDef="actions">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="text-right pr-6 text-gray-500 font-bold uppercase text-[11px]"> Acciones </th>
-                            <td mat-cell *matCellDef="let element" class="text-right pr-4">
-                                <button mat-icon-button [disabled]="monthStatus() === 'CLOSED'"
-                                    (click)="deleteExpense(element.id)" class="transition-colors"
-                                    [ngClass]="monthStatus() === 'OPEN' ? 'text-red-400 hover:text-red-600' : 'text-gray-200'">
-                                    <mat-icon>delete_outline</mat-icon>
-                                </button>
-                            </td>
-                        </ng-container>
+    <mat-tab label="Histórico">
+      <mat-card class="panel-card mt-4">
+        <div class="table-panel__head">
+          <div>
+            <h3 class="m-0 font-bold text-gray-800">Cierres de periodo</h3>
+            <p class="m-0 mt-1 text-xs text-gray-500">Consulta liquidaciones y reporte de gastos</p>
+          </div>
+        </div>
 
-                        <ng-container matColumnDef="buildingName">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px] py-4"> Edificio </th>
-                            <td mat-cell *matCellDef="let element">
-                                <span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-[10px] font-bold">
-                                    {{element.buildingName || 'Conjunto'}}
-                                </span>
-                            </td>
-                        </ng-container>
+        @if (selectedBuildingId() === 'ALL') {
+          <div class="empty-state">
+            <mat-icon class="text-5xl opacity-30 mb-2">apartment</mat-icon>
+            <p class="text-sm m-0">Selecciona un edificio para ver el histórico de cierres.</p>
+          </div>
+        } @else if (closedPeriods().length === 0) {
+          <div class="empty-state">
+            <mat-icon class="text-5xl opacity-30 mb-2">history</mat-icon>
+            <p class="text-sm m-0">Aún no hay cierres de mes para este edificio.</p>
+          </div>
+        } @else {
+          <div class="table-scroll">
+            <table mat-table [dataSource]="closedPeriods()" class="w-full">
+              <ng-container matColumnDef="periodo">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Periodo</th>
+                <td mat-cell *matCellDef="let p" class="font-bold text-gray-800">{{ periodLabel(p.month, p.year) }}</td>
+              </ng-container>
 
-                        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
-                        <tr mat-row *matRowDef="let row; columns: displayedColumns();"
-                            class="hover:bg-gray-50/80 transition-colors cursor-default"></tr>
-                    </table>
+              <ng-container matColumnDef="fecha">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Cierre</th>
+                <td mat-cell *matCellDef="let p" class="text-gray-600 text-sm">{{ formatClosedAt(p.closed_at) }}</td>
+              </ng-container>
 
-                    <div *ngIf="invoices().length === 0"
-                        class="py-20 flex flex-col items-center justify-center text-gray-400">
-                        <mat-icon class="text-6xl mb-4 opacity-20">inventory_2</mat-icon>
-                        <p class="text-sm font-medium italic">No hay facturas cargadas para {{ currentPeriodLabel() }} todavía.</p>
-                        <button mat-button color="primary" class="mt-2" (click)="openAddExpenseModal()">Cargar la
-                            primera ahora</button>
-                    </div>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Estado</th>
+                <td mat-cell *matCellDef="let p">
+                  <span class="status-pill">Liquidado</span>
+                </td>
+              </ng-container>
 
-                    <div *ngIf="invoices().length > 0 && filteredInvoices().length === 0"
-                        class="py-12 flex flex-col items-center justify-center text-gray-400">
-                        <mat-icon class="text-5xl mb-3 opacity-20">search_off</mat-icon>
-                        <p class="text-sm font-medium">No hay gastos que coincidan con “{{ searchQuery() }}”.</p>
-                    </div>
-                </div>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="text-right bg-gray-50"></th>
+                <td mat-cell *matCellDef="let p" class="text-right pr-2">
+                  <button mat-icon-button type="button" (click)="viewReport(p)" matTooltip="Ver detalle">
+                    <mat-icon class="text-indigo-600">analytics</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
 
-                <mat-paginator *ngIf="filteredInvoices().length > 0"
-                    [length]="filteredInvoices().length"
-                    [pageIndex]="pageIndex()"
-                    [pageSize]="pageSize()"
-                    [pageSizeOptions]="[10, 25, 50]"
-                    [showFirstLastButtons]="true"
-                    (page)="onPage($event)"
-                    class="border-t border-gray-100">
-                </mat-paginator>
-            </mat-card>
-
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl mt-6">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <mat-icon class="text-blue-400">info</mat-icon>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-xs text-blue-700 leading-relaxed font-medium">
-                            <strong>Nota de Facturación:</strong> Al cerrar el mes, el sistema sumará automáticamente
-                            todos los gastos listados arriba más los montos vigentes en la sección de <span
-                                class="underline cursor-pointer">Contratos</span>. La suma total será prorrateada entre
-                            las unidades según su alícuota.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </mat-tab>
-
-        <mat-tab label="Histórico">
-            <div class="pt-6">
-                <mat-card class="shadow-sm border-none rounded-2xl overflow-hidden">
-                    <table mat-table *ngIf="closedPeriods().length > 0" [dataSource]="closedPeriods()" class="w-full">
-
-                        <ng-container matColumnDef="periodo">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px] py-4"> Periodo Facturado </th>
-                            <td mat-cell *matCellDef="let p" class="font-bold text-gray-800"> {{ periodLabel(p.month, p.year) }} </td>
-                        </ng-container>
-
-                        <ng-container matColumnDef="fecha">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="bg-gray-50/30 text-gray-500 font-bold uppercase text-[11px]"> Fecha de Cierre </th>
-                            <td mat-cell *matCellDef="let p" class="text-gray-600 text-sm"> {{ formatClosedAt(p.closed_at) }} </td>
-                        </ng-container>
-
-                        <ng-container matColumnDef="status">
-                            <th mat-header-cell *matHeaderCellDef> Estado </th>
-                            <td mat-cell *matCellDef="let p">
-                                <span
-                                    class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-[10px] font-black uppercase">Liquidado</span>
-                            </td>
-                        </ng-container>
-
-                        <ng-container matColumnDef="actions">
-                            <th mat-header-cell *matHeaderCellDef
-                                class="text-right pr-6 font-bold text-gray-500 uppercase text-[11px]">Acciones</th>
-                            <td mat-cell *matCellDef="let p" class="text-right pr-4">
-                                <button mat-icon-button (click)="viewReport(p)" matTooltip="Ver detalle de gastos">
-                                    <mat-icon class="text-indigo-600">analytics</mat-icon>
-                                </button>
-                            </td>
-                        </ng-container>
-
-                        <tr mat-header-row *matHeaderRowDef="['periodo', 'fecha', 'status', 'actions']"></tr>
-                        <tr mat-row *matRowDef="let row; columns: ['periodo', 'fecha', 'status', 'actions'];"
-                            class="hover:bg-gray-50/50"></tr>
-                    </table>
-
-                    <div *ngIf="selectedBuildingId() === 'ALL'"
-                        class="p-10 text-center text-gray-400 flex flex-col items-center">
-                        <mat-icon class="text-4xl mb-2 opacity-20">apartment</mat-icon>
-                        Selecciona un edificio para ver su histórico de cierres.
-                    </div>
-
-                    <div *ngIf="selectedBuildingId() !== 'ALL' && closedPeriods().length === 0"
-                        class="p-10 text-center text-gray-400 flex flex-col items-center">
-                        <mat-icon class="text-4xl mb-2 opacity-20">history</mat-icon>
-                        No se han realizado cierres de mes para este edificio todavía.
-                    </div>
-                </mat-card>
-            </div>
-        </mat-tab>
-    </mat-tab-group>
-
+              <tr mat-header-row *matHeaderRowDef="['periodo', 'fecha', 'status', 'actions']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['periodo', 'fecha', 'status', 'actions']" class="row-hover"></tr>
+            </table>
+          </div>
+        }
+      </mat-card>
+    </mat-tab>
+  </mat-tab-group>
 </div>

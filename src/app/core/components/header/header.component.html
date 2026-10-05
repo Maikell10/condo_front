@@ -52,10 +52,12 @@
                 <mat-icon class="text-gray-500">person</mat-icon>
                 <span>Mi Perfil</span>
             </button>
-            <button mat-menu-item routerLink="/config">
-                <mat-icon class="text-gray-500">settings</mat-icon>
-                <span>Configuración</span>
-            </button>
+            @if (user()?.role !== 'OWNER') {
+                <button mat-menu-item routerLink="/config">
+                    <mat-icon class="text-gray-500">settings</mat-icon>
+                    <span>Configuración</span>
+                </button>
+            }
             <mat-divider></mat-divider>
             <button mat-menu-item (click)="logout()" class="text-red-600 hover:bg-red-50">
                 <mat-icon class="text-red-600">logout</mat-icon>
