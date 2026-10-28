@@ -32,6 +32,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'vcards',
         loadComponent: () =>
             import('./pages/vcards/vcards.component').then(m => m.VcardsComponent)
+    },
+    {
+        path: 'accounting',
+        loadComponent: () =>
+            import('./pages/accounting/accounting.component').then(m => m.AccountingComponent)
     }
 
 

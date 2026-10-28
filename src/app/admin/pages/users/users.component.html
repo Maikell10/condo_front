@@ -35,7 +35,7 @@
   <mat-card class="!rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
     <div class="flex flex-col lg:flex-row gap-3 lg:items-center">
       <mat-form-field appearance="outline" class="w-full lg:flex-1 !mb-0">
-        <mat-label>Buscar por nombre o correo</mat-label>
+        <mat-label>Buscar por nombre, correo, cédula o teléfono</mat-label>
         <mat-icon matPrefix>search</mat-icon>
         <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
           placeholder="Ej. García, admin@..." />
@@ -93,15 +93,22 @@
         <mat-spinner diameter="40"></mat-spinner>
       </div>
       <div class="overflow-x-auto">
-      <table mat-table [dataSource]="users()" class="w-full min-w-[920px]">
+      <table mat-table [dataSource]="users()" class="w-full min-w-[1080px]">
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Nombre</th>
           <td mat-cell *matCellDef="let u" class="font-semibold text-gray-900">{{ u.name }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="contact">
+          <th mat-header-cell *matHeaderCellDef>Contacto</th>
+          <td mat-cell *matCellDef="let u" class="text-gray-600 text-xs max-w-[180px]">
+            <span class="line-clamp-2">{{ contactLine(u) }}</span>
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="email">
           <th mat-header-cell *matHeaderCellDef>Correo</th>
-          <td mat-cell *matCellDef="let u" class="text-gray-600 text-sm">{{ u.email }}</td>
+          <td mat-cell *matCellDef="let u" class="text-gray-600 text-sm">{{ displayEmail(u) }}</td>
         </ng-container>
 
         <ng-container matColumnDef="role">
@@ -115,10 +122,31 @@
           </td>
         </ng-container>
 
+        <ng-container matColumnDef="units">
+          <th mat-header-cell *matHeaderCellDef>Propiedades</th>
+          <td mat-cell *matCellDef="let u">
+            @if (u.role === 'OWNER') {
+              <span
+                class="units-pill"
+                [class.units-pill--none]="!(u.apartmentCount > 0)"
+                [matTooltip]="u.ownedUnitsSummary || unitsLabel(u)"
+                matTooltipClass="units-tooltip">
+                {{ unitsLabel(u) }}
+              </span>
+            } @else {
+              <span class="text-gray-400 text-xs">—</span>
+            }
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="building">
-          <th mat-header-cell *matHeaderCellDef>Ámbito</th>
-          <td mat-cell *matCellDef="let u" class="text-gray-500 text-xs max-w-[220px]">
-            <span class="line-clamp-2">{{ u.buildingName || '—' }}</span>
+          <th mat-header-cell *matHeaderCellDef
+            matTooltip="Admin: conjunto o edificio que administra. Propietario: nombres de edificio donde tiene unidades. Super admin: acceso global.">
+            Edificio(s)
+          </th>
+          <td mat-cell *matCellDef="let u" class="text-gray-500 text-xs max-w-[220px]"
+            [matTooltip]="scopeTooltip(u)">
+            <span class="line-clamp-2">{{ scopeDisplay(u) }}</span>
           </td>
         </ng-container>
 

@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_URL_BASE } from '../constants';
-import { AdminUsersListResponse } from '../../admin/pages/users/admin-user.model';
+import { AdminUsersListResponse, AdminUserDetailResponse } from '../../admin/pages/users/admin-user.model';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -33,6 +33,10 @@ export class AdminService {
             params = params.set('status', filters.status);
         }
         return this.http.get<AdminUsersListResponse>(`${this.API_URL}/users`, { params });
+    }
+
+    getUserById(id: number): Observable<AdminUserDetailResponse> {
+        return this.http.get<AdminUserDetailResponse>(`${this.API_URL}/users/${id}`);
     }
 
     updateStatus(id: number, status: string): Observable<any> {

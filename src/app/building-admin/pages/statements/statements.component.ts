@@ -171,13 +171,9 @@ export class StatementsComponent implements OnInit {
       }
     }
 
-    const q = this.searchQuery().toLowerCase().trim();
+    const q = this.searchQuery().trim();
     if (q) {
-      data = data.filter(r =>
-        r.apartment?.toString().toLowerCase().includes(q) ||
-        r.ownerName?.toLowerCase().includes(q) ||
-        r.description?.toLowerCase().includes(q)
-      );
+      data = data.filter((r) => this.receiptMatchesSearch(r, q));
     }
 
     return data;
@@ -629,6 +625,40 @@ export class StatementsComponent implements OnInit {
       n = Math.floor((n - 1) / 26);
     }
     return s;
+  }
+
+  /** Ignora mayúsculas, tildes, puntuación y espacios repetidos (ej. "CARMEN  J." vs "Carmen J.") */
+  private normalizeSearchText(value: string | number | null | undefined): string {
+    return String(value ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[.,]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  private receiptMatchesSearch(receipt: any, query: string): boolean {
+    const q = this.normalizeSearchText(query);
+    if (!q) return true;
+
+    const haystack = this.normalizeSearchText(
+      [
+        receipt.apartment,
+        receipt.ownerName,
+        receipt.description,
+        receipt.buildingName,
+        receipt.receiptNumber,
+        receipt.receipt_number,
+        receipt.receiptId,
+        receipt.receipt_id,
+        receipt.id,
+      ]
+        .filter((v) => v !== null && v !== undefined && v !== '')
+        .join(' '),
+    );
+
+    return haystack.includes(q);
   }
 
   private currentBuildingLabel(): string {

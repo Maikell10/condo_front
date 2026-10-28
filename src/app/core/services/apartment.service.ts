@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { API_URL_BASE } from '../constants';
+import { OwnerEditContextResponse } from '../../modals/user-dialog/user-dialog.model';
 
 export interface Apartment {
     id: string;
@@ -32,6 +33,22 @@ export class ApartmentService {
     // Vincula el usuario al apartamento
     linkOwner(apartmentId: number, userId: number): Observable<any> {
         return this.http.patch(`${this.API_URL}/${apartmentId}/owner`, { userId });
+    }
+
+    getOwnerEditContext(apartmentId: number): Observable<{ data: OwnerEditContextResponse }> {
+        return this.http.get<{ data: OwnerEditContextResponse }>(
+            `${this.API_URL}/${apartmentId}/owner-edit-context`
+        );
+    }
+
+    updateOwnerProfile(
+        ownerId: number,
+        data: Record<string, unknown>
+    ): Observable<{ message: string }> {
+        return this.http.put<{ message: string }>(
+            `${API_URL_BASE}/api/users/owners/${ownerId}/profile`,
+            data
+        );
     }
 
     createApartment(data: { number: string; alicuota: number; buildingId: number }): Observable<any> {

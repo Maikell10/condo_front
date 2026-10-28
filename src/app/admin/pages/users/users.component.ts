@@ -18,8 +18,13 @@ import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/materi
 import { UserDialogComponent } from '../../../modals/user-dialog/user-dialog.component';
 import {
   AdminUserRow,
-  AdminUsersStats
+  AdminUsersStats,
+  displayUserEmail
 } from './admin-user.model';
+import {
+  formatPhoneForDisplay,
+  parseStoredCedula
+} from './admin-user-profile.util';
 
 function usersPaginatorLabels(): MatPaginatorIntl {
   const intl = new MatPaginatorIntl();
@@ -112,7 +117,7 @@ export class UsersComponent implements OnInit {
   pageIndex = signal(0);
   pageSize = signal(25);
 
-  displayedColumns = ['name', 'email', 'role', 'building', 'status', 'actions'];
+  displayedColumns = ['name', 'contact', 'email', 'role', 'units', 'building', 'status', 'actions'];
 
   statCards = computed(() => {
     const s = this.stats();
@@ -259,7 +264,7 @@ export class UsersComponent implements OnInit {
       if (role !== 'ALL' && u.role !== role) return false;
       if (status !== 'ALL' && u.status !== status) return false;
       if (!q) return true;
-      return `${u.name} ${u.email}`.toLowerCase().includes(q);
+      return `${u.name} ${u.email} ${u.cedula ?? ''} ${u.phone ?? ''}`.toLowerCase().includes(q);
     });
   }
 
@@ -283,6 +288,47 @@ export class UsersComponent implements OnInit {
       buildingAdmins: rows.filter((u) => u.role === 'BUILDING_ADMIN').length,
       owners: rows.filter((u) => u.role === 'OWNER').length
     };
+  }
+
+  displayEmail(user: AdminUserRow): string {
+    return displayUserEmail(user.email, user.role) || '—';
+  }
+
+  contactLine(user: AdminUserRow): string {
+    const parts: string[] = [];
+    if (user.cedula?.trim()) {
+      const { docType, docNumber } = parseStoredCedula(user.cedula);
+      if (docNumber) parts.push(`${docType}${docNumber}`);
+    }
+    const phoneDisplay = formatPhoneForDisplay(user.phone);
+    if (phoneDisplay) parts.push(phoneDisplay);
+    return parts.length ? parts.join(' · ') : '—';
+  }
+
+  unitsLabel(user: AdminUserRow): string {
+    const n = Number(user.apartmentCount ?? 0);
+    if (user.role !== 'OWNER') return '—';
+    if (n === 0) return 'Sin unidades';
+    if (n === 1) return '1 unidad';
+    return `${n} unidades`;
+  }
+
+  /** Texto de la columna Edificio(s) (campo API buildingName). */
+  scopeDisplay(user: AdminUserRow): string {
+    const raw = user.buildingName?.trim();
+    if (!raw) return '—';
+    if (user.role === 'SUPER_ADMIN') return 'Todo el sistema';
+    if (user.role === 'OWNER' && raw === 'Sin unidad') return 'Sin edificio vinculado';
+    if (user.role === 'BUILDING_ADMIN' && raw === 'Sin asignar') return 'Sin edificio asignado';
+    return raw;
+  }
+
+  scopeTooltip(user: AdminUserRow): string {
+    const text = this.scopeDisplay(user);
+    if (user.role === 'OWNER' && user.ownedUnitsSummary) {
+      return `Edificios: ${text}. Unidades: ${user.ownedUnitsSummary}`;
+    }
+    return text;
   }
 
   roleLabel(role: string): string {
@@ -322,7 +368,9 @@ export class UsersComponent implements OnInit {
 
   openDialog(user?: AdminUserRow): void {
     const dialogRef = this.dialog.open(UserDialogComponent, {
-      width: '450px',
+      width: '560px',
+      maxWidth: '95vw',
+      panelClass: 'user-dialog-panel',
       data: user || null
     });
 

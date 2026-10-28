@@ -20,6 +20,8 @@ import { DashboardService } from '../../../core/services/dashboard.service';
 import { MatDialog } from '@angular/material/dialog';
 import { LinkOwnerModalComponent } from '../../modal/link-owner-modal.component';
 import { AddApartmentModalComponent } from '../../modal/add-apartment-modal.component';
+import { UserDialogComponent } from '../../../modals/user-dialog/user-dialog.component';
+import { ConfirmActionDialogComponent } from '../../../shared/confirm-action-dialog/confirm-action-dialog.component';
 import * as XLSX from 'xlsx';
 
 @Component({
@@ -200,16 +202,90 @@ export class ApartmentsComponent implements OnInit {
       data: apt
     });
 
-    dialogRef.afterClosed().subscribe(userId => {
+    dialogRef.afterClosed().subscribe((userId) => {
       if (userId && this.selectedBuildingId()) {
         this.apartmentService.linkOwner(apt.id, userId).subscribe({
           next: () => {
-            alert('Propietario vinculado con éxito');
+            this.snackBar.open('Propietario vinculado con éxito', 'Cerrar', { duration: 3500 });
             this.loadApartments(this.selectedBuildingId()!);
           },
-          error: (err) => alert('Error: ' + err.error.message)
+          error: (err) =>
+            this.snackBar.open(err.error?.message || 'Error al vincular', 'Cerrar', {
+              duration: 5000,
+              panelClass: ['error-snackbar']
+            })
         });
       }
+    });
+  }
+
+  editOwnerProfile(apt: { id: number; number: string; ownerId?: number | null }): void {
+    if (!apt.ownerId) {
+      this.snackBar.open('Esta unidad no tiene propietario asignado', 'Cerrar', { duration: 4000 });
+      return;
+    }
+
+    this.apartmentService.getOwnerEditContext(apt.id).subscribe({
+      next: (res) => {
+        const ctx = res.data;
+        if (!ctx.canEdit) {
+          const highlights =
+            ctx.outsideUnits?.map((u) => `${u.buildingName} · Apt ${u.number}`) ?? [];
+          this.dialog.open(ConfirmActionDialogComponent, {
+            width: '480px',
+            maxWidth: '95vw',
+            data: {
+              variant: 'neutral',
+              title: 'Edición no disponible',
+              message:
+                ctx.message ||
+                'Para modificar este propietario contacte al administrador del sistema.',
+              confirmLabel: 'Entendido',
+              cancelLabel: 'Cerrar',
+              highlights: highlights.length ? highlights : undefined
+            }
+          });
+          return;
+        }
+
+        if (!ctx.owner) return;
+
+        const unitLabel = `${this.getBuildingName(apt)}-${apt.number}`;
+        const dialogRef = this.dialog.open(UserDialogComponent, {
+          width: '560px',
+          maxWidth: '95vw',
+          panelClass: 'user-dialog-panel',
+          data: {
+            mode: 'building_admin_profile',
+            owner: ctx.owner,
+            unitsInScope: ctx.unitsInScope,
+            unitLabel
+          }
+        });
+
+        dialogRef.afterClosed().subscribe((payload) => {
+          if (!payload) return;
+          this.apartmentService.updateOwnerProfile(ctx.ownerId, payload).subscribe({
+            next: (r) => {
+              this.snackBar.open(r.message || 'Propietario actualizado', 'Cerrar', {
+                duration: 4000,
+                panelClass: ['success-snackbar']
+              });
+              this.loadApartments(this.selectedBuildingId()!);
+            },
+            error: (err) =>
+              this.snackBar.open(err.error?.message || 'No se pudo guardar', 'Cerrar', {
+                duration: 6000,
+                panelClass: ['error-snackbar']
+              })
+          });
+        });
+      },
+      error: (err) =>
+        this.snackBar.open(err.error?.message || 'No se pudo validar el propietario', 'Cerrar', {
+          duration: 5000,
+          panelClass: ['error-snackbar']
+        })
     });
   }
 

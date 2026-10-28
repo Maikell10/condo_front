@@ -1,1 +1,156 @@
-<p>user-dialog works!</p>
+<h2 mat-dialog-title class="font-black tracking-tight text-gray-800">
+  {{ dialogTitle }}
+</h2>
+@if (profileUnitLabel) {
+  <p class="user-dialog-subtitle">Unidad {{ profileUnitLabel }}</p>
+}
+
+<mat-dialog-content class="user-dialog-content">
+  <form [formGroup]="form" class="user-dialog-form flex flex-col gap-4">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="user-dialog-form__name">
+      <mat-label>Nombre completo</mat-label>
+      <input matInput formControlName="name" placeholder="Ej: Juan Pérez" />
+    </mat-form-field>
+
+    <div class="user-dialog-form__row-label">Documento de identidad <span class="optional">(opcional)</span></div>
+    <div class="user-dialog-form__split">
+      <mat-form-field appearance="outline" class="user-dialog-form__doc-type">
+        <mat-label>Tipo</mat-label>
+        <mat-select formControlName="docType">
+          <mat-option value="V">V — Venezolano</mat-option>
+          <mat-option value="E">E — Extranjero</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="user-dialog-form__doc-number">
+        <mat-label>Número</mat-label>
+        <input
+          matInput
+          formControlName="docNumber"
+          inputmode="numeric"
+          maxlength="9"
+          placeholder="10127247"
+          (input)="onDigitsInput($event, 'docNumber', 9)" />
+        <mat-error *ngIf="form.get('docNumber')?.hasError('pattern')">Solo números</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="user-dialog-form__row-label">Teléfono <span class="optional">(opcional)</span></div>
+    <div class="user-dialog-form__split">
+      <mat-form-field appearance="outline" class="user-dialog-form__phone-prefix">
+        <mat-label>País</mat-label>
+        <mat-select formControlName="phoneCountry">
+          <mat-option value="+58">🇻🇪 +58</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="user-dialog-form__phone-local">
+        <mat-label>Número móvil</mat-label>
+        <input
+          matInput
+          formControlName="phoneLocal"
+          inputmode="numeric"
+          maxlength="10"
+          placeholder="4241207370"
+          (input)="onDigitsInput($event, 'phoneLocal', 10)" />
+        <mat-hint>10 dígitos sin espacios</mat-hint>
+        <mat-error *ngIf="form.get('phoneLocal')?.hasError('phoneLength')">
+          Debe tener exactamente 10 dígitos
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Correo electrónico</mat-label>
+      <input matInput formControlName="email" type="email" placeholder="juan@correo.com" autocomplete="email" />
+      <mat-hint *ngIf="profileMode || form.get('role')?.value === 'OWNER'">
+        Opcional; si lo indicas, debe ser un correo válido
+      </mat-hint>
+      <mat-error *ngIf="form.get('email')?.hasError('required')">Correo obligatorio para administradores</mat-error>
+      <mat-error *ngIf="form.get('email')?.hasError('email')">Ingresa un correo válido</mat-error>
+    </mat-form-field>
+
+    <div class="user-dialog-form__split user-dialog-form__split--demographics">
+      <mat-form-field appearance="outline">
+        <mat-label>Sexo</mat-label>
+        <mat-select formControlName="sex">
+          <mat-option value="">— Sin especificar —</mat-option>
+          <mat-option value="M">M — Masculino</mat-option>
+          <mat-option value="F">F — Femenino</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="user-dialog-form__birth">
+        <mat-label>Fecha de nacimiento</mat-label>
+        <input
+          matInput
+          [matDatepicker]="birthPicker"
+          formControlName="birthDate"
+          [min]="minBirthDate"
+          [max]="maxBirthDate"
+          readonly
+          (click)="birthPicker.open()"
+          placeholder="Seleccionar fecha" />
+        <mat-datepicker-toggle matIconSuffix [for]="birthPicker"></mat-datepicker-toggle>
+        <mat-datepicker
+          #birthPicker
+          startView="multi-year"
+          [startAt]="birthPickerStartAt"
+          [touchUi]="touchUi"
+          panelClass="user-birth-datepicker">
+        </mat-datepicker>
+        <mat-hint>Primero el año, luego mes y día</mat-hint>
+      </mat-form-field>
+    </div>
+
+    @if (!profileMode) {
+      <mat-form-field appearance="outline">
+        <mat-label>Rol en el sistema</mat-label>
+        <mat-select formControlName="role">
+          <mat-option value="OWNER">Propietario</mat-option>
+          <mat-option value="BUILDING_ADMIN">Admin. de edificio</mat-option>
+          <mat-option value="SUPER_ADMIN">Super administrador</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" *ngIf="!isEdit">
+        <mat-label>Contraseña temporal</mat-label>
+        <input matInput formControlName="password" type="password" />
+        <mat-hint>El usuario podrá cambiarla luego</mat-hint>
+      </mat-form-field>
+    }
+
+    @if (profileMode || (isEdit && form.get('role')?.value === 'OWNER')) {
+      <div class="owned-units rounded-xl border border-violet-100 bg-violet-50/80 p-3 text-sm">
+        <div class="font-bold text-violet-900 mb-2 flex items-center gap-1">
+          <mat-icon class="!text-[18px] !h-[18px] !w-[18px]">apartment</mat-icon>
+          Unidades en propiedad
+        </div>
+        @if (loadingUnits()) {
+          <mat-spinner diameter="28"></mat-spinner>
+        } @else if (ownedUnits().length === 0) {
+          <p class="m-0 text-gray-600">Sin apartamentos vinculados en el sistema.</p>
+        } @else {
+          <ul class="m-0 pl-4 space-y-1 text-gray-800">
+            @for (u of ownedUnits(); track u.id) {
+              <li>
+                <span class="font-medium">{{ u.buildingName }}</span>
+                · Apt {{ u.number }}
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    }
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="pb-4 pr-4">
+  <button mat-button mat-dialog-close class="text-gray-500">Cancelar</button>
+  <button
+    mat-flat-button
+    color="primary"
+    class="rounded-xl shadow-md"
+    [disabled]="form.invalid"
+    (click)="save()">
+        {{ profileMode ? 'Guardar propietario' : (isEdit ? 'Guardar cambios' : 'Registrar usuario') }}
+  </button>
+</mat-dialog-actions>
