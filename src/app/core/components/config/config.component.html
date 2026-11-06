@@ -95,6 +95,104 @@
     </ng-container>
 
     <!-- ============================================== -->
+    <!-- TASA USD (SUPER ADMIN) — card aparte -->
+    <!-- ============================================== -->
+    <ng-container *ngIf="role() === 'SUPER_ADMIN'">
+        <mat-card class="shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
+            <div class="p-5 border-b bg-emerald-50/80 flex items-center gap-3">
+                <mat-icon class="text-emerald-700">currency_exchange</mat-icon>
+                <h2 class="text-lg font-bold text-emerald-950 m-0">Tasa del día (USD / Bs.)</h2>
+            </div>
+
+            <div class="p-6">
+                <p class="text-gray-500 text-sm m-0 mb-4">
+                    Una sola fila en <code class="text-xs bg-slate-100 px-1 rounded">exchange_rates</code> (moneda USD).
+                    Puedes cargar desde el BCV o editar manualmente.
+                </p>
+
+                <div *ngIf="exchangeRateLoading()" class="flex items-center gap-2 text-gray-600 py-4">
+                    <mat-icon class="animate-spin">progress_activity</mat-icon>
+                    <span>Cargando…</span>
+                </div>
+
+                <ng-container *ngIf="!exchangeRateLoading()">
+                    <div *ngIf="exchangeRateRow() as row" class="grid sm:grid-cols-3 gap-4 mb-6">
+                        <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide m-0">Tasa</p>
+                            <p class="text-2xl font-black text-slate-900 m-0 mt-1">
+                                {{ row.rate | number:'1.2-4' }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide m-0">Fecha de la tasa</p>
+                            <p class="text-lg font-bold text-slate-800 m-0 mt-1">
+                                {{ formatRateDateDisplay(row.rate_date) }}
+                            </p>
+                        </div>
+                        <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide m-0">Última actualización</p>
+                            <p class="text-lg font-bold text-slate-800 m-0 mt-1">
+                                {{ formatLastDbChangeDisplay(row.updated_at, row.created_at) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div *ngIf="!exchangeRateRow()" class="rounded-xl border border-amber-100 bg-amber-50/60 p-4 mb-6 text-amber-950 text-sm">
+                        No hay registro USD todavía. Usa <strong>Cargar desde BCV</strong> o <strong>Editar / guardar</strong> para crearlo.
+                    </div>
+
+                    <div *ngIf="!exchangeRateEditing()" class="flex flex-wrap gap-3">
+                        <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold"
+                            [disabled]="exchangeRateRefreshing()"
+                            (click)="refreshExchangeRateBcv()">
+                            <mat-icon *ngIf="!exchangeRateRefreshing()">cloud_download</mat-icon>
+                            <mat-icon *ngIf="exchangeRateRefreshing()" class="animate-spin">progress_activity</mat-icon>
+                            Cargar tasa (BCV)
+                        </button>
+                        <button mat-stroked-button type="button" class="rounded-xl font-bold"
+                            (click)="startEditExchangeRate()">
+                            <mat-icon>edit</mat-icon>
+                            Editar manualmente
+                        </button>
+                        <button mat-button type="button" class="rounded-xl"
+                            (click)="loadExchangeRateAdmin()" [disabled]="exchangeRateLoading()">
+                            <mat-icon>refresh</mat-icon>
+                            Refrescar vista
+                        </button>
+                    </div>
+
+                    <form *ngIf="exchangeRateEditing()" [formGroup]="exchangeRateForm" (ngSubmit)="saveExchangeRate()"
+                        class="mt-4 p-4 rounded-xl border border-emerald-100 bg-emerald-50/30 space-y-4">
+                        <div class="grid sm:grid-cols-2 gap-4">
+                            <mat-form-field appearance="outline" class="w-full">
+                                <mat-label>Tasa (Bs. por USD)</mat-label>
+                                <input matInput type="number" formControlName="rate" step="any" placeholder="896.1225">
+                                <mat-error *ngIf="exchangeRateForm.get('rate')?.hasError('required')">Requerido</mat-error>
+                                <mat-error *ngIf="exchangeRateForm.get('rate')?.hasError('min')">Debe ser mayor que 0</mat-error>
+                            </mat-form-field>
+                            <mat-form-field appearance="outline" class="w-full">
+                                <mat-label>Fecha de la tasa (valor)</mat-label>
+                                <input matInput type="date" formControlName="rate_date">
+                                <mat-error *ngIf="exchangeRateForm.get('rate_date')?.hasError('required')">Requerido</mat-error>
+                            </mat-form-field>
+                        </div>
+                        <div class="flex flex-wrap gap-2 justify-end">
+                            <button mat-button type="button" (click)="cancelEditExchangeRate()"
+                                [disabled]="exchangeRateSaving()">Cancelar</button>
+                            <button mat-flat-button color="primary" type="submit" class="rounded-xl font-bold"
+                                [disabled]="exchangeRateForm.invalid || exchangeRateSaving()">
+                                <mat-icon *ngIf="!exchangeRateSaving()">save</mat-icon>
+                                <mat-icon *ngIf="exchangeRateSaving()" class="animate-spin">progress_activity</mat-icon>
+                                Guardar
+                            </button>
+                        </div>
+                    </form>
+                </ng-container>
+            </div>
+        </mat-card>
+    </ng-container>
+
+    <!-- ============================================== -->
     <!-- PANEL DEMO PARA SUPER ADMIN -->
     <!-- ============================================== -->
     <ng-container *ngIf="role() === 'SUPER_ADMIN'">

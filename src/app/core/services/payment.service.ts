@@ -35,4 +35,19 @@ export class PaymentService {
     getLatestExchangeRate() {
         return this.http.get<any>(`${API_URL_BASE}/api/tasa/get_tasa/usd`);
     }
+
+    /** Super Admin: tasa USD con id, fechas de BD (p. ej. updated_at). */
+    getExchangeRateAdmin() {
+        return this.http.get<any>(`${API_URL_BASE}/api/tasa/admin/usd`);
+    }
+
+    /** Super Admin: guardar manualmente la única fila USD. */
+    updateExchangeRateUsd(payload: { rate: number; rate_date: string }) {
+        return this.http.put<any>(`${API_URL_BASE}/api/tasa/admin/usd`, payload);
+    }
+
+    /** Super Admin: scrape BCV y actualizar BD. */
+    refreshExchangeRateFromBcv() {
+        return this.http.post<any>(`${API_URL_BASE}/api/tasa/admin/refresh-bcv`, {});
+    }
 }
