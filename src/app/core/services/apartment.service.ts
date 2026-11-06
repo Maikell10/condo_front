@@ -25,14 +25,15 @@ export class ApartmentService {
         return this.http.patch(`${this.API_URL}/${id}/alicuota`, { alicuota });
     }
 
-    // Busca usuarios por nombre o correo para el modal de vinculación
-    searchUsers(term: string): Observable<{ data: any[] }> {
-        return this.http.get<{ data: any[] }>(`${API_URL_BASE}/api/users/search?term=${term}`);
-    }
-
-    // Vincula el usuario al apartamento
-    linkOwner(apartmentId: number, userId: number): Observable<any> {
-        return this.http.patch(`${this.API_URL}/${apartmentId}/owner`, { userId });
+    /** Crea usuario OWNER y lo asigna al apartamento sin dueño. */
+    createOwnerAndAssignToApartment(
+        apartmentId: number,
+        data: Record<string, unknown>
+    ): Observable<{ message: string; ownerId?: number }> {
+        return this.http.post<{ message: string; ownerId?: number }>(
+            `${this.API_URL}/${apartmentId}/owner`,
+            data
+        );
     }
 
     getOwnerEditContext(apartmentId: number): Observable<{ data: OwnerEditContextResponse }> {

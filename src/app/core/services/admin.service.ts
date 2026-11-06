@@ -15,6 +15,8 @@ export class AdminService {
         search?: string;
         role?: string;
         status?: string;
+        /** Propietarios sin apartamentos (solo tiene efecto con API actualizada). */
+        ownerUnits?: 'ALL' | 'NONE';
     }): Observable<AdminUsersListResponse> {
         let params = new HttpParams();
         if (filters?.page != null) {
@@ -26,7 +28,9 @@ export class AdminService {
         if (filters?.search?.trim()) {
             params = params.set('search', filters.search.trim());
         }
-        if (filters?.role && filters.role !== 'ALL') {
+        if (filters?.ownerUnits === 'NONE') {
+            params = params.set('ownerUnits', 'NONE');
+        } else if (filters?.role && filters.role !== 'ALL') {
             params = params.set('role', filters.role);
         }
         if (filters?.status && filters.status !== 'ALL') {

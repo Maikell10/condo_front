@@ -2,7 +2,13 @@
   {{ dialogTitle }}
 </h2>
 @if (profileUnitLabel) {
-  <p class="user-dialog-subtitle">Unidad {{ profileUnitLabel }}</p>
+  <p class="user-dialog-subtitle">
+    @if (createOwnerMode) {
+      Asignar a la unidad {{ profileUnitLabel }}
+    } @else {
+      Unidad {{ profileUnitLabel }}
+    }
+  </p>
 }
 
 <mat-dialog-content class="user-dialog-content">
@@ -61,7 +67,7 @@
     <mat-form-field appearance="outline">
       <mat-label>Correo electrónico</mat-label>
       <input matInput formControlName="email" type="email" placeholder="juan@correo.com" autocomplete="email" />
-      <mat-hint *ngIf="profileMode || form.get('role')?.value === 'OWNER'">
+      <mat-hint *ngIf="profileMode || createOwnerMode || form.get('role')?.value === 'OWNER'">
         Opcional; si lo indicas, debe ser un correo válido
       </mat-hint>
       <mat-error *ngIf="form.get('email')?.hasError('required')">Correo obligatorio para administradores</mat-error>
@@ -101,7 +107,7 @@
       </mat-form-field>
     </div>
 
-    @if (!profileMode) {
+    @if (!profileMode && !createOwnerMode) {
       <mat-form-field appearance="outline">
         <mat-label>Rol en el sistema</mat-label>
         <mat-select formControlName="role">
@@ -110,12 +116,20 @@
           <mat-option value="SUPER_ADMIN">Super administrador</mat-option>
         </mat-select>
       </mat-form-field>
+    }
 
-      <mat-form-field appearance="outline" *ngIf="!isEdit">
+    @if (!profileMode && !createOwnerMode && !isEdit) {
+      <mat-form-field appearance="outline">
         <mat-label>Contraseña temporal</mat-label>
-        <input matInput formControlName="password" type="password" />
-        <mat-hint>El usuario podrá cambiarla luego</mat-hint>
+        <input matInput formControlName="password" type="password" autocomplete="new-password" />
+        <mat-hint>Mínimo 6 caracteres; el usuario podrá cambiarla luego</mat-hint>
       </mat-form-field>
+    }
+
+    @if (createOwnerMode) {
+      <p class="create-owner-hint m-0 text-sm text-slate-600">
+        El acceso del propietario al portal es con el <strong>código de acceso</strong> de la unidad (no se pide contraseña aquí).
+      </p>
     }
 
     @if (profileMode || (isEdit && form.get('role')?.value === 'OWNER')) {
@@ -151,6 +165,6 @@
     class="rounded-xl shadow-md"
     [disabled]="form.invalid"
     (click)="save()">
-        {{ profileMode ? 'Guardar propietario' : (isEdit ? 'Guardar cambios' : 'Registrar usuario') }}
+        {{ profileMode ? 'Guardar propietario' : createOwnerMode ? 'Crear y asignar' : (isEdit ? 'Guardar cambios' : 'Registrar usuario') }}
   </button>
 </mat-dialog-actions>

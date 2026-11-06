@@ -14,12 +14,29 @@ export interface BuildingAdminOwnerProfileDialogData {
   unitLabel?: string;
 }
 
-export type UserDialogData = AdminUserRow | BuildingAdminOwnerProfileDialogData | null;
+/** Alta de propietario nuevo y asignación a un apartamento sin dueño (building admin). */
+export interface CreateOwnerForApartmentDialogData {
+  mode: 'create_owner_for_apartment';
+  apartmentId: number;
+  unitLabel?: string;
+}
+
+export type UserDialogData =
+  | AdminUserRow
+  | BuildingAdminOwnerProfileDialogData
+  | CreateOwnerForApartmentDialogData
+  | null;
 
 export function isBuildingAdminProfileDialog(
   data: UserDialogData
 ): data is BuildingAdminOwnerProfileDialogData {
   return !!data && typeof data === 'object' && 'mode' in data && data.mode === 'building_admin_profile';
+}
+
+export function isCreateOwnerForApartmentDialog(
+  data: UserDialogData
+): data is CreateOwnerForApartmentDialogData {
+  return !!data && typeof data === 'object' && 'mode' in data && data.mode === 'create_owner_for_apartment';
 }
 
 export interface OwnerEditContextResponse {

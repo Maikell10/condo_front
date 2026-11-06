@@ -180,11 +180,12 @@
                     (click)="editOwnerProfile(a)">
                     <mat-icon class="text-gray-400 hover:text-violet-600">edit</mat-icon>
                   </button>
+                } @else {
+                  <button mat-icon-button type="button" matTooltip="Crear propietario y asignar"
+                    (click)="openCreateOwnerModal(a)">
+                    <mat-icon class="text-gray-400 hover:text-indigo-600">person_add_alt</mat-icon>
+                  </button>
                 }
-                <button mat-icon-button type="button" matTooltip="Vincular propietario"
-                  (click)="openLinkOwnerModal(a)">
-                  <mat-icon class="text-gray-400 hover:text-indigo-600">person_add_alt</mat-icon>
-                </button>
                 <button mat-icon-button type="button" matTooltip="Ajustar alícuota"
                   (click)="editAlicuota(a)">
                   <mat-icon class="text-gray-400 hover:text-emerald-600">percent</mat-icon>

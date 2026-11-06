@@ -18,7 +18,6 @@ import { ApartmentService } from '../../../core/services/apartment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { MatDialog } from '@angular/material/dialog';
-import { LinkOwnerModalComponent } from '../../modal/link-owner-modal.component';
 import { AddApartmentModalComponent } from '../../modal/add-apartment-modal.component';
 import { UserDialogComponent } from '../../../modals/user-dialog/user-dialog.component';
 import { ConfirmActionDialogComponent } from '../../../shared/confirm-action-dialog/confirm-action-dialog.component';
@@ -196,26 +195,38 @@ export class ApartmentsComponent implements OnInit {
     }
   }
 
-  openLinkOwnerModal(apt: any) {
-    const dialogRef = this.dialog.open(LinkOwnerModalComponent, {
-      width: '450px',
-      data: apt
+  /** Alta de propietario nuevo y asignación a la unidad (sin dueño previo). */
+  openCreateOwnerModal(apt: { id: number; number: string }): void {
+    if (!this.selectedBuildingId()) return;
+    const unitLabel = `${this.getBuildingName(apt)}-${apt.number}`;
+
+    const dialogRef = this.dialog.open(UserDialogComponent, {
+      width: '560px',
+      maxWidth: '95vw',
+      panelClass: 'user-dialog-panel',
+      data: {
+        mode: 'create_owner_for_apartment',
+        apartmentId: apt.id,
+        unitLabel
+      }
     });
 
-    dialogRef.afterClosed().subscribe((userId) => {
-      if (userId && this.selectedBuildingId()) {
-        this.apartmentService.linkOwner(apt.id, userId).subscribe({
-          next: () => {
-            this.snackBar.open('Propietario vinculado con éxito', 'Cerrar', { duration: 3500 });
-            this.loadApartments(this.selectedBuildingId()!);
-          },
-          error: (err) =>
-            this.snackBar.open(err.error?.message || 'Error al vincular', 'Cerrar', {
-              duration: 5000,
-              panelClass: ['error-snackbar']
-            })
-        });
-      }
+    dialogRef.afterClosed().subscribe((payload: Record<string, unknown> | undefined) => {
+      if (!payload || !this.selectedBuildingId()) return;
+      this.apartmentService.createOwnerAndAssignToApartment(apt.id, payload).subscribe({
+        next: (r) => {
+          this.snackBar.open(r.message || 'Propietario creado', 'Cerrar', {
+            duration: 4500,
+            panelClass: ['success-snackbar']
+          });
+          this.loadApartments(this.selectedBuildingId()!);
+        },
+        error: (err) =>
+          this.snackBar.open(err.error?.message || 'No se pudo crear el propietario', 'Cerrar', {
+            duration: 6000,
+            panelClass: ['error-snackbar']
+          })
+      });
     });
   }
 

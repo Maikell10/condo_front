@@ -12,6 +12,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -57,6 +58,7 @@ function usersPaginatorLabels(): MatPaginatorIntl {
     MatSnackBarModule,
     MatFormFieldModule,
     MatInputModule,
+    MatCheckboxModule,
     MatSelectModule,
     MatProgressSpinnerModule,
     MatPaginatorModule
@@ -113,6 +115,8 @@ export class UsersComponent implements OnInit {
 
   searchQuery = signal('');
   roleFilter = signal<'ALL' | 'SUPER_ADMIN' | 'BUILDING_ADMIN' | 'OWNER'>('ALL');
+  /** Solo propietarios sin apartamento vinculado (fuerza rol OWNER en la petición). */
+  ownerWithoutUnitsOnly = signal(false);
   statusFilter = signal<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
   pageIndex = signal(0);
   pageSize = signal(25);
@@ -185,6 +189,18 @@ export class UsersComponent implements OnInit {
 
   onRoleFilterChange(value: 'ALL' | 'SUPER_ADMIN' | 'BUILDING_ADMIN' | 'OWNER'): void {
     this.roleFilter.set(value);
+    if (value !== 'OWNER') {
+      this.ownerWithoutUnitsOnly.set(false);
+    }
+    this.pageIndex.set(0);
+    this.loadUsers();
+  }
+
+  onOwnerWithoutUnitsChange(enabled: boolean): void {
+    this.ownerWithoutUnitsOnly.set(enabled);
+    if (enabled) {
+      this.roleFilter.set('OWNER');
+    }
     this.pageIndex.set(0);
     this.loadUsers();
   }
@@ -208,6 +224,7 @@ export class UsersComponent implements OnInit {
   clearFilters(): void {
     this.searchQuery.set('');
     this.roleFilter.set('ALL');
+    this.ownerWithoutUnitsOnly.set(false);
     this.statusFilter.set('ALL');
     this.pageIndex.set(0);
     this.loadUsers();
@@ -216,13 +233,15 @@ export class UsersComponent implements OnInit {
   loadUsers(): void {
     this.loading.set(true);
     this.loadError.set(null);
+    const noUnits = this.ownerWithoutUnitsOnly();
     this.adminService
       .getUsers({
         page: this.pageIndex() + 1,
         limit: this.pageSize(),
         search: this.searchQuery(),
-        role: this.roleFilter(),
-        status: this.statusFilter()
+        role: noUnits ? 'OWNER' : this.roleFilter(),
+        status: this.statusFilter(),
+        ownerUnits: noUnits ? 'NONE' : 'ALL'
       })
       .subscribe({
         next: (res) => {
@@ -259,9 +278,16 @@ export class UsersComponent implements OnInit {
     const q = this.searchQuery().trim().toLowerCase();
     const role = this.roleFilter();
     const status = this.statusFilter();
+    const noUnits = this.ownerWithoutUnitsOnly();
 
     return rows.filter((u) => {
-      if (role !== 'ALL' && u.role !== role) return false;
+      if (noUnits) {
+        if (u.role !== 'OWNER') return false;
+        const n = Number(u.apartmentCount ?? 0);
+        if (n > 0) return false;
+      } else if (role !== 'ALL' && u.role !== role) {
+        return false;
+      }
       if (status !== 'ALL' && u.status !== status) return false;
       if (!q) return true;
       return `${u.name} ${u.email} ${u.cedula ?? ''} ${u.phone ?? ''}`.toLowerCase().includes(q);

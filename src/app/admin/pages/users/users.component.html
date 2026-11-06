@@ -54,6 +54,19 @@
         </mat-select>
       </mat-form-field>
 
+      @if (roleFilter() === 'OWNER') {
+        <div
+          class="flex items-center gap-2 px-1 py-2 rounded-xl border border-violet-100 bg-violet-50/70 shrink-0 lg:self-stretch lg:min-h-[56px]">
+          <mat-checkbox
+            [ngModel]="ownerWithoutUnitsOnly()"
+            (ngModelChange)="onOwnerWithoutUnitsChange($event)"
+            color="primary"
+            class="!text-sm">
+            Solo sin unidad
+          </mat-checkbox>
+        </div>
+      }
+
       <mat-form-field appearance="outline" class="w-full lg:w-44 !mb-0">
         <mat-label>Estado</mat-label>
         <mat-select [ngModel]="statusFilter()" (ngModelChange)="onStatusFilterChange($event)">

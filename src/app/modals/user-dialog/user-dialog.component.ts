@@ -29,6 +29,7 @@ import {
 import {
   BuildingAdminOwnerProfileDialogData,
   isBuildingAdminProfileDialog,
+  isCreateOwnerForApartmentDialog,
   OwnerUnitScopeRow,
   UserDialogData
 } from './user-dialog.model';
@@ -55,6 +56,7 @@ function phoneLocalValidator(control: AbstractControl): ValidationErrors | null 
 function resolveAdminRow(data: UserDialogData): AdminUserRow | null {
   if (!data) return null;
   if (isBuildingAdminProfileDialog(data)) return data.owner;
+  if (isCreateOwnerForApartmentDialog(data)) return null;
   return data;
 }
 
@@ -84,16 +86,23 @@ export class UserDialogComponent implements OnInit {
   data = inject(MAT_DIALOG_DATA, { optional: true }) as UserDialogData;
 
   profileMode = isBuildingAdminProfileDialog(this.data);
-  profileUnitLabel = isBuildingAdminProfileDialog(this.data) ? this.data.unitLabel : undefined;
+  createOwnerMode = isCreateOwnerForApartmentDialog(this.data);
+  profileUnitLabel = isBuildingAdminProfileDialog(this.data)
+    ? this.data.unitLabel
+    : isCreateOwnerForApartmentDialog(this.data)
+      ? this.data.unitLabel
+      : undefined;
 
   private adminRow: AdminUserRow | null = resolveAdminRow(this.data);
 
   isEdit = this.profileMode || !!this.adminRow?.id;
   dialogTitle = this.profileMode
     ? 'Editar propietario'
-    : this.isEdit
-      ? 'Editar Usuario'
-      : 'Registrar Nuevo Usuario';
+    : this.createOwnerMode
+      ? 'Crear propietario'
+      : this.isEdit
+        ? 'Editar Usuario'
+        : 'Registrar Nuevo Usuario';
 
   loadingUnits = signal(false);
   ownedUnits = signal<{ id: number; number: string; buildingName: string }[]>([]);
@@ -119,7 +128,12 @@ export class UserDialogComponent implements OnInit {
     sex: [this.adminRow?.sex ?? ''],
     birthDate: [parseIsoDate(this.adminRow?.birthDate ?? null), []],
     role: [this.adminRow?.role || 'OWNER', Validators.required],
-    password: ['', this.isEdit ? [] : [Validators.required, Validators.minLength(6)]]
+    password: [
+      '',
+      this.isEdit || this.createOwnerMode
+        ? []
+        : [Validators.required, Validators.minLength(6)]
+    ]
   });
 
   ngOnInit(): void {
@@ -128,10 +142,17 @@ export class UserDialogComponent implements OnInit {
       this.birthPickerStartAt = birth;
     }
 
-    if (!this.profileMode) {
+    if (!this.profileMode && !this.createOwnerMode) {
       this.form.get('role')?.valueChanges.subscribe(() => {
         this.form.get('email')?.updateValueAndValidity();
       });
+    }
+
+    if (this.createOwnerMode) {
+      this.form.get('role')?.clearValidators();
+      this.form.get('role')?.updateValueAndValidity();
+      this.form.get('password')?.clearValidators();
+      this.form.get('password')?.updateValueAndValidity();
     }
 
     if (this.profileMode) {
@@ -210,7 +231,7 @@ export class UserDialogComponent implements OnInit {
       birthDate: toIsoDate(raw.birthDate)
     };
 
-    if (!this.profileMode) {
+    if (!this.profileMode && !this.createOwnerMode) {
       payload['role'] = raw.role;
       if (!this.isEdit && raw.password) {
         payload['password'] = raw.password;
