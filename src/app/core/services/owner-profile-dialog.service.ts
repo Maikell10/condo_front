@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { AdminUserRow, displayUserEmail } from '../../admin/pages/users/admin-user.model';
-import { OwnerProfileDialogComponent } from '../../owner/pages/profile/owner-profile-dialog.component';
+import type { OwnerProfileDialogComponent } from '../../owner/pages/profile/owner-profile-dialog.component';
 import { ApartmentService } from './apartment.service';
 
 const PROMPT_KEY = 'owner-profile-prompted';
@@ -22,19 +22,29 @@ export class OwnerProfileDialogService {
   private dialog = inject(MatDialog);
   private apartments = inject(ApartmentService);
   private ref: MatDialogRef<OwnerProfileDialogComponent> | null = null;
+  private opening = false;
 
   open(): void {
-    if (this.ref) return;
-    this.ref = this.dialog.open(OwnerProfileDialogComponent, {
-      width: '640px',
-      maxWidth: '96vw',
-      maxHeight: '92vh',
-      autoFocus: false,
-      panelClass: 'owner-profile-dialog'
-    });
-    this.ref.afterClosed().subscribe(() => {
-      this.ref = null;
-    });
+    if (this.ref || this.opening) return;
+    this.opening = true;
+    import('../../owner/pages/profile/owner-profile-dialog.component')
+      .then(({ OwnerProfileDialogComponent }) => {
+        this.opening = false;
+        if (this.ref) return;
+        this.ref = this.dialog.open(OwnerProfileDialogComponent, {
+          width: '640px',
+          maxWidth: '96vw',
+          maxHeight: '92vh',
+          autoFocus: false,
+          panelClass: 'owner-profile-dialog'
+        });
+        this.ref.afterClosed().subscribe(() => {
+          this.ref = null;
+        });
+      })
+      .catch(() => {
+        this.opening = false;
+      });
   }
 
   promptIfIncomplete(): void {
