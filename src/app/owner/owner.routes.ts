@@ -9,6 +9,10 @@ export const OWNER_ROUTES: Routes = [
     children: [
       { path: '', component: DashboardComponent },
       {
+        path: 'profile',
+        loadComponent: () => import('./pages/profile/owner-profile.component').then(m => m.OwnerProfileComponent)
+      },
+      {
         path: 'pending-receipts',
         loadComponent: () =>
           import('./pages/pending-receipts/pending-receipts.component').then(m => m.PendingReceiptsComponent)

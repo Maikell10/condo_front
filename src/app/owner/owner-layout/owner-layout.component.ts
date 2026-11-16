@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { OwnerProfileDialogService } from '../../core/services/owner-profile-dialog.service';
 import { OwnerDataLoaderComponent } from '../shared/owner-data-loader/owner-data-loader.component';
 import { ownerRouteAnimation } from '../owner-page.animations';
 
@@ -15,11 +16,13 @@ import { ownerRouteAnimation } from '../owner-page.animations';
 })
 export class OwnerLayoutComponent {
   private router = inject(Router);
+  private ownerProfile = inject(OwnerProfileDialogService);
 
   routeLoading = signal(false);
   routeAnimKey = signal(0);
 
   constructor() {
+    this.ownerProfile.promptIfIncomplete();
     this.router.events
       .pipe(takeUntilDestroyed())
       .subscribe((event) => {

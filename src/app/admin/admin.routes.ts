@@ -4,6 +4,11 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 export const ADMIN_ROUTES: Routes = [
     { path: '', component: DashboardComponent },
     {
+        path: 'kpi',
+        loadComponent: () =>
+            import('./pages/global-kpi/global-kpi.component').then(m => m.GlobalKpiComponent)
+    },
+    {
         path: 'buildings',
         loadComponent: () =>
             import('./pages/buildings/buildings.component').then(m => m.BuildingsComponent)

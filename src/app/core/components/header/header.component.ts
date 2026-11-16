@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu'; // 🔥 Para el menú desplegable
 import { MatBadgeModule } from '@angular/material/badge'; // 🔥 Para la campanita
 import { AuthService } from '../../services/auth.service';
+import { OwnerProfileDialogService } from '../../services/owner-profile-dialog.service';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterModule } from '@angular/router';
 
@@ -24,6 +25,7 @@ import { RouterModule } from '@angular/router';
 })
 export class HeaderComponent {
   private auth = inject(AuthService);
+  private ownerProfile = inject(OwnerProfileDialogService);
 
   // Emitimos un evento por si quieres usar el botón hamburguesa para el sidebar en móvil
   @Output() toggleSidebar = new EventEmitter<void>();
@@ -33,6 +35,12 @@ export class HeaderComponent {
 
   logout() {
     this.auth.logout();
+  }
+
+  openProfile(): void {
+    if (this.user()?.role === 'OWNER') {
+      this.ownerProfile.open();
+    }
   }
 
   // Extrae las iniciales para el Avatar (Ej. "Propietario PH" -> "PP")

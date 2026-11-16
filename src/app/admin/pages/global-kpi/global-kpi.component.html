@@ -1,0 +1,145 @@
+<div class="kpi-page">
+  <header class="kpi-hero">
+    <div>
+      <p class="kpi-kicker">Administración global</p>
+      <h1>KPIs de la plataforma</h1>
+      <p class="kpi-lead">Cifras de toda la operación: edificios, usuarios y cobranza SaaS.</p>
+    </div>
+    <a mat-stroked-button routerLink="/admin" class="hero-link">
+      <mat-icon>arrow_back</mat-icon>
+      Dashboard
+    </a>
+  </header>
+
+  <div *ngIf="loading()" class="kpi-loading">
+    <mat-spinner diameter="42"></mat-spinner>
+  </div>
+
+  <p *ngIf="!loading() && loadError()" class="kpi-error">{{ loadError() }}</p>
+
+  <ng-container *ngIf="!loading() && !loadError()">
+    <section class="kpi-stats" aria-label="Indicadores principales">
+      <article>
+        <span>Edificios activos</span>
+        <strong>{{ activeBuildings() }}</strong>
+        <small>{{ inactiveBuildings() }} {{ inactiveBuildings() === 1 ? 'inactivo' : 'inactivos' }} · {{ complexCount() }} conjuntos</small>
+      </article>
+      <article>
+        <span>Usuarios activos</span>
+        <strong>{{ userStats()?.active || 0 }}</strong>
+        <small>{{ userStats()?.inactive || 0 }} {{ (userStats()?.inactive || 0) === 1 ? 'inactivo' : 'inactivos' }} de {{ userStats()?.total || 0 }}</small>
+      </article>
+      <article>
+        <span>Unidades</span>
+        <strong>{{ totalApartments() }}</strong>
+        <small>{{ withoutAdmin() }} {{ withoutAdmin() === 1 ? 'edificio' : 'edificios' }} sin administrador</small>
+      </article>
+      <article>
+        <span>SaaS cobrado este mes</span>
+        <strong>{{ chartCurrency() }} {{ collectedThisMonth() | number:'1.0-0' }}</strong>
+        <small>Cartera {{ chartCurrency() }} {{ openPortfolio() | number:'1.0-0' }} · cuota {{ chartCurrency() }} {{ mrr() | number:'1.0-0' }}</small>
+      </article>
+    </section>
+
+    <section class="kpi-grid">
+      <article class="panel panel-wide">
+        <header>
+          <div>
+            <h2>Cobranza SaaS</h2>
+            <p>Pagos registrados en {{ chartCurrency() }}, últimos seis meses.</p>
+          </div>
+        </header>
+        <svg class="area-chart" viewBox="0 0 640 220" role="img" [attr.aria-label]="'Cobranza SaaS en ' + chartCurrency()">
+          <line x1="36" y1="46" x2="604" y2="46" class="grid"></line>
+          <line x1="36" y1="92" x2="604" y2="92" class="grid"></line>
+          <line x1="36" y1="138" x2="604" y2="138" class="grid"></line>
+          <line x1="36" y1="184" x2="604" y2="184" class="axis"></line>
+          <path [attr.d]="areaPath()" class="area"></path>
+          <path [attr.d]="linePath()" class="line"></path>
+          <g *ngFor="let point of chartPoints()">
+            <circle [attr.cx]="point.x" [attr.cy]="point.y" r="4" class="dot"></circle>
+            <text [attr.x]="point.x" y="206" text-anchor="middle">{{ point.label }}</text>
+            <text [attr.x]="point.x" [attr.y]="point.y - 10" text-anchor="middle" class="value">{{ point.amount | number:'1.0-0' }}</text>
+          </g>
+        </svg>
+      </article>
+
+      <article class="panel">
+        <header>
+          <div>
+            <h2>Usuarios por rol</h2>
+            <p>{{ roleTotal() }} cuentas en la plataforma.</p>
+          </div>
+        </header>
+        <div class="donut-row" *ngIf="roleSlices().length; else emptyRoles">
+          <svg viewBox="0 0 140 140" class="donut" role="img" aria-label="Distribución de usuarios por rol">
+            <circle cx="70" cy="70" r="54" class="donut-track"></circle>
+            <circle *ngFor="let slice of roleSlices(); let i = index" cx="70" cy="70" r="54"
+              [attr.stroke]="slice.color"
+              [attr.stroke-dasharray]="dash(roleSlices(), i)"
+              [attr.stroke-dashoffset]="dashOffset(roleSlices(), i)"></circle>
+            <text x="70" y="74" text-anchor="middle">{{ roleTotal() }}</text>
+          </svg>
+          <ul>
+            <li *ngFor="let slice of roleSlices()">
+              <i [style.background]="slice.color"></i>
+              <span>{{ slice.label }}</span>
+              <b>{{ slice.value }} · {{ pct(slice.value, roleTotal()) }}%</b>
+            </li>
+          </ul>
+        </div>
+        <ng-template #emptyRoles><p class="empty">Sin usuarios para graficar.</p></ng-template>
+      </article>
+
+      <article class="panel">
+        <header>
+          <div>
+            <h2>Edificios con más unidades</h2>
+            <p>Las seis cuentas más grandes por apartamentos.</p>
+          </div>
+        </header>
+        <ol class="bars" *ngIf="topBuildings().length; else emptyBuildings">
+          <li *ngFor="let building of topBuildings()">
+            <div class="bar-label">
+              <span>{{ building.name }}</span>
+              <b>{{ building.units }}</b>
+            </div>
+            <div class="bar-track" [attr.aria-label]="building.name + ', ' + building.units + ' unidades'">
+              <span [style.width.%]="building.width"></span>
+            </div>
+            <small>{{ building.complex }}</small>
+          </li>
+        </ol>
+        <ng-template #emptyBuildings><p class="empty">No hay edificios cargados.</p></ng-template>
+      </article>
+
+      <article class="panel">
+        <header>
+          <div>
+            <h2>Estado de la cuota SaaS</h2>
+            <p>{{ saasTotal() }} administradores en el ciclo actual.</p>
+          </div>
+        </header>
+        <div class="donut-row" *ngIf="saasSlices().length; else emptySaas">
+          <svg viewBox="0 0 140 140" class="donut" role="img" aria-label="Estado de cuotas SaaS">
+            <circle cx="70" cy="70" r="54" class="donut-track"></circle>
+            <circle *ngFor="let slice of saasSlices(); let i = index" cx="70" cy="70" r="54"
+              [attr.stroke]="slice.color"
+              [attr.stroke-dasharray]="dash(saasSlices(), i)"
+              [attr.stroke-dashoffset]="dashOffset(saasSlices(), i)"></circle>
+            <text x="70" y="74" text-anchor="middle">{{ saasTotal() }}</text>
+          </svg>
+          <ul>
+            <li *ngFor="let slice of saasSlices()">
+              <i [style.background]="slice.color"></i>
+              <span>{{ slice.label }}</span>
+              <b>{{ slice.value }} · {{ pct(slice.value, saasTotal()) }}%</b>
+            </li>
+          </ul>
+        </div>
+        <ng-template #emptySaas><p class="empty">Sin clientes SaaS.</p></ng-template>
+        <a class="panel-link" routerLink="/admin/administration">Ver cobranza</a>
+      </article>
+    </section>
+  </ng-container>
+</div>

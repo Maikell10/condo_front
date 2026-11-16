@@ -1,0 +1,103 @@
+<div class="owner-page owner-profile" [class.owner-profile--dialog]="presentation === 'dialog'">
+  @if (loading()) {
+    <app-owner-data-loader message="Cargando tus datos…" submessage="Nombre, documento y contacto" />
+  } @else if (loadError()) {
+    <p class="profile-error">{{ loadError() }}</p>
+  } @else {
+    @if (presentation === 'page') {
+    <header class="profile-hero">
+      <p>Mi residencia</p>
+      <h1>Mis datos</h1>
+      <p class="profile-lead">Completa tu información de contacto. Estos datos son los mismos que ve el administrador, sin el rol del sistema.</p>
+    </header>
+    }
+
+    <form [formGroup]="form" class="profile-form" (ngSubmit)="save()">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>Nombre completo</mat-label>
+        <input matInput formControlName="name" placeholder="Ej: Juan Pérez" />
+      </mat-form-field>
+
+      <div class="profile-label">Documento de identidad <span>opcional</span></div>
+      <div class="profile-split">
+        <mat-form-field appearance="outline" class="profile-doc-type">
+          <mat-label>Tipo</mat-label>
+          <mat-select formControlName="docType">
+            <mat-option value="V">V — Venezolano</mat-option>
+            <mat-option value="E">E — Extranjero</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="profile-grow">
+          <mat-label>Número</mat-label>
+          <input matInput formControlName="docNumber" inputmode="numeric" maxlength="9" placeholder="10127247"
+            (input)="onDigitsInput($event, 'docNumber', 9)" />
+          <mat-error>Solo números</mat-error>
+        </mat-form-field>
+      </div>
+
+      <div class="profile-label">Teléfono <span>opcional</span></div>
+      <div class="profile-split">
+        <mat-form-field appearance="outline" class="profile-phone-prefix">
+          <mat-label>País</mat-label>
+          <mat-select formControlName="phoneCountry">
+            <mat-option value="+58">🇻🇪 +58</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="profile-grow">
+          <mat-label>Número móvil</mat-label>
+          <input matInput formControlName="phoneLocal" inputmode="numeric" maxlength="10" placeholder="4241207370"
+            (input)="onDigitsInput($event, 'phoneLocal', 10)" />
+          <mat-hint>10 dígitos sin espacios</mat-hint>
+          <mat-error>Debe tener exactamente 10 dígitos</mat-error>
+        </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Correo electrónico</mat-label>
+        <input matInput formControlName="email" type="email" placeholder="juan@correo.com" autocomplete="email" />
+        <mat-hint>Opcional; si lo indicas, debe ser un correo válido</mat-hint>
+        <mat-error>Ingresa un correo válido</mat-error>
+      </mat-form-field>
+
+      <div class="profile-split profile-split--demographics">
+        <mat-form-field appearance="outline">
+          <mat-label>Sexo</mat-label>
+          <mat-select formControlName="sex">
+            <mat-option value="">— Sin especificar —</mat-option>
+            <mat-option value="M">M — Masculino</mat-option>
+            <mat-option value="F">F — Femenino</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Fecha de nacimiento</mat-label>
+          <input matInput [matDatepicker]="birthPicker" formControlName="birthDate" [min]="minBirthDate"
+            [max]="maxBirthDate" readonly (click)="birthPicker.open()" placeholder="Seleccionar fecha" />
+          <mat-datepicker-toggle matIconSuffix [for]="birthPicker"></mat-datepicker-toggle>
+          <mat-datepicker #birthPicker startView="multi-year" [startAt]="birthPickerStartAt" [touchUi]="touchUi"
+            panelClass="user-birth-datepicker"></mat-datepicker>
+          <mat-hint>Primero el año, luego mes y día</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <div class="profile-units">
+        <div class="profile-units__title">
+          <mat-icon>apartment</mat-icon>
+          Unidades en propiedad
+        </div>
+        @if (units().length === 0) {
+          <p>Sin apartamentos vinculados en el sistema.</p>
+        } @else {
+          <ul>
+            @for (unit of units(); track unit.id) {
+              <li><strong>{{ unit.buildingName }}</strong> · Apt {{ unit.number }}</li>
+            }
+          </ul>
+        }
+      </div>
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || saving()">
+        {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+      </button>
+    </form>
+  }
+</div>

@@ -88,8 +88,18 @@ export class AuthService {
     // Método extra para obtener el token cuando armemos los Interceptors
     getToken(): string | null { return localStorage.getItem(this.TOKEN_KEY); }
 
+    patchStoredUser(partial: Partial<User>): void {
+        const current = this.currentUserSignal();
+        if (!current) return;
+        const next = { ...current, ...partial };
+        this.currentUserSignal.set(next);
+        this.userSubject.next(next);
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(next));
+    }
+
     logout(): void {
+        sessionStorage.removeItem('owner-profile-prompted');
         this.setSession(null);
-        this.router.navigate(['/']); // Redirigir a la vista de inicio
+        this.router.navigate(['/']);
     }
 }

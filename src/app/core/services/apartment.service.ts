@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { API_URL_BASE } from '../constants';
 import { OwnerEditContextResponse } from '../../modals/user-dialog/user-dialog.model';
+import { AdminUserRow } from '../../admin/pages/users/admin-user.model';
 
 export interface Apartment {
     id: string;
@@ -48,6 +49,17 @@ export class ApartmentService {
     ): Observable<{ message: string }> {
         return this.http.put<{ message: string }>(
             `${API_URL_BASE}/api/users/owners/${ownerId}/profile`,
+            data
+        );
+    }
+
+    getMyProfile(): Observable<{ data: AdminUserRow }> {
+        return this.http.get<{ data: AdminUserRow }>(`${API_URL_BASE}/api/users/me`);
+    }
+
+    updateMyProfile(data: Record<string, unknown>): Observable<{ message: string; data: AdminUserRow }> {
+        return this.http.put<{ message: string; data: AdminUserRow }>(
+            `${API_URL_BASE}/api/users/me`,
             data
         );
     }
