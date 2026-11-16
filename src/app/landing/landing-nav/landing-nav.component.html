@@ -6,9 +6,10 @@
     </a>
 
     <div class="landing-nav__links">
-      <a routerLink="/" fragment="features">Características</a>
-      <a routerLink="/" fragment="benefits">Beneficios</a>
-      <a routerLink="/" fragment="contact">Contacto</a>
+      <a href="#sistema" (click)="scrollToSection('sistema', $event)">El sistema</a>
+      <a href="#features" (click)="scrollToSection('features', $event)">Características</a>
+      <a href="#benefits" (click)="scrollToSection('benefits', $event)">Beneficios</a>
+      <a href="#contact" (click)="scrollToSection('contact', $event)">Contacto</a>
     </div>
 
     <a routerLink="/login">

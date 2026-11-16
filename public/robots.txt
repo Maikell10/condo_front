@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /building-admin
+Disallow: /owner
+Disallow: /auth
+Disallow: /login
+Disallow: /config
+Disallow: /vcard
+
+Sitemap: https://www.condominioaunclic.online/sitemap.xml
