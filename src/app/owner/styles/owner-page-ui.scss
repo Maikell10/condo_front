@@ -1,0 +1,171 @@
+// Shared owner portal UI (stat cards, panels, status pills) — global to stay within per-component style budgets.
+
+.stat-cards-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.stat-card {
+  border-radius: 1.25rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  padding: 1.1rem 1.15rem 1.2rem !important;
+  box-shadow: 0 16px 40px -22px rgba(15, 23, 42, 0.35) !important;
+  min-height: 7.75rem;
+  color: #fff;
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.18s ease;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 44px -18px rgba(15, 23, 42, 0.4) !important;
+    }
+  }
+}
+
+.stat-card--indigo {
+  background: linear-gradient(145deg, #6366f1, #4f46e5);
+}
+
+.stat-card--violet {
+  background: linear-gradient(145deg, #8b5cf6, #7c3aed);
+}
+
+.stat-card--rose {
+  background: linear-gradient(145deg, #f43f5e, #e11d48);
+}
+
+.stat-card--emerald {
+  background: linear-gradient(145deg, #10b981, #059669);
+}
+
+.stat-card--amber {
+  background: linear-gradient(145deg, #f59e0b, #d97706);
+}
+
+.stat-card--blue {
+  background: linear-gradient(145deg, #3b82f6, #2563eb);
+}
+
+.stat-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.stat-card__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.22);
+
+  mat-icon {
+    color: #fff;
+  }
+}
+
+.stat-card__chip {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.stat-card__value {
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.stat-card__sub {
+  font-size: 0.7rem;
+  opacity: 0.88;
+  margin-top: 0.35rem;
+}
+
+.panel-card {
+  border-radius: 1.25rem !important;
+  border: 1px solid #f1f5f9 !important;
+  box-shadow: 0 10px 36px -14px rgba(15, 23, 42, 0.12) !important;
+  overflow: hidden;
+  background: #fff;
+}
+
+.table-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: linear-gradient(180deg, #f8fafc, #fff);
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 0.22rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.status-pill--partial {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-pill--pending {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-pill--review {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-pill--approved {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.status-pill--rejected {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.25rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.empty-state--ok {
+  color: #047857;
+  background: linear-gradient(180deg, #ecfdf5, #fff);
+}
+
+.row-hover:hover {
+  background: #eef2ff !important;
+}

@@ -2,6 +2,8 @@
 @use "tailwindcss";
 @use "styles/landing";
 @use "app/owner/styles/owner-motion";
+@use "app/owner/styles/owner-page-ui";
+@use "app/owner/styles/owner-payment-report";
 
 html,
 body {
