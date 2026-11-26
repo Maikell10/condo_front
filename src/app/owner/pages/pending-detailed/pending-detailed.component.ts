@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { CurrencyPipe, NgClass } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -42,6 +42,7 @@ interface DetailedTableRow {
   standalone: true,
   imports: [
     CurrencyPipe,
+    DatePipe,
     NgClass,
     FormsModule,
     MatCardModule,
@@ -241,12 +242,15 @@ export class PendingDetailedComponent implements OnInit {
     this.searchQuery.set(value);
   }
 
+  printedAt = signal<Date | null>(null);
+
   printDetail() {
     if (this.groups().length === 0) {
       this.snackBar.open('No hay deudas que imprimir', 'Cerrar', { duration: 3000 });
       return;
     }
-    window.print();
+    this.printedAt.set(new Date());
+    requestAnimationFrame(() => window.print());
   }
 
   rowClass(row: DetailedTableRow) {

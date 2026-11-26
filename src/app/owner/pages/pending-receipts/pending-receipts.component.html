@@ -126,6 +126,75 @@
     }
   </mat-card>
 
+  @if (rows().length > 0) {
+    <div id="printable-pending-summary" class="pending-print-sheet" aria-hidden="true">
+      <header class="pending-print-header">
+        <div>
+          <p class="pending-print-header__kicker">Informe de morosidad</p>
+          <h1 class="pending-print-header__title">{{ buildingLabel() }}</h1>
+          <p class="pending-print-header__sub">Recibos pendientes por unidad · vista del propietario</p>
+        </div>
+        <div class="pending-print-header__logo">
+          <img src="/LOGO_SN1.png" alt="Condominio a un clic" width="140" height="42" />
+        </div>
+      </header>
+
+      <div class="pending-print-kpis">
+        <div class="pending-print-kpi">
+          <span class="pending-print-kpi__label">Deuda total</span>
+          <strong>{{ totalDebt() | currency:'USD':'symbol':'1.2-2' }}</strong>
+        </div>
+        <div class="pending-print-kpi">
+          <span class="pending-print-kpi__label">Recibos vencidos</span>
+          <strong>{{ totalReceipts() }}</strong>
+        </div>
+        <div class="pending-print-kpi">
+          <span class="pending-print-kpi__label">Unidades en mora</span>
+          <strong>{{ unitsInDebt() }}</strong>
+        </div>
+      </div>
+
+      <div class="pending-print-table-wrap">
+        <table class="pending-print-table">
+          <thead>
+            <tr>
+              <th>Unidad</th>
+              <th class="text-center">Recibos vencidos</th>
+              <th class="text-right">Deuda (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of filteredRows(); track row.unit) {
+              <tr [class.pending-print-table__mine]="row.isMe">
+                <td class="font-mono font-bold">{{ row.unit }}</td>
+                <td class="text-center">{{ row.receipts }}</td>
+                <td class="text-right font-bold text-rose-700">
+                  {{ row.debt | currency:'USD':'symbol':'1.2-2' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Totales ({{ filteredRows().length }} unidades)</td>
+              <td class="text-center font-bold">{{ filteredTotalReceipts() }}</td>
+              <td class="text-right font-bold text-rose-800">
+                {{ filteredTotalDebt() | currency:'USD':'symbol':'1.2-2' }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <footer class="pending-print-footer">
+        @if (printedAt(); as at) {
+          Generado el {{ at | date:'dd/MM/yyyy HH:mm' }}
+        }
+        · Condominio a un clic · Documento informativo
+      </footer>
+    </div>
+  }
+
   </div>
   }
 </div>

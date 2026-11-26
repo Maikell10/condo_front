@@ -1,0 +1,145 @@
+<div class="owner-page payment-reports-page space-y-6 max-w-[1200px] mx-auto pb-12 px-4 sm:px-6">
+
+  @if (showPageLoader()) {
+    <app-owner-data-loader message="Cargando reportes…" submessage="Historial de transferencias enviadas" />
+  } @else {
+  <div class="owner-page__content space-y-6">
+
+    <div class="owner-hero-animate reports-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
+        <div>
+          <a routerLink="/owner/payments" class="reports-back">
+            <mat-icon>arrow_back</mat-icon>
+            Volver a pagos
+          </a>
+          <div class="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-2 mt-3">Historial</div>
+          <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">Reportes de pago</h1>
+          <p class="text-indigo-50/90 mt-3 mb-0 max-w-xl text-sm sm:text-base">
+            Todas las transferencias que enviaste a administración: referencia, montos y estado de validación.
+          </p>
+        </div>
+        <button mat-stroked-button type="button" class="hero-btn--stroked h-12 px-4 font-bold shrink-0"
+          (click)="loadReports()" [disabled]="loading()">
+          <mat-icon>refresh</mat-icon>
+          Actualizar
+        </button>
+      </div>
+    </div>
+
+    <div class="owner-stagger stat-cards-grid">
+      @for (card of statCards(); track card.id) {
+        <mat-card class="stat-card stat-card--{{ card.variant }}">
+          <div class="stat-card__top">
+            <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+            <span class="stat-card__chip">{{ card.chip }}</span>
+          </div>
+          <div class="stat-card__value">{{ card.value }}</div>
+          @if (card.sub) {
+            <div class="stat-card__sub">{{ card.sub }}</div>
+          }
+        </mat-card>
+      }
+    </div>
+
+    <mat-card class="panel-card">
+      <div class="table-panel__head">
+        <div>
+          <h2 class="m-0 font-bold text-gray-800">Listado de reportes</h2>
+          <p class="m-0 mt-1 text-xs text-gray-500">
+            {{ filteredReports().length }} resultado{{ filteredReports().length === 1 ? '' : 's' }}
+            · total reportado {{ totalReportedUsd() | currency:'USD':'symbol':'1.2-2' }}
+          </p>
+        </div>
+        <mat-form-field appearance="outline" class="w-full sm:w-80 !mb-0">
+          <mat-label>Buscar referencia, monto o estado</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" autocomplete="off" />
+          @if (searchQuery()) {
+            <button matSuffix mat-icon-button type="button" (click)="onSearchChange('')">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
+      </div>
+
+      @if (loading()) {
+        <div class="table-panel__loading">
+          <mat-spinner diameter="44"></mat-spinner>
+        </div>
+      } @else if (reports().length === 0) {
+        <div class="empty-state">
+          <mat-icon class="text-5xl opacity-30 mb-2">payments</mat-icon>
+          <h3 class="m-0 font-bold text-gray-600">Sin reportes aún</h3>
+          <p class="text-sm m-0 mt-1">Cuando envíes una transferencia desde Pagos aparecerá aquí.</p>
+          <a mat-flat-button color="primary" routerLink="/owner/payments" class="!mt-4 !rounded-xl font-bold">
+            Ir a reportar pago
+          </a>
+        </div>
+      } @else if (filteredReports().length === 0) {
+        <div class="empty-state">
+          <mat-icon class="text-5xl opacity-30 mb-2">search_off</mat-icon>
+          <p class="text-sm m-0">Ningún reporte coincide con la búsqueda.</p>
+        </div>
+      } @else {
+        <div class="table-scroll">
+          <table mat-table [dataSource]="pagedReports()" class="w-full min-w-[720px]">
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase pl-6">Fecha</th>
+              <td mat-cell *matCellDef="let row" class="pl-6 text-gray-700 font-medium whitespace-nowrap">
+                {{ row.payment_date | date:'dd/MM/yyyy' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="reference">
+              <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase">Referencia</th>
+              <td mat-cell *matCellDef="let row">
+                <span class="font-mono font-bold text-gray-800">{{ row.reference }}</span>
+                <span class="block text-[10px] text-gray-400 mt-0.5">{{ operationLabel(row.operation_type) }}</span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase text-right">Monto USD</th>
+              <td mat-cell *matCellDef="let row" class="text-right font-bold text-gray-900">
+                {{ row.amount | currency:'USD':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="amountLocal">
+              <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase text-right">Monto Bs.</th>
+              <td mat-cell *matCellDef="let row" class="text-right font-mono text-amber-800 text-sm">
+                @if (row.amount_local != null) {
+                  Bs. {{ row.amount_local | number:'1.2-2' }}
+                } @else {
+                  <span class="text-gray-300">—</span>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase text-center pr-6">Estado</th>
+              <td mat-cell *matCellDef="let row" class="text-center pr-6">
+                @let st = paymentStatusLabel(row.status);
+                <span class="status-pill" [ngClass]="'status-pill--' + st.pill">{{ st.label }}</span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="row-hover"></tr>
+          </table>
+        </div>
+
+        <mat-paginator class="border-t border-gray-100"
+          [length]="filteredReports().length"
+          [pageIndex]="pageIndex()"
+          [pageSize]="pageSize()"
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          [showFirstLastButtons]="true"
+          (page)="onPage($event)">
+        </mat-paginator>
+      }
+    </mat-card>
+
+  </div>
+  }
+</div>

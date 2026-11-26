@@ -1,245 +1,276 @@
-<div class="space-y-6 max-w-4xl mx-auto pb-10 pt-4 px-4 sm:px-0">
+<div class="config-page space-y-6 mx-auto pb-12 pt-2 px-4 sm:px-6">
 
-    <!-- CABECERA -->
-    <div class="flex items-center gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div class="p-4 bg-slate-50 rounded-2xl text-slate-600">
-            <mat-icon class="scale-150">settings</mat-icon>
-        </div>
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-black text-gray-900 m-0">Configuración</h1>
-            <p class="text-gray-500 font-medium mt-1 m-0 text-sm sm:text-base">
-                {{ role() === 'SUPER_ADMIN' ? 'Ajustes globales del sistema SaaS.' : 'Ajustes generales para todos tus
-                edificios y condominios.' }}
-            </p>
-        </div>
+  <header
+    class="config-hero"
+    [class.config-hero--building]="role() === 'BUILDING_ADMIN'"
+    [class.config-hero--super]="role() === 'SUPER_ADMIN'">
+    <div class="config-hero__inner">
+      <div>
+        <p class="config-hero__kicker">Tu espacio de ajustes</p>
+        <h1 class="config-hero__title">Configuración</h1>
+        <p class="config-hero__sub">
+          @if (role() === 'SUPER_ADMIN') {
+            Parámetros globales del SaaS: tasa del día y preferencias de plataforma.
+          } @else if (role() === 'BUILDING_ADMIN') {
+            Fondo de reserva y reglas de prorrateo para tus edificios y condominios.
+          } @else {
+            Ajustes generales de tu cuenta en el sistema.
+          }
+        </p>
+      </div>
+      <div class="config-hero__badge" aria-hidden="true">
+        <mat-icon>tune</mat-icon>
+      </div>
     </div>
+  </header>
 
-    <!-- ============================================== -->
-    <!-- PANEL PARA BUILDING ADMIN (Fondo de Reserva) -->
-    <!-- ============================================== -->
-    <ng-container *ngIf="role() === 'BUILDING_ADMIN'">
-        <mat-card class="shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
-            <div class="p-5 border-b bg-indigo-50/50 flex items-center gap-3">
-                <mat-icon class="text-indigo-600">savings</mat-icon>
-                <h2 class="text-lg font-bold text-indigo-900 m-0">Fondo de Reserva</h2>
-            </div>
+  <div class="config-panels">
+    @if (role() === 'BUILDING_ADMIN') {
+      <mat-card class="panel-card">
+        <div class="panel-card__head panel-card__head--indigo">
+          <div class="panel-card__icon panel-card__icon--indigo">
+            <mat-icon>savings</mat-icon>
+          </div>
+          <h2>Fondo de reserva y prorrateo</h2>
+        </div>
 
-            <form [formGroup]="reserveForm" (ngSubmit)="saveSettings()" class="p-6">
-
-                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-6 mb-8">
-                    <div class="flex-1">
-                        <h3 class="font-bold text-gray-800 text-base m-0">Habilitar Recaudación de Fondo de Reserva</h3>
-                        <p class="text-gray-500 text-sm m-0 mt-1">Al activar esta opción, el sistema calculará
-                            automáticamente un porcentaje extra sobre los gastos mensuales para destinarlo a emergencias
-                            e imprevistos.</p>
-                    </div>
-
-                    <mat-slide-toggle formControlName="hasReserveFund" color="primary" class="scale-110">
-                        {{ reserveForm.get('hasReserveFund')?.value ? 'Activado' : 'Desactivado' }}
-                    </mat-slide-toggle>
-                </div>
-
-                <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 flex flex-col sm:flex-row items-center gap-6 transition-opacity"
-                    [class.opacity-50]="!reserveForm.get('hasReserveFund')?.value">
-
-                    <div class="flex-1">
-                        <h4 class="font-bold text-gray-800 m-0">Porcentaje de Recaudación</h4>
-                        <p class="text-xs text-gray-500 mt-1 m-0">Ingresa el porcentaje exacto que indica el documento
-                            de condominio (Ej. 10%).</p>
-                    </div>
-
-                    <mat-form-field appearance="outline" class="w-full sm:w-48 !mb-[-1.25em]">
-                        <mat-label>Porcentaje (%)</mat-label>
-                        <input matInput type="number" formControlName="reserveFundPercentage" placeholder="0.00"
-                            step="0.1">
-                        <mat-icon matSuffix class="text-gray-400 mr-2">percent</mat-icon>
-                        <mat-error *ngIf="reserveForm.get('reserveFundPercentage')?.hasError('min')">
-                            Debe ser mayor a 0
-                        </mat-error>
-                    </mat-form-field>
-                </div>
-
-                <div class="mt-8 p-6 rounded-xl border border-indigo-100 bg-indigo-50/40">
-                    <h3 class="font-bold text-gray-800 text-base m-0">Prorrateo de gastos del conjunto</h3>
-                    <p class="text-gray-500 text-sm m-0 mt-1 mb-4">
-                        Solo cambia esto si el conjunto tiene torres con distinta cantidad de apartamentos
-                        (por ejemplo un edificio que se partió en dos). El resto de conjuntos deja
-                        <strong>Por edificio</strong>.
-                    </p>
-                    <mat-radio-group formControlName="expenseSplitMode" class="flex flex-col gap-3">
-                        <mat-radio-button value="BY_BUILDING" color="primary">
-                            <span class="font-semibold text-gray-800">Por edificio (predeterminado)</span>
-                            <span class="block text-xs text-gray-500 font-normal mt-0.5">
-                                Divide el total en partes iguales entre las torres. Es el modo de los conjuntos regulares.
-                            </span>
-                        </mat-radio-button>
-                        <mat-radio-button value="BY_APARTMENT" color="primary">
-                            <span class="font-semibold text-gray-800">Por apartamento</span>
-                            <span class="block text-xs text-gray-500 font-normal mt-0.5">
-                                Cada unidad paga lo mismo. Una torre de 8 aptos recibe la mitad que una de 16.
-                            </span>
-                        </mat-radio-button>
-                    </mat-radio-group>
-                </div>
-
-                <mat-divider class="my-6"></mat-divider>
-
-                <div class="flex justify-end mt-5">
-                    <button mat-flat-button color="primary" type="submit" class="h-12 px-8 rounded-xl font-bold"
-                        [disabled]="reserveForm.invalid || isSubmitting()">
-                        <mat-icon>save</mat-icon> Guardar Cambios
-                    </button>
-                </div>
-            </form>
-        </mat-card>
-    </ng-container>
-
-    <!-- ============================================== -->
-    <!-- TASA USD (SUPER ADMIN) — card aparte -->
-    <!-- ============================================== -->
-    <ng-container *ngIf="role() === 'SUPER_ADMIN'">
-        <mat-card class="shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
-            <div class="p-5 border-b bg-emerald-50/80 flex items-center gap-3">
-                <mat-icon class="text-emerald-700">currency_exchange</mat-icon>
-                <h2 class="text-lg font-bold text-emerald-950 m-0">Tasa del día (USD / Bs.)</h2>
-            </div>
-
-            <div class="p-6">
-                <p class="text-gray-500 text-sm m-0 mb-4">
-                    Una sola fila en <code class="text-xs bg-slate-100 px-1 rounded">exchange_rates</code> (moneda USD).
-                    Puedes cargar desde el BCV o editar manualmente.
+        <form [formGroup]="reserveForm" (ngSubmit)="saveSettings()" class="panel-card__body">
+          <section class="setting-block">
+            <div class="setting-row">
+              <div class="setting-row__text">
+                <h3>Recaudar fondo de reserva</h3>
+                <p>
+                  Calcula un porcentaje adicional sobre los gastos mensuales para emergencias e imprevistos del condominio.
                 </p>
+              </div>
+              <div class="setting-row__control">
+                <mat-slide-toggle formControlName="hasReserveFund" color="primary">
+                  {{ reserveForm.get('hasReserveFund')?.value ? 'Activado' : 'Desactivado' }}
+                </mat-slide-toggle>
+              </div>
+            </div>
 
-                <div *ngIf="exchangeRateLoading()" class="flex items-center gap-2 text-gray-600 py-4">
+            <div
+              class="percent-block"
+              [class.is-disabled]="!reserveForm.get('hasReserveFund')?.value">
+              <div class="setting-row__text flex-1">
+                <h3>Porcentaje de recaudación</h3>
+                <p>Según documento de condominio (ej. 10%).</p>
+              </div>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="percent-field">
+                <mat-label>Porcentaje</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="reserveFundPercentage"
+                  placeholder="0.00"
+                  step="0.1" />
+                <span matTextSuffix class="text-gray-400 font-bold">%</span>
+                @if (reserveForm.get('reserveFundPercentage')?.hasError('min')) {
+                  <mat-error>Debe ser mayor a 0</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <div class="radio-panel">
+              <h3>Prorrateo de gastos del conjunto</h3>
+              <p>
+                Solo cámbialo si hay torres con distinta cantidad de apartamentos. En conjuntos regulares deja
+                <strong>Por edificio</strong>.
+              </p>
+              <mat-radio-group formControlName="expenseSplitMode" class="config-radio-group">
+                <div class="config-radio-option">
+                  <mat-radio-button value="BY_BUILDING" color="primary">
+                    <span class="option-title">Por edificio (predeterminado)</span>
+                    <span class="option-desc">
+                      Divide el total en partes iguales entre torres.
+                    </span>
+                  </mat-radio-button>
+                </div>
+                <div class="config-radio-option">
+                  <mat-radio-button value="BY_APARTMENT" color="primary">
+                    <span class="option-title">Por apartamento</span>
+                    <span class="option-desc">
+                      Cada unidad paga lo mismo; torres con más aptos absorben más del total.
+                    </span>
+                  </mat-radio-button>
+                </div>
+              </mat-radio-group>
+            </div>
+          </section>
+
+          <div class="panel-actions">
+            <button
+              mat-flat-button
+              color="primary"
+              type="submit"
+              class="btn-save"
+              [disabled]="reserveForm.invalid || isSubmitting()">
+              Guardar cambios
+            </button>
+          </div>
+        </form>
+      </mat-card>
+    }
+
+    @if (role() === 'SUPER_ADMIN') {
+      <mat-card class="panel-card">
+        <div class="panel-card__head panel-card__head--emerald">
+          <div class="panel-card__icon panel-card__icon--emerald">
+            <mat-icon>currency_exchange</mat-icon>
+          </div>
+          <h2>Tasa del día (USD / Bs.)</h2>
+        </div>
+
+        <div class="panel-card__body">
+          <p class="config-hint m-0">
+            Una fila en <code>exchange_rates</code> (moneda USD). Carga desde el BCV o edita manualmente.
+          </p>
+
+          @if (exchangeRateLoading()) {
+            <div class="config-loading">
+              <mat-icon class="animate-spin">progress_activity</mat-icon>
+              <span>Cargando tasa…</span>
+            </div>
+          } @else {
+            @if (exchangeRateRow(); as row) {
+              <div class="stat-cards-grid mb-5">
+                <div class="stat-mini">
+                  <p class="stat-mini__label">Tasa</p>
+                  <p class="stat-mini__value">{{ row.rate | number:'1.2-4' }}</p>
+                </div>
+                <div class="stat-mini">
+                  <p class="stat-mini__label">Fecha de la tasa</p>
+                  <p class="stat-mini__value stat-mini__value--sm">
+                    {{ formatRateDateDisplay(row.rate_date) }}
+                  </p>
+                </div>
+                <div class="stat-mini">
+                  <p class="stat-mini__label">Última actualización</p>
+                  <p class="stat-mini__value stat-mini__value--sm">
+                    {{ formatLastDbChangeDisplay(row.updated_at, row.created_at) }}
+                  </p>
+                </div>
+              </div>
+            } @else {
+              <div class="config-alert">
+                No hay registro USD. Usa <strong>Cargar tasa (BCV)</strong> o <strong>Editar manualmente</strong>.
+              </div>
+            }
+
+            @if (!exchangeRateEditing()) {
+              <div class="config-tool-row">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  [disabled]="exchangeRateRefreshing()"
+                  (click)="refreshExchangeRateBcv()">
+                  @if (exchangeRateRefreshing()) {
                     <mat-icon class="animate-spin">progress_activity</mat-icon>
-                    <span>Cargando…</span>
+                  } @else {
+                    <mat-icon>cloud_download</mat-icon>
+                  }
+                  Cargar tasa (BCV)
+                </button>
+                <button mat-stroked-button type="button" (click)="startEditExchangeRate()">
+                  <mat-icon>edit</mat-icon>
+                  Editar manualmente
+                </button>
+                <button mat-button type="button" (click)="loadExchangeRateAdmin()">
+                  <mat-icon>refresh</mat-icon>
+                  Refrescar vista
+                </button>
+              </div>
+            } @else {
+              <form
+                [formGroup]="exchangeRateForm"
+                (ngSubmit)="saveExchangeRate()"
+                class="edit-rate-form space-y-4">
+                <div class="grid sm:grid-cols-2 gap-4">
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                    <mat-label>Tasa (Bs. por USD)</mat-label>
+                    <input matInput type="number" formControlName="rate" step="any" placeholder="896.1225" />
+                    @if (exchangeRateForm.get('rate')?.hasError('required')) {
+                      <mat-error>Requerido</mat-error>
+                    }
+                    @if (exchangeRateForm.get('rate')?.hasError('min')) {
+                      <mat-error>Debe ser mayor que 0</mat-error>
+                    }
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+                    <mat-label>Fecha de la tasa (valor)</mat-label>
+                    <input matInput type="date" formControlName="rate_date" />
+                    @if (exchangeRateForm.get('rate_date')?.hasError('required')) {
+                      <mat-error>Requerido</mat-error>
+                    }
+                  </mat-form-field>
                 </div>
+                <div class="config-tool-row justify-end">
+                  <button
+                    mat-button
+                    type="button"
+                    (click)="cancelEditExchangeRate()"
+                    [disabled]="exchangeRateSaving()">
+                    Cancelar
+                  </button>
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    type="submit"
+                    [disabled]="exchangeRateForm.invalid || exchangeRateSaving()">
+                    @if (exchangeRateSaving()) {
+                      <mat-icon class="animate-spin">progress_activity</mat-icon>
+                    }
+                    Guardar
+                  </button>
+                </div>
+              </form>
+            }
+          }
+        </div>
+      </mat-card>
 
-                <ng-container *ngIf="!exchangeRateLoading()">
-                    <div *ngIf="exchangeRateRow() as row" class="grid sm:grid-cols-3 gap-4 mb-6">
-                        <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide m-0">Tasa</p>
-                            <p class="text-2xl font-black text-slate-900 m-0 mt-1">
-                                {{ row.rate | number:'1.2-4' }}
-                            </p>
-                        </div>
-                        <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide m-0">Fecha de la tasa</p>
-                            <p class="text-lg font-bold text-slate-800 m-0 mt-1">
-                                {{ formatRateDateDisplay(row.rate_date) }}
-                            </p>
-                        </div>
-                        <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-4">
-                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide m-0">Última actualización</p>
-                            <p class="text-lg font-bold text-slate-800 m-0 mt-1">
-                                {{ formatLastDbChangeDisplay(row.updated_at, row.created_at) }}
-                            </p>
-                        </div>
-                    </div>
+      <mat-card class="panel-card">
+        <div class="panel-card__head panel-card__head--slate">
+          <div class="panel-card__icon panel-card__icon--slate">
+            <mat-icon>admin_panel_settings</mat-icon>
+          </div>
+          <h2>Preferencias del servidor (demo)</h2>
+        </div>
 
-                    <div *ngIf="!exchangeRateRow()" class="rounded-xl border border-amber-100 bg-amber-50/60 p-4 mb-6 text-amber-950 text-sm">
-                        No hay registro USD todavía. Usa <strong>Cargar desde BCV</strong> o <strong>Editar / guardar</strong> para crearlo.
-                    </div>
-
-                    <div *ngIf="!exchangeRateEditing()" class="flex flex-wrap gap-3">
-                        <button mat-flat-button color="primary" type="button" class="rounded-xl font-bold"
-                            [disabled]="exchangeRateRefreshing()"
-                            (click)="refreshExchangeRateBcv()">
-                            <mat-icon *ngIf="!exchangeRateRefreshing()">cloud_download</mat-icon>
-                            <mat-icon *ngIf="exchangeRateRefreshing()" class="animate-spin">progress_activity</mat-icon>
-                            Cargar tasa (BCV)
-                        </button>
-                        <button mat-stroked-button type="button" class="rounded-xl font-bold"
-                            (click)="startEditExchangeRate()">
-                            <mat-icon>edit</mat-icon>
-                            Editar manualmente
-                        </button>
-                        <button mat-button type="button" class="rounded-xl"
-                            (click)="loadExchangeRateAdmin()" [disabled]="exchangeRateLoading()">
-                            <mat-icon>refresh</mat-icon>
-                            Refrescar vista
-                        </button>
-                    </div>
-
-                    <form *ngIf="exchangeRateEditing()" [formGroup]="exchangeRateForm" (ngSubmit)="saveExchangeRate()"
-                        class="mt-4 p-4 rounded-xl border border-emerald-100 bg-emerald-50/30 space-y-4">
-                        <div class="grid sm:grid-cols-2 gap-4">
-                            <mat-form-field appearance="outline" class="w-full">
-                                <mat-label>Tasa (Bs. por USD)</mat-label>
-                                <input matInput type="number" formControlName="rate" step="any" placeholder="896.1225">
-                                <mat-error *ngIf="exchangeRateForm.get('rate')?.hasError('required')">Requerido</mat-error>
-                                <mat-error *ngIf="exchangeRateForm.get('rate')?.hasError('min')">Debe ser mayor que 0</mat-error>
-                            </mat-form-field>
-                            <mat-form-field appearance="outline" class="w-full">
-                                <mat-label>Fecha de la tasa (valor)</mat-label>
-                                <input matInput type="date" formControlName="rate_date">
-                                <mat-error *ngIf="exchangeRateForm.get('rate_date')?.hasError('required')">Requerido</mat-error>
-                            </mat-form-field>
-                        </div>
-                        <div class="flex flex-wrap gap-2 justify-end">
-                            <button mat-button type="button" (click)="cancelEditExchangeRate()"
-                                [disabled]="exchangeRateSaving()">Cancelar</button>
-                            <button mat-flat-button color="primary" type="submit" class="rounded-xl font-bold"
-                                [disabled]="exchangeRateForm.invalid || exchangeRateSaving()">
-                                <mat-icon *ngIf="!exchangeRateSaving()">save</mat-icon>
-                                <mat-icon *ngIf="exchangeRateSaving()" class="animate-spin">progress_activity</mat-icon>
-                                Guardar
-                            </button>
-                        </div>
-                    </form>
-                </ng-container>
+        <form [formGroup]="superAdminForm" (ngSubmit)="saveSuperAdminDemo()" class="panel-card__body">
+          <div class="toggle-stack">
+            <div class="toggle-item">
+              <div>
+                <h3>Modo mantenimiento</h3>
+                <p>Bloquea el acceso a usuarios e inquilinos temporalmente.</p>
+              </div>
+              <mat-slide-toggle formControlName="maintenanceMode" color="warn"></mat-slide-toggle>
             </div>
-        </mat-card>
-    </ng-container>
-
-    <!-- ============================================== -->
-    <!-- PANEL DEMO PARA SUPER ADMIN -->
-    <!-- ============================================== -->
-    <ng-container *ngIf="role() === 'SUPER_ADMIN'">
-        <mat-card class="shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
-            <div class="p-5 border-b bg-slate-50 flex items-center gap-3">
-                <mat-icon class="text-slate-600">admin_panel_settings</mat-icon>
-                <h2 class="text-lg font-bold text-slate-800 m-0">Preferencias del Servidor (Demo)</h2>
+            <div class="toggle-item">
+              <div>
+                <h3>Auditoría estricta</h3>
+                <p>Registrar en base de datos cada clic y petición HTTP.</p>
+              </div>
+              <mat-slide-toggle formControlName="strictAudit" color="primary"></mat-slide-toggle>
             </div>
+            <div class="toggle-item">
+              <div>
+                <h3>Notificaciones globales (push)</h3>
+                <p>Websockets para alertas en tiempo real.</p>
+              </div>
+              <mat-slide-toggle formControlName="globalNotifications" color="primary"></mat-slide-toggle>
+            </div>
+          </div>
 
-            <form [formGroup]="superAdminForm" (ngSubmit)="saveSuperAdminDemo()" class="p-6 space-y-6">
-
-                <div class="flex justify-between items-center pb-4 border-b border-gray-100">
-                    <div>
-                        <h3 class="font-bold text-gray-800 m-0">Modo Mantenimiento</h3>
-                        <p class="text-gray-500 text-sm m-0">Bloquea el acceso a usuarios e inquilinos temporalmente.
-                        </p>
-                    </div>
-                    <mat-slide-toggle formControlName="maintenanceMode" color="warn"></mat-slide-toggle>
-                </div>
-
-                <div class="flex justify-between items-center pb-4 border-b border-gray-100">
-                    <div>
-                        <h3 class="font-bold text-gray-800 m-0">Auditoría Estricta</h3>
-                        <p class="text-gray-500 text-sm m-0">Registrar en base de datos cada clic y petición HTTP.</p>
-                    </div>
-                    <mat-slide-toggle formControlName="strictAudit" color="primary"></mat-slide-toggle>
-                </div>
-
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="font-bold text-gray-800 m-0">Notificaciones Globales (Push)</h3>
-                        <p class="text-gray-500 text-sm m-0">Habilitar servidor de websockets para alertas en tiempo
-                            real.</p>
-                    </div>
-                    <mat-slide-toggle formControlName="globalNotifications" color="primary"></mat-slide-toggle>
-                </div>
-
-                <mat-divider class="my-6"></mat-divider>
-
-                <div class="flex justify-end">
-                    <button mat-flat-button class="!bg-slate-800 !text-white h-12 px-8 rounded-xl font-bold"
-                        type="submit">
-                        <mat-icon>sync</mat-icon> Aplicar Ajustes
-                    </button>
-                </div>
-            </form>
-        </mat-card>
-    </ng-container>
-
+          <div class="panel-actions">
+            <button mat-flat-button type="submit" class="btn-save btn-save--dark">
+              Aplicar ajustes (demo)
+            </button>
+          </div>
+        </form>
+      </mat-card>
+    }
+  </div>
 </div>

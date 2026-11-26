@@ -21,6 +21,7 @@ export class AuthService {
 
     private readonly STORAGE_KEY = 'condominio_current_user';
     private readonly TOKEN_KEY = 'condominio_token';
+    private readonly MIRROR_BACKUP_KEY = 'condominio_mirror_backup';
     private readonly API_URL = API_URL_BASE + '/api/auth'; // Tu backend
 
     // Mantenemos el Observable para compatibilidad con código viejo
@@ -32,6 +33,19 @@ export class AuthService {
     public readonly userSignal = this.currentUserSignal.asReadonly();
     public readonly isLoggedInSignal = computed(() => this.currentUserSignal() !== null);
     public readonly userRoleSignal = computed(() => this.currentUserSignal()?.role ?? null);
+    public readonly isReadOnlyMirror = computed(
+        () =>
+            !!(
+                this.currentUserSignal()?.impersonating &&
+                this.currentUserSignal()?.readOnlyMirror
+            )
+    );
+    public readonly mirrorBuildingLabel = computed(() => {
+        const u = this.currentUserSignal();
+        if (!u?.mirrorBuildingName) return '';
+        const code = u.mirrorBuildingCode ? `${u.mirrorBuildingCode} · ` : '';
+        return `${code}${u.mirrorBuildingName}`;
+    });
 
     constructor() {
         // Recuperar sesión al recargar la página
@@ -97,8 +111,41 @@ export class AuthService {
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(next));
     }
 
+    /** Super admin: entra al panel del edificio en solo lectura (backup en sessionStorage). */
+    enterReadOnlyMirror(response: AuthResponse): void {
+        const currentUser = this.getUser();
+        const token = this.getToken();
+        if (currentUser && token) {
+            sessionStorage.setItem(
+                this.MIRROR_BACKUP_KEY,
+                JSON.stringify({ user: currentUser, token })
+            );
+        }
+        this.setSession(response.user, response.token);
+        this.router.navigate(['/building-admin']);
+    }
+
+    /** Restaura la sesión de super admin tras una vista espejo. */
+    exitReadOnlyMirror(): void {
+        const raw = sessionStorage.getItem(this.MIRROR_BACKUP_KEY);
+        if (!raw) {
+            this.logout();
+            return;
+        }
+        try {
+            const backup = JSON.parse(raw) as { user: User; token: string };
+            sessionStorage.removeItem(this.MIRROR_BACKUP_KEY);
+            this.setSession(backup.user, backup.token);
+            this.router.navigate(['/admin/buildings']);
+        } catch {
+            sessionStorage.removeItem(this.MIRROR_BACKUP_KEY);
+            this.logout();
+        }
+    }
+
     logout(): void {
         sessionStorage.removeItem('owner-profile-prompted');
+        sessionStorage.removeItem(this.MIRROR_BACKUP_KEY);
         this.setSession(null);
         this.router.navigate(['/']);
     }

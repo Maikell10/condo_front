@@ -23,7 +23,8 @@ import { PaymentService } from '../../../core/services/payment.service';
     MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule,
     MatDividerModule, MatSnackBarModule, MatRadioModule
   ],
-  templateUrl: './config.component.html'
+  templateUrl: './config.component.html',
+  styleUrl: './config.component.scss'
 })
 export class ConfigComponent implements OnInit {
   private fb = inject(FormBuilder);

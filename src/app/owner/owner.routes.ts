@@ -43,6 +43,11 @@ export const OWNER_ROUTES: Routes = [
           import('./pages/payments/payments.component').then(m => m.PaymentsComponent)
       },
       {
+        path: 'payments/reports',
+        loadComponent: () =>
+          import('./pages/payment-reports/payment-reports.component').then(m => m.PaymentReportsComponent)
+      },
+      {
         path: 'incidents',
         loadComponent: () =>
           import('./pages/incidents/incidents.component').then(m => m.IncidentsComponent)

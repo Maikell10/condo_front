@@ -1,44 +1,129 @@
-<div class="p-6 w-[420px] flex flex-col gap-5">
+<div class="contract-dialog">
+  <header class="contract-dialog__hero">
+  <div class="contract-dialog__hero-main">
+    <p class="contract-dialog__kicker">Nuevo registro</p>
+    <h2 class="contract-dialog__title">Contrato de servicio</h2>
+    <p class="contract-dialog__sub">
+      Gasto fijo mensual que entra al cierre de facturación del edificio.
+    </p>
+  </div>
+  <hr class="contract-dialog__hero-divider" aria-hidden="true" />
+  <div class="contract-dialog__hero-badge" aria-hidden="true">
+    <mat-icon>handshake</mat-icon>
+  </div>
+  <button
+    type="button"
+    mat-icon-button
+    class="contract-dialog__close"
+    aria-label="Cerrar"
+    (click)="close()">
+    <mat-icon>close</mat-icon>
+  </button>
+</header>
 
-    <h2 class="text-xl font-semibold">Nuevo contrato</h2>
+<mat-dialog-content class="contract-dialog__content">
+  <div class="contract-dialog__hint" role="note">
+    <mat-icon>info</mat-icon>
+    <p>
+      El <strong>monto mensual</strong> se prorratea en el recibo mientras el contrato esté vigente entre las fechas indicadas.
+    </p>
+  </div>
 
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Proveedor</mat-label>
-        <input matInput [(ngModel)]="provider" />
-    </mat-form-field>
+  <form [formGroup]="contractForm" class="contract-dialog__form">
+    @if (showBuildingField()) {
+      <section class="contract-dialog__section">
+        <h3 class="contract-dialog__section-title">
+          <mat-icon>apartment</mat-icon>
+          Alcance
+        </h3>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-label>Edificio</mat-label>
+          <mat-select formControlName="buildingId">
+            @for (b of buildingsList(); track b.id) {
+              <mat-option [value]="b.id">{{ b.name }}</mat-option>
+            }
+          </mat-select>
+          <mat-error>Selecciona el edificio</mat-error>
+        </mat-form-field>
+      </section>
+    }
 
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Servicio</mat-label>
-        <input matInput [(ngModel)]="service" />
-    </mat-form-field>
+    <section class="contract-dialog__section">
+      <h3 class="contract-dialog__section-title">
+        <mat-icon>storefront</mat-icon>
+        Proveedor
+      </h3>
+      <div class="contract-dialog__fields">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-label>Proveedor / empresa</mat-label>
+          <input matInput formControlName="provider" placeholder="Ej: Ascensores Caracas C.A." />
+          <mat-error>Obligatorio</mat-error>
+        </mat-form-field>
 
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Monto mensual</mat-label>
-        <input matInput type="number" [(ngModel)]="monthlyCost" />
-    </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="w-full">
+          <mat-label>Descripción del servicio</mat-label>
+          <input matInput formControlName="service" placeholder="Ej: Mantenimiento mensual preventivo" />
+          <mat-error>Obligatorio</mat-error>
+        </mat-form-field>
+      </div>
+    </section>
 
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Fecha inicio</mat-label>
-        <input matInput [matDatepicker]="picker1" [(ngModel)]="startDate" />
-        <mat-datepicker-toggle matSuffix [for]="picker1"></mat-datepicker-toggle>
-        <mat-datepicker #picker1></mat-datepicker>
-    </mat-form-field>
+    <section class="contract-dialog__section">
+      <h3 class="contract-dialog__section-title">
+        <mat-icon>payments</mat-icon>
+        Costo
+      </h3>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="contract-dialog__amount w-full">
+        <mat-label>Monto mensual fijo</mat-label>
+        <span matTextPrefix class="contract-dialog__currency">$&nbsp;</span>
+        <input matInput type="number" formControlName="monthlyCost" placeholder="0.00" min="0" step="0.01" />
+        <mat-hint>USD · se suma cada mes al cierre</mat-hint>
+        <mat-error>Ingresa un monto mayor a cero</mat-error>
+      </mat-form-field>
+    </section>
 
-    <mat-form-field appearance="outline" class="w-full">
-        <mat-label>Fecha fin</mat-label>
-        <input matInput [matDatepicker]="picker2" [(ngModel)]="endDate" />
-        <mat-datepicker-toggle matSuffix [for]="picker2"></mat-datepicker-toggle>
-        <mat-datepicker #picker2></mat-datepicker>
-    </mat-form-field>
+    <section class="contract-dialog__section">
+      <h3 class="contract-dialog__section-title">
+        <mat-icon>date_range</mat-icon>
+        Vigencia
+      </h3>
+      <div class="contract-dialog__dates">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Inicio</mat-label>
+          <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+          <mat-error>Fecha requerida</mat-error>
+        </mat-form-field>
 
-    <div class="flex flex-col">
-        <label class="text-sm text-gray-600 mb-1">Archivo del contrato</label>
-        <input type="file" (change)="onFileSelected($event)" />
-    </div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Vencimiento</mat-label>
+          <input matInput [matDatepicker]="endPicker" formControlName="endDate" [min]="contractForm.get('startDate')?.value" />
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+          @if (contractForm.get('endDate')?.hasError('required')) {
+            <mat-error>Fecha requerida</mat-error>
+          } @else if (contractForm.hasError('beforeStart')) {
+            <mat-error>Debe ser posterior al inicio</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    </section>
+  </form>
+</mat-dialog-content>
 
-    <div class="flex justify-end gap-3 pt-2">
-        <button mat-button (click)="close()">Cancelar</button>
-        <button mat-flat-button color="primary" (click)="save()">Guardar</button>
-    </div>
-
+<footer class="contract-dialog__actions" mat-dialog-actions>
+  <button mat-stroked-button type="button" class="contract-dialog__btn-cancel" (click)="close()">
+    Cancelar
+  </button>
+  <button
+    mat-flat-button
+    color="primary"
+    type="button"
+    class="contract-dialog__btn-save"
+    [disabled]="contractForm.invalid"
+    (click)="save()">
+    Guardar contrato
+  </button>
+</footer>
 </div>

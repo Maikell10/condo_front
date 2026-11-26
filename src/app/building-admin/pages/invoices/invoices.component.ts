@@ -28,6 +28,10 @@ import { ConfigService } from '../../../core/services/config.service';
 
 import { AddExpenseModalComponent } from '../../modal/add-expense-modal/add-expense-modal.component';
 import { ReportViewModalComponent } from '../../modal/report-view-modal/report-view-modal.component';
+import {
+  CloseMonthPreviewDialogComponent,
+  CloseMonthPreviewDialogData
+} from '../../modal/close-month-preview-dialog/close-month-preview-dialog.component';
 
 function spanishPaginator(): MatPaginatorIntl {
   const intl = new MatPaginatorIntl();
@@ -350,38 +354,45 @@ export class InvoicesComponent implements OnInit {
   }
 
   closeMonth() {
-    const buildingId = this.selectedBuildingId();
-    if (buildingId === 'ALL' || !buildingId) return;
+    if (this.authService.isReadOnlyMirror()) {
+      this.snackBar.open('Vista espejo: el cierre de mes es solo lectura.', 'Cerrar', { duration: 3500 });
+      return;
+    }
 
-    const payload = {
-      buildingId: buildingId,
+    const buildingId = this.selectedBuildingId();
+    const complexId = this.authService.userSignal()?.complexId;
+    const isComplexAll = this.isComplex() && buildingId === 'ALL';
+
+    if (isComplexAll && !complexId) return;
+    if (!isComplexAll && (buildingId === 'ALL' || !buildingId)) return;
+
+    const dialogData: CloseMonthPreviewDialogData = {
+      isComplex: !!isComplexAll,
+      complexId: isComplexAll ? complexId : undefined,
+      buildingId: !isComplexAll ? Number(buildingId) : undefined,
       month: this.selectedMonth(),
-      year: this.selectedYear()
+      year: this.selectedYear(),
+      periodLabel: this.currentPeriodLabel(),
+      scopeLabel: this.scopeLabel()
     };
 
-    this.openConfirm({
-      variant: 'approve',
-      title: `¿Cerrar ${this.currentPeriodLabel()}?`,
-      message: 'Se generarán los recibos de condominio para las unidades según alícuota y contratos vigentes.',
-      confirmLabel: 'Sí, cerrar mes',
-      cancelLabel: 'Volver',
-      highlights: [
-        `Alcance: ${this.scopeLabel()}`,
-        `Gastos cargados: ${this.invoices().length}`,
-        `Monto acumulado: $${this.totalMonth().toFixed(2)}`
-      ]
-    }).subscribe((confirmed) => {
-      if (!confirmed) return;
-      this.billingService.generateBilling(payload).subscribe({
-        next: (res: any) => {
-          this.snackBar.open(res.message || 'Mes cerrado correctamente', 'Cerrar', { duration: 4000 });
+    this.dialog
+      .open(CloseMonthPreviewDialogComponent, {
+        width: 'min(960px, 98vw)',
+        maxWidth: '98vw',
+        maxHeight: '92vh',
+        disableClose: true,
+        data: dialogData
+      })
+      .afterClosed()
+      .subscribe((closed) => {
+        if (closed) {
           this.loadExpenses();
-        },
-        error: (err: any) => {
-          this.snackBar.open(err.error?.message || 'Error en facturación', 'Cerrar', { duration: 4000 });
+          if (this.currentTabIndex() === 1) {
+            this.loadHistory();
+          }
         }
       });
-    });
   }
 
   deleteExpense(element: { id: number; code?: string; provider?: string; amount?: number }) {

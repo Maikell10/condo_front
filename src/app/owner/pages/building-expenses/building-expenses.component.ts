@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { CurrencyPipe, NgClass } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -33,6 +33,7 @@ interface ExpenseRow {
   standalone: true,
   imports: [
     CurrencyPipe,
+    DatePipe,
     NgClass,
     FormsModule,
     MatCardModule,
@@ -96,6 +97,12 @@ export class BuildingExpensesComponent implements OnInit {
         String(r.description ?? '').toLowerCase().includes(q)
     );
   });
+
+  filteredTotal = computed(() =>
+    this.filteredLines().reduce((acc, r) => acc + Number(r.amount || 0), 0)
+  );
+
+  printedAt = signal<Date | null>(null);
 
   tableRows = computed(() => {
     const lines = this.filteredLines();
@@ -240,7 +247,12 @@ export class BuildingExpensesComponent implements OnInit {
       this.snackBar.open('No hay gastos para imprimir en este periodo', 'Cerrar', { duration: 3000 });
       return;
     }
-    window.print();
+    if (this.filteredLines().length === 0) {
+      this.snackBar.open('No hay conceptos visibles para imprimir. Limpia la búsqueda.', 'Cerrar', { duration: 3500 });
+      return;
+    }
+    this.printedAt.set(new Date());
+    requestAnimationFrame(() => window.print());
   }
 
   private formatMoney(value: number): string {

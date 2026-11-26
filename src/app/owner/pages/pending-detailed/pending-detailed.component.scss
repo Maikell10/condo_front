@@ -170,3 +170,177 @@
   background: #fef3c7;
   color: #b45309;
 }
+
+.pending-print-sheet {
+  display: none;
+}
+
+.pending-print-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 2px solid #fdba74;
+}
+
+.pending-print-header__kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c2410c;
+}
+
+.pending-print-header__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #7c2d12;
+}
+
+.pending-print-header__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.pending-print-header__logo img {
+  max-height: 2.75rem;
+  width: auto;
+}
+
+.pending-print-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.pending-print-kpi {
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+
+  strong {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 1rem;
+    color: #9a3412;
+  }
+}
+
+.pending-print-kpi__label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #c2410c;
+}
+
+.pending-print-table-wrap {
+  border: 1px solid #fdba74;
+  border-radius: 0.65rem;
+  overflow: hidden;
+}
+
+.pending-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.pending-print-table thead {
+  background: linear-gradient(90deg, #9a3412, #ea580c);
+  color: #fff;
+
+  th {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+  }
+}
+
+.pending-print-table__group td {
+  padding: 0.5rem 0.65rem;
+  background: #ffedd5;
+  border-top: 1px solid #fed7aa;
+  border-bottom: 1px solid #fed7aa;
+}
+
+.pending-print-table__line td {
+  padding: 0.35rem 0.65rem;
+  border-bottom: 1px solid #fff7ed;
+  font-size: 0.72rem;
+}
+
+.pending-print-table__line:nth-child(even) td {
+  background: #fffaf5;
+}
+
+.pending-print-table__mine td {
+  background: #fef3c7 !important;
+}
+
+.pending-print-owner {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #78716c;
+  text-transform: none;
+}
+
+.pending-print-table tfoot td {
+  padding: 0.55rem 0.65rem;
+  background: #ffedd5;
+  font-weight: 800;
+  border-top: 2px solid #fb923c;
+}
+
+.pending-print-footer {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.62rem;
+  color: #94a3b8;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  ::ng-deep body * {
+    visibility: hidden !important;
+  }
+
+  ::ng-deep #printable-pending-detailed,
+  ::ng-deep #printable-pending-detailed * {
+    visibility: visible !important;
+  }
+
+  ::ng-deep html,
+  ::ng-deep body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  ::ng-deep #printable-pending-detailed {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    padding: 10mm !important;
+    box-sizing: border-box;
+  }
+}

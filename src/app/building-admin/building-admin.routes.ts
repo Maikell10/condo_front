@@ -3,6 +3,7 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { StatementsComponent } from './pages/statements/statements.component';
 
 export const BUILDING_ADMIN_ROUTES: Routes = [
+    { path: 'dashboard', redirectTo: '', pathMatch: 'full' },
     { path: '', component: DashboardComponent },
     {
         path: 'kpi',

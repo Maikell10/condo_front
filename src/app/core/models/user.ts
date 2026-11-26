@@ -9,5 +9,11 @@ export interface User {
     buildingId?: string;
     apartmentId?: string;
     ownerCode?: string;
-    complexId?: number
+    complexId?: number;
+    /** Super admin en vista espejo del building admin */
+    impersonating?: boolean;
+    readOnlyMirror?: boolean;
+    realRole?: UserRole;
+    mirrorBuildingName?: string;
+    mirrorBuildingCode?: string;
 }

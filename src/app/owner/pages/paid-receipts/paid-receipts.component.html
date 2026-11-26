@@ -95,9 +95,12 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef class="bg-gray-50 text-[11px] uppercase text-right pr-6">Acciones</th>
             <td mat-cell *matCellDef="let row" class="text-right pr-4">
-              <button mat-icon-button type="button" class="text-indigo-600" matTooltip="Ver recibo"
+              <button type="button" class="receipt-pdf-btn" matTooltip="Abrir recibo en PDF"
                 (click)="downloadReceipt(row)">
-                <mat-icon>picture_as_pdf</mat-icon>
+                <span class="receipt-pdf-btn__glyph" aria-hidden="true">
+                  <mat-icon>picture_as_pdf</mat-icon>
+                </span>
+                <span class="receipt-pdf-btn__text">Ver PDF</span>
               </button>
             </td>
           </ng-container>

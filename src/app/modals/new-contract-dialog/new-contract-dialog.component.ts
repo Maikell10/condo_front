@@ -1,12 +1,34 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+  AbstractControl,
+  ValidationErrors
+} from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, MAT_DATE_LOCALE } from '@angular/material/core';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+
+export interface NewContractDialogData {
+  isComplex?: boolean;
+  buildingsList?: { id: number; name: string; code?: string }[];
+  currentSelection?: number | 'ALL';
+}
+
+function endAfterStart(group: AbstractControl): ValidationErrors | null {
+  const start = group.get('startDate')?.value as Date | null;
+  const end = group.get('endDate')?.value as Date | null;
+  if (!start || !end) return null;
+  return end < start ? { beforeStart: true } : null;
+}
 
 @Component({
   selector: 'app-new-contract-dialog',
@@ -19,75 +41,59 @@ import { MatButtonModule } from '@angular/material/button';
     MatInputModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatButtonModule
+    MatButtonModule,
+    MatSelectModule,
+    MatIconModule
   ],
-  template: `
-    <h2 mat-dialog-title class="font-bold text-gray-800 border-b pb-2">Registrar Contrato de Servicio</h2>
-    
-    <mat-dialog-content class="pt-4">
-      <form [formGroup]="contractForm" class="flex flex-col gap-4">
-        
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Proveedor / Empresa</mat-label>
-          <input matInput formControlName="provider" placeholder="Ej: Ascensores Caracas C.A.">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Descripción del Servicio</mat-label>
-          <input matInput formControlName="service" placeholder="Ej: Mantenimiento mensual preventivo">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Monto Mensual Fijo ($)</mat-label>
-          <input matInput type="number" formControlName="monthlyCost" placeholder="0.00">
-          <span matPrefix class="mr-1">$</span>
-        </mat-form-field>
-
-        <div class="grid grid-cols-2 gap-4">
-          <mat-form-field appearance="outline">
-            <mat-label>Fecha de Inicio</mat-label>
-            <input matInput [matDatepicker]="startPicker" formControlName="startDate">
-            <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
-            <mat-datepicker #startPicker></mat-datepicker>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline">
-            <mat-label>Fecha de Vencimiento</mat-label>
-            <input matInput [matDatepicker]="endPicker" formControlName="endDate">
-            <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
-            <mat-datepicker #endPicker></mat-datepicker>
-          </mat-form-field>
-        </div>
-
-      </form>
-    </mat-dialog-content>
-
-    <mat-dialog-actions align="end" class="p-4 border-t">
-      <button mat-button (click)="dialogRef.close()">Cancelar</button>
-      <button mat-flat-button color="primary" 
-              class="px-6"
-              [disabled]="contractForm.invalid" 
-              (click)="save()">
-        Guardar Contrato
-      </button>
-    </mat-dialog-actions>
-  `
+  providers: [{ provide: MAT_DATE_LOCALE, useValue: 'es-ES' }],
+  templateUrl: './new-contract-dialog.component.html',
+  styleUrl: './new-contract-dialog.component.scss'
 })
 export class NewContractDialogComponent {
   private fb = inject(FormBuilder);
-  public dialogRef = inject(MatDialogRef<NewContractDialogComponent>);
+  private data = inject<NewContractDialogData>(MAT_DIALOG_DATA, { optional: true });
+  readonly dialogRef = inject(MatDialogRef<NewContractDialogComponent>);
 
-  contractForm: FormGroup = this.fb.group({
-    provider: ['', Validators.required],
-    service: ['', Validators.required],
-    monthlyCost: ['', [Validators.required, Validators.min(1)]],
-    startDate: [new Date(), Validators.required],
-    endDate: ['', Validators.required]
-  });
+  readonly buildingsList = signal(this.data?.buildingsList ?? []);
 
-  save() {
-    if (this.contractForm.valid) {
-      this.dialogRef.close(this.contractForm.value);
+  readonly showBuildingField = () =>
+    !!this.data?.isComplex && this.buildingsList().length > 0;
+
+  contractForm: FormGroup = this.buildForm();
+
+  private buildForm(): FormGroup {
+    const initialBuilding =
+      this.data?.currentSelection !== 'ALL' && this.data?.currentSelection != null
+        ? this.data.currentSelection
+        : null;
+
+    const buildingValidators = this.showBuildingField() ? [Validators.required] : [];
+
+    return this.fb.group(
+      {
+        buildingId: [initialBuilding, buildingValidators],
+        provider: ['', Validators.required],
+        service: ['', Validators.required],
+        monthlyCost: ['', [Validators.required, Validators.min(0.01)]],
+        startDate: [new Date(), Validators.required],
+        endDate: ['', Validators.required]
+      },
+      { validators: endAfterStart }
+    );
+  }
+
+  close(): void {
+    this.dialogRef.close();
+  }
+
+  save(): void {
+    this.contractForm.markAllAsTouched();
+    if (this.contractForm.invalid) return;
+
+    const raw = { ...this.contractForm.value };
+    if (!this.showBuildingField()) {
+      delete raw.buildingId;
     }
+    this.dialogRef.close(raw);
   }
 }

@@ -1,1 +1,118 @@
-<p>receipt-preview-dialog works!</p>
+<div class="receipt-dialog-toolbar print:hidden">
+  <div class="receipt-dialog-toolbar__title">
+    <mat-icon>receipt_long</mat-icon>
+  <span>Vista previa del recibo</span>
+  </div>
+  <div class="receipt-dialog-toolbar__actions">
+    <button type="button" class="receipt-dialog-toolbar__close" (click)="close()">Cerrar</button>
+    <button mat-flat-button color="primary" type="button" class="receipt-dialog-toolbar__print" (click)="print()">
+      <span class="receipt-dialog-toolbar__btn-inner">
+        Imprimir / PDF
+      </span>
+    </button>
+  </div>
+</div>
+
+<mat-dialog-content class="receipt-dialog-content print:p-0">
+  <div class="receipt-a4" id="printable-receipt">
+    <header class="receipt-header">
+      <div class="receipt-header__brand">
+        <p class="receipt-header__kicker">Documento fiscal interno</p>
+        <h1 class="receipt-header__title">Condominio a un clic</h1>
+        <p class="receipt-header__sub">Recibo de gastos comunes</p>
+      </div>
+      <div class="receipt-header__aside">
+        <div class="receipt-header__logo">
+          <img src="/LOGO_SN1.png" alt="Logo" width="160" height="48" />
+        </div>
+        <div class="receipt-access">
+          <span class="receipt-access__label">Clave portal</span>
+          <span class="receipt-access__code">{{ data.accessCode }}</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="receipt-banner">
+      <span>{{ data.buildingName }}</span>
+      <span class="receipt-banner__dot">·</span>
+      <span>Periodo {{ data.monthYear }}</span>
+    </div>
+
+    <section class="receipt-meta">
+      <div class="receipt-meta__item">
+        <span class="receipt-meta__label">Edificio</span>
+        <span class="receipt-meta__value">{{ data.buildingName }}</span>
+      </div>
+      <div class="receipt-meta__item">
+        <span class="receipt-meta__label">Unidad</span>
+        <span class="receipt-meta__value receipt-meta__value--mono">{{ data.unit }}</span>
+      </div>
+      <div class="receipt-meta__item">
+        <span class="receipt-meta__label">Emisión</span>
+        <span class="receipt-meta__value">{{ data.issueDate }}</span>
+      </div>
+      <div class="receipt-meta__item">
+        <span class="receipt-meta__label">Propietario</span>
+        <span class="receipt-meta__value">{{ data.ownerName }}</span>
+      </div>
+      <div class="receipt-meta__item">
+        <span class="receipt-meta__label">Alícuota</span>
+        <span class="receipt-meta__value">{{ data.quota }}</span>
+      </div>
+      <div class="receipt-meta__item receipt-meta__item--highlight">
+        <span class="receipt-meta__label">Total a pagar</span>
+        <span class="receipt-meta__value receipt-meta__value--amount">
+          {{ data.totalBill | currency:'USD':'symbol':'1.2-2' }}
+        </span>
+        <span class="receipt-status" [class.receipt-status--paid]="isPaid()" [class.receipt-status--pending]="!isPaid()">
+          {{ statusLabel() }}
+        </span>
+      </div>
+    </section>
+
+    <section class="receipt-lines">
+      <div class="receipt-lines__head">
+        <span class="receipt-lines__col receipt-lines__col--concept">Concepto</span>
+        <span class="receipt-lines__col receipt-lines__col--num">Gasto común</span>
+        <span class="receipt-lines__col receipt-lines__col--num">Cuota parte</span>
+      </div>
+
+      <div class="receipt-lines__body">
+        @for (item of data.lineItems; track $index) {
+          <div class="receipt-lines__row">
+            <span class="receipt-lines__col receipt-lines__col--concept">{{ item.concept }}</span>
+            <span class="receipt-lines__col receipt-lines__col--num">
+              {{ item.commonExpense | currency:'USD':'symbol':'1.2-2' }}
+            </span>
+            <span class="receipt-lines__col receipt-lines__col--num receipt-lines__col--share">
+              {{ item.individualShare | currency:'USD':'symbol':'1.2-2' }}
+            </span>
+          </div>
+        }
+
+        <div class="receipt-lines__row receipt-lines__row--subtotal">
+          <span class="receipt-lines__col receipt-lines__col--concept">Subtotal gastos comunes</span>
+          <span class="receipt-lines__col receipt-lines__col--num">
+            {{ data.totalGastoComun | currency:'USD':'symbol':'1.2-2' }}
+          </span>
+          <span class="receipt-lines__col receipt-lines__col--num">
+            {{ data.totalGastoIndividual | currency:'USD':'symbol':'1.2-2' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="receipt-total" [class.receipt-total--paid]="isPaid()">
+        <span>Total a pagar</span>
+        <strong>{{ data.totalBill | currency:'USD':'symbol':'1.2-2' }}</strong>
+      </div>
+
+      <div class="receipt-watermark" [class.receipt-watermark--paid]="isPaid()">
+        {{ statusLabel() | uppercase }}
+      </div>
+    </section>
+
+    <footer class="receipt-footer">
+      Documento emitido electrónicamente · condominioaunclic.online · Condominio a un clic
+    </footer>
+  </div>
+</mat-dialog-content>

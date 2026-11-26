@@ -124,6 +124,86 @@
     }
   </mat-card>
 
+  @if (groups().length > 0) {
+    <div id="printable-pending-detailed" class="pending-print-sheet" aria-hidden="true">
+      <header class="pending-print-header">
+        <div>
+          <p class="pending-print-header__kicker">Informe detallado</p>
+          <h1 class="pending-print-header__title">{{ buildingLabel() }}</h1>
+          <p class="pending-print-header__sub">Morosidad por unidad y periodo · vista del propietario</p>
+        </div>
+        <div class="pending-print-header__logo">
+          <img src="/LOGO_SN1.png" alt="Condominio a un clic" width="140" height="42" />
+        </div>
+      </header>
+
+      <div class="pending-print-kpis">
+        <div class="pending-print-kpi">
+          <span class="pending-print-kpi__label">Deuda (vista)</span>
+          <strong>{{ viewDebt() | currency:'USD':'symbol':'1.2-2' }}</strong>
+        </div>
+        <div class="pending-print-kpi">
+          <span class="pending-print-kpi__label">Recibos pendientes</span>
+          <strong>{{ viewReceipts() }}</strong>
+        </div>
+        <div class="pending-print-kpi">
+          <span class="pending-print-kpi__label">Unidades</span>
+          <strong>{{ filteredGroups().length }}</strong>
+        </div>
+      </div>
+
+      <div class="pending-print-table-wrap">
+        <table class="pending-print-table pending-print-table--detailed">
+          <thead>
+            <tr>
+              <th>Unidad</th>
+              <th>Recibo / periodo</th>
+              <th class="text-right">Deuda (USD)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (group of filteredGroups(); track group.unit) {
+              <tr class="pending-print-table__group" [class.pending-print-table__mine]="group.isMe">
+                <td class="font-mono font-bold">
+                  {{ group.unit }}
+                  <span class="pending-print-owner">{{ group.owner }}</span>
+                </td>
+                <td class="text-center font-bold">{{ group.receipts.length }} recibo{{ group.receipts.length === 1 ? '' : 's' }}</td>
+                <td class="text-right font-bold text-orange-800">
+                  {{ group.totalDebt | currency:'USD':'symbol':'1.2-2' }}
+                </td>
+              </tr>
+              @for (r of group.receipts; track r.description ?? r.period) {
+                <tr class="pending-print-table__line">
+                  <td></td>
+                  <td class="text-gray-600">{{ r.description || r.period || '—' }}</td>
+                  <td class="text-right text-orange-700">
+                    {{ r.debt | currency:'USD':'symbol':'1.2-2' }}
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">Totales ({{ filteredGroups().length }} unidades · {{ viewReceipts() }} recibos)</td>
+              <td class="text-right font-bold text-orange-900">
+                {{ viewDebt() | currency:'USD':'symbol':'1.2-2' }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <footer class="pending-print-footer">
+        @if (printedAt(); as at) {
+          Generado el {{ at | date:'dd/MM/yyyy HH:mm' }}
+        }
+        · Condominio a un clic · Documento informativo
+      </footer>
+    </div>
+  }
+
   </div>
   }
 </div>

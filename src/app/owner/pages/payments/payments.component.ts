@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe, NgClass } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -16,6 +16,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, MAT_DATE_LOCALE, DateAdapter } from '@angular/material/core';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RouterLink } from '@angular/router';
 import { SelectionModel } from '@angular/cdk/collections';
 
 import { ReceiptService, Receipt } from '../../../core/services/receipt.service';
@@ -23,6 +27,7 @@ import { PaymentService } from '../../../core/services/payment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApartmentService } from '../../../core/services/apartment.service';
 import { OwnerDataLoaderComponent } from '../../shared/owner-data-loader/owner-data-loader.component';
+import { ownerPaymentStatusLabel } from '../../shared/owner-payment-status';
 
 export interface Movement {
   fecha: string;
@@ -35,15 +40,33 @@ export interface Movement {
   selector: 'app-payments',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatCardModule, MatTableModule,
-    MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatRadioModule, MatButtonModule, MatIconModule, MatDatepickerModule,
-    MatNativeDateModule, MatTabsModule, OwnerDataLoaderComponent
+    CommonModule,
+    DecimalPipe,
+    NgClass,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatTableModule,
+    MatCheckboxModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatRadioModule,
+    MatButtonModule,
+    MatIconModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatTabsModule,
+    MatSnackBarModule,
+    MatTooltipModule,
+    MatProgressSpinnerModule,
+    RouterLink,
+    OwnerDataLoaderComponent
   ],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: 'es-ES' }
   ],
   templateUrl: './payments.component.html',
+  styleUrl: './payments.component.scss'
 })
 export class PaymentsComponent implements OnInit {
   maxDate: Date = new Date();
@@ -56,6 +79,9 @@ export class PaymentsComponent implements OnInit {
   private authService = inject(AuthService);
   private apartmentService = inject(ApartmentService);
   private dateAdapter = inject(DateAdapter);
+  private snackBar = inject(MatSnackBar);
+
+  readonly paymentStatusLabel = ownerPaymentStatusLabel;
 
   // --- SIGNALS ORIGINALES ---
   receipts = signal<Receipt[]>([]);
@@ -74,14 +100,15 @@ export class PaymentsComponent implements OnInit {
     operationDate: ['', Validators.required],
     referenceNumber: ['', [Validators.required, Validators.minLength(6)]],
     amount: ['', [Validators.required, Validators.min(0.1)]],
+    amountLocal: ['', [Validators.required, Validators.min(0.01)]],
     operationType: ['same_bank', Validators.required],
+    /** Oculto en UI (sección C); se rellena con el correo del usuario logueado. */
     email: ['', [Validators.required, Validators.email]],
   });
 
   selectedBankId = toSignal(this.paymentForm.get('bankAccount')!.valueChanges, { initialValue: null });
 
-  // Escuchamos el monto que el usuario teclea para calcular los Bs. en tiempo real
-  formAmount = toSignal(this.paymentForm.get('amount')!.valueChanges, { initialValue: 0 });
+  formAmountLocal = toSignal(this.paymentForm.get('amountLocal')!.valueChanges, { initialValue: 0 });
 
   selectedBankDetails = computed(() => {
     const id = this.selectedBankId();
@@ -89,10 +116,75 @@ export class PaymentsComponent implements OnInit {
     return this.banks().find(b => b.id === id || b.id === Number(id) || String(b.id) === String(id));
   });
 
-  // 🔥 CÁLCULO REACTIVO DE BOLÍVARES
-  montoTransferirVES = computed(() => {
-    const amountUSD = Number(this.formAmount()) || 0;
-    return amountUSD * this.tasaDelDia();
+  montoReportadoVES = computed(() => Number(this.formAmountLocal()) || 0);
+
+  montoEquivalenteUSD = computed(() => {
+    const rate = this.tasaDelDia();
+    if (!rate) return 0;
+    return this.montoReportadoVES() / rate;
+  });
+
+  selectedTotalVes = computed(() => this.totalSelected() * this.tasaDelDia());
+
+  unitLabel = computed(() => {
+    const code = this.authService.userSignal()?.ownerCode;
+    return code?.trim() ? `Unidad ${code}` : '';
+  });
+
+  pendingReviewCount = computed(
+    () => this.recentPayments().filter((p) => p.status === 'PENDING_APPROVAL').length
+  );
+
+  recentPaymentsSorted = computed(() =>
+    [...this.recentPayments()].sort(
+      (a, b) =>
+        new Date(b.payment_date ?? b.created_at ?? 0).getTime() -
+        new Date(a.payment_date ?? a.created_at ?? 0).getTime()
+    )
+  );
+
+  recentPaymentsPreview = computed(() => this.recentPaymentsSorted().slice(0, 3));
+
+  hasMoreRecentPayments = computed(() => this.recentPaymentsSorted().length > 3);
+
+  isSolvent = computed(() => this.totalDebt() <= 0.001 && this.receipts().length === 0);
+
+  statCards = computed(() => {
+    const ves = this.totalSelected() * this.tasaDelDia();
+    return [
+      {
+        id: 'debt',
+        variant: 'rose',
+        icon: 'account_balance_wallet',
+        chip: 'Deuda total',
+        value: `$${this.totalDebt().toFixed(2)}`,
+        sub: 'Recibos con saldo pendiente'
+      },
+      {
+        id: 'selected',
+        variant: 'violet',
+        icon: 'playlist_add_check',
+        chip: 'Seleccionado',
+        value: `$${this.totalSelected().toFixed(2)}`,
+        sub: this.totalSelected() > 0 ? `≈ Bs. ${ves.toFixed(2)} a tasa BCV` : 'Marca los recibos que pagarás'
+      },
+      {
+        id: 'receipts',
+        variant: 'indigo',
+        icon: 'receipt_long',
+        chip: 'Recibos',
+        value: String(this.receipts().length),
+        sub: `${this.selection.selected.length} marcados en esta sesión`
+      },
+      {
+        id: 'review',
+        variant: 'amber',
+        icon: 'hourglass_top',
+        chip: 'En revisión',
+        value: String(this.pendingReviewCount()),
+        sub: 'Reportes esperando validación'
+      }
+    ] as const;
   });
 
   selection = new SelectionModel<Receipt>(true, []);
@@ -106,6 +198,15 @@ export class PaymentsComponent implements OnInit {
   ngOnInit() {
     const user = this.authService.userSignal();
     if (user) this.paymentForm.patchValue({ email: user.email });
+    this.paymentForm.get('amountLocal')!.valueChanges.subscribe((vesRaw) => {
+      const rate = this.tasaDelDia();
+      const ves = Number(vesRaw) || 0;
+      const usd = rate > 0 ? ves / rate : 0;
+      this.paymentForm.patchValue(
+        { amount: usd > 0 ? parseFloat(usd.toFixed(2)) : '' },
+        { emitEvent: false }
+      );
+    });
     this.refreshData(true);
   }
 
@@ -130,6 +231,10 @@ export class PaymentsComponent implements OnInit {
           this.tasaDelDia.set(Number(rateRes.data.rate));
           const rawDate = rateRes.data.rate_date ? rateRes.data.rate_date.split('T')[0] : '';
           this.fechaTasa.set(rawDate);
+        }
+
+        if (this.selection.selected.length) {
+          this.calculateTotal();
         }
 
         const receiptRows = (receipts as any).data ?? [];
@@ -158,6 +263,23 @@ export class PaymentsComponent implements OnInit {
       });
   }
 
+  copyAccountNumber(value: string | undefined) {
+    if (!value) return;
+    navigator.clipboard?.writeText(value).then(
+      () =>
+        this.snackBar.open('Número de cuenta copiado', 'Listo', {
+          duration: 2800,
+          horizontalPosition: 'end',
+          verticalPosition: 'bottom'
+        }),
+      () => this.snackBar.open('No se pudo copiar. Selecciónala manualmente.', 'Cerrar', { duration: 4000 })
+    );
+  }
+
+  scrollToReportForm() {
+    document.getElementById('formulario-pago')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   toggleSelection(row: Receipt) {
     this.selection.toggle(row);
     this.calculateTotal();
@@ -166,37 +288,57 @@ export class PaymentsComponent implements OnInit {
   calculateTotal() {
     const total = this.selection.selected.reduce((acc, curr) => acc + (curr.monto - curr.paid), 0);
     this.totalSelected.set(total);
-    this.paymentForm.patchValue({ amount: total > 0 ? total.toFixed(2) : '' });
+    const rate = this.tasaDelDia();
+    const ves = total * rate;
+    this.paymentForm.patchValue({
+      amountLocal: total > 0 && rate > 0 ? parseFloat(ves.toFixed(2)) : ''
+    });
+    if (total <= 0) {
+      this.paymentForm.patchValue({ amount: '' }, { emitEvent: false });
+    }
   }
 
   onSubmit() {
+    const userEmail = this.authService.userSignal()?.email;
+    if (userEmail && !this.paymentForm.get('email')?.value) {
+      this.paymentForm.patchValue({ email: userEmail }, { emitEvent: false });
+    }
+
     if (this.paymentForm.valid && this.totalSelected() > 0 && !this.isSubmitting()) {
       this.isSubmitting.set(true);
 
       const rawData = this.paymentForm.getRawValue();
       const formattedDate = new Date(rawData.operationDate).toISOString().split('T')[0];
 
-      // 🔥 Redondeo limpio a 2 decimales para los Bolívares
-      const amountLocalClean = parseFloat(this.montoTransferirVES().toFixed(2));
+      const amountLocalClean = parseFloat(Number(rawData.amountLocal).toFixed(2));
+      const amountUsd = parseFloat(Number(rawData.amount).toFixed(2));
 
-      // 🔥 PAYLOAD BIMONETARIO PARA EL BACKEND
       const payload = {
         ...rawData,
+        amount: amountUsd,
         operationDate: formattedDate,
         currency: 'USD',
         exchangeRate: this.tasaDelDia(),
-        amountLocal: amountLocalClean // Enviamos cuánto fue exactamente en Bs.
+        amountLocal: amountLocalClean
       };
 
       this.paymentService.reportPayment(payload).subscribe({
         next: (res) => {
-          alert(res.message);
+          this.snackBar.open(res.message || 'Reporte enviado correctamente', 'Cerrar', {
+            duration: 5000,
+            horizontalPosition: 'end',
+            verticalPosition: 'bottom'
+          });
           this.resetUI();
           this.refreshData(false);
           this.isSubmitting.set(false);
         },
         error: (err) => {
-          alert(err.error?.message || 'Error al enviar reporte');
+          this.snackBar.open(err.error?.message || 'Error al enviar reporte', 'Cerrar', {
+            duration: 6000,
+            horizontalPosition: 'end',
+            verticalPosition: 'bottom'
+          });
           this.isSubmitting.set(false);
         }
       });

@@ -20,8 +20,19 @@ export class BillingService {
  * @param payload Objeto con buildingId, month y year
  */
     generateBilling(payload: { buildingId: number; month: number; year: number }): Observable<BillingResponse> {
-        // Enviamos el objeto completo al backend para cerrar el periodo exacto
         return this.http.post<BillingResponse>(`${this.API_URL}/generate`, payload);
+    }
+
+    generateBillingBatch(payload: { complexId: number; month: number; year: number }): Observable<any> {
+        return this.http.post(`${this.API_URL}/generate/batch`, payload);
+    }
+
+    getBuildingClosePreview(buildingId: number, month: number, year: number): Observable<any> {
+        return this.http.get(`${this.API_URL}/close-preview/${buildingId}?month=${month}&year=${year}`);
+    }
+
+    getComplexClosePreview(complexId: number, month: number, year: number): Observable<any> {
+        return this.http.get(`${this.API_URL}/close-preview/complex/${complexId}?month=${month}&year=${year}`);
     }
 
     /**

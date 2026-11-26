@@ -1,5 +1,5 @@
 import { Component, inject, signal, OnInit, computed } from '@angular/core';
-import { CurrencyPipe, NgClass } from '@angular/common';
+import { CurrencyPipe, DatePipe, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
@@ -44,6 +44,7 @@ function spanishPaginator(): MatPaginatorIntl {
   standalone: true,
   imports: [
     CurrencyPipe,
+    DatePipe,
     NgClass,
     FormsModule,
     MatCardModule,
@@ -213,12 +214,15 @@ export class PendingReceiptsComponent implements OnInit {
     this.pageSize.set(event.pageSize);
   }
 
+  printedAt = signal<Date | null>(null);
+
   printSummary() {
     if (this.rows().length === 0) {
       this.snackBar.open('No hay deudas que imprimir', 'Cerrar', { duration: 3000 });
       return;
     }
-    window.print();
+    this.printedAt.set(new Date());
+    requestAnimationFrame(() => window.print());
   }
 
   rowClass(row: PendingSummaryRow) {

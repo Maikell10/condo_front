@@ -42,9 +42,9 @@
           </button>
           <button mat-flat-button type="button" class="hero-btn hero-btn--primary"
             (click)="closeMonth()"
-            [disabled]="!canClosePeriod() || invoices().length === 0 || !selectedBuildingId() || selectedBuildingId() === 'ALL'">
+            [disabled]="!canClosePeriod() || !selectedBuildingId()">
             <mat-icon>lock_reset</mat-icon>
-            Cerrar mes
+            {{ isComplex() && selectedBuildingId() === 'ALL' ? 'Cerrar mes del conjunto' : 'Cerrar mes' }}
           </button>
         </div>
       </div>

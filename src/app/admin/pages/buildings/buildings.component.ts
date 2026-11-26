@@ -3,6 +3,7 @@ import { Component, computed, effect, inject, signal, OnInit } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../../core/services/admin.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
@@ -97,6 +98,7 @@ function buildingsPaginatorLabels(): MatPaginatorIntl {
 })
 export class BuildingsComponent implements OnInit {
   private adminService = inject(AdminService);
+  private authService = inject(AuthService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
@@ -113,6 +115,7 @@ export class BuildingsComponent implements OnInit {
   pageSize = signal(10);
   selectedGroupKey = signal<string | null>(null);
   complexActionId = signal<number | null>(null);
+  mirrorLoadingId = signal<number | null>(null);
 
   displayedColumns = ['code', 'name', 'complex', 'admin', 'apartments', 'status', 'actions'];
   groupedDetailColumns = ['code', 'name', 'admin', 'apartments', 'status', 'actions'];
@@ -453,6 +456,24 @@ export class BuildingsComponent implements OnInit {
       }
     }
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  }
+
+  openReadOnlyMirror(building: AdminBuilding): void {
+    if (building.status !== 'ACTIVE') {
+      this.showMessage('La vista espejo solo está disponible en edificios activos.', true);
+      return;
+    }
+    this.mirrorLoadingId.set(building.id);
+    this.adminService.startBuildingMirrorSession(building.id).subscribe({
+      next: (res) => {
+        this.mirrorLoadingId.set(null);
+        this.authService.enterReadOnlyMirror(res);
+      },
+      error: (err) => {
+        this.mirrorLoadingId.set(null);
+        this.showMessage(err.error?.message || 'No se pudo abrir la vista espejo', true);
+      }
+    });
   }
 
   openAssignAdmin(building: AdminBuilding): void {

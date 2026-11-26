@@ -158,3 +158,164 @@
 ::ng-deep .hide-subscript .mat-mdc-form-field-subscript-wrapper {
   display: none;
 }
+
+.expenses-print-sheet {
+  display: none;
+}
+
+.expenses-print-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 2px solid #c7d2fe;
+}
+
+.expenses-print-header__kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4338ca;
+}
+
+.expenses-print-header__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #312e81;
+}
+
+.expenses-print-header__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.expenses-print-header__logo img {
+  max-height: 2.75rem;
+  width: auto;
+}
+
+.expenses-print-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.expenses-print-kpi {
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+
+  strong {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 1rem;
+    color: #3730a3;
+  }
+}
+
+.expenses-print-kpi__period {
+  font-size: 0.88rem !important;
+}
+
+.expenses-print-kpi__label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #4f46e5;
+}
+
+.expenses-print-table-wrap {
+  border: 1px solid #a5b4fc;
+  border-radius: 0.65rem;
+  overflow: hidden;
+}
+
+.expenses-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+
+  .w-code {
+    width: 5.5rem;
+  }
+}
+
+.expenses-print-table thead {
+  background: linear-gradient(90deg, #3730a3, #4f46e5);
+  color: #fff;
+
+  th {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+  }
+}
+
+.expenses-print-table tbody td {
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid #e0e7ff;
+}
+
+.expenses-print-table tbody tr:nth-child(even) {
+  background: #f5f3ff;
+}
+
+.expenses-print-table tfoot td {
+  padding: 0.55rem 0.65rem;
+  background: #eef2ff;
+  font-weight: 800;
+  border-top: 2px solid #818cf8;
+}
+
+.expenses-print-footer {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.62rem;
+  color: #94a3b8;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  ::ng-deep body * {
+    visibility: hidden !important;
+  }
+
+  ::ng-deep #printable-building-expenses,
+  ::ng-deep #printable-building-expenses * {
+    visibility: visible !important;
+  }
+
+  ::ng-deep html,
+  ::ng-deep body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  ::ng-deep #printable-building-expenses {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    padding: 10mm !important;
+    box-sizing: border-box;
+  }
+}

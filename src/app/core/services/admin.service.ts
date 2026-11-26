@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { API_URL_BASE } from '../constants';
 import { AdminUsersListResponse, AdminUserDetailResponse } from '../../admin/pages/users/admin-user.model';
+import { AuthResponse } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -96,6 +97,14 @@ export class AdminService {
 
     getDashboardStats(): Observable<any> {
         return this.http.get(`${this.API_URL}/dashboard-stats`);
+    }
+
+    /** Vista espejo solo lectura del panel de un edificio (super admin). */
+    startBuildingMirrorSession(buildingId: number): Observable<AuthResponse> {
+        return this.http.post<AuthResponse>(
+            `${this.API_URL}/buildings/${buildingId}/mirror-session`,
+            {}
+        );
     }
 
     importComplexData(formData: FormData) {

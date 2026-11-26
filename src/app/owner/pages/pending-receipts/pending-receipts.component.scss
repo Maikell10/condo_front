@@ -168,3 +168,159 @@
   color: #b45309;
   vertical-align: middle;
 }
+
+.pending-print-sheet {
+  display: none;
+}
+
+.pending-print-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 2px solid #fecdd3;
+}
+
+.pending-print-header__kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #be123c;
+}
+
+.pending-print-header__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #881337;
+}
+
+.pending-print-header__sub {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.pending-print-header__logo img {
+  max-height: 2.75rem;
+  width: auto;
+}
+
+.pending-print-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.pending-print-kpi {
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.55rem;
+  border: 1px solid #fecdd3;
+  background: #fff1f2;
+
+  strong {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 1rem;
+    color: #9f1239;
+  }
+}
+
+.pending-print-kpi__label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #be123c;
+}
+
+.pending-print-table-wrap {
+  border: 1px solid #fda4af;
+  border-radius: 0.65rem;
+  overflow: hidden;
+}
+
+.pending-print-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.pending-print-table thead {
+  background: linear-gradient(90deg, #9f1239, #e11d48);
+  color: #fff;
+
+  th {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+.pending-print-table tbody td {
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid #ffe4e6;
+}
+
+.pending-print-table tbody tr:nth-child(even) {
+  background: #fff1f2;
+}
+
+.pending-print-table__mine {
+  background: #fef3c7 !important;
+}
+
+.pending-print-table tfoot td {
+  padding: 0.55rem 0.65rem;
+  background: #ffe4e6;
+  font-weight: 800;
+  border-top: 2px solid #fb7185;
+}
+
+.pending-print-footer {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.62rem;
+  color: #94a3b8;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  ::ng-deep body * {
+    visibility: hidden !important;
+  }
+
+  ::ng-deep #printable-pending-summary,
+  ::ng-deep #printable-pending-summary * {
+    visibility: visible !important;
+  }
+
+  ::ng-deep html,
+  ::ng-deep body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  ::ng-deep #printable-pending-summary {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    padding: 10mm !important;
+    box-sizing: border-box;
+  }
+}

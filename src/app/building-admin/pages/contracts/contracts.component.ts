@@ -208,7 +208,10 @@ export class ContractsComponent implements OnInit {
 
   openNewContractDialog() {
     const dialogRef = this.dialog.open(NewContractDialogComponent, {
-      width: '450px',
+      width: 'min(520px, 96vw)',
+      maxWidth: '96vw',
+      panelClass: 'new-contract-dialog-panel',
+      autoFocus: 'first-tabbable',
       data: {
         isComplex: this.isComplex(),
         buildingsList: this.buildingsList(),

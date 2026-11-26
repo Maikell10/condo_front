@@ -1,0 +1,81 @@
+<div class="close-preview">
+  <header class="close-preview__hero">
+    <div>
+      <p class="close-preview__kicker">Vista previa del cierre</p>
+      <h2 class="close-preview__title">{{ data.periodLabel }}</h2>
+      <p class="close-preview__sub">{{ data.scopeLabel }} · Revisa cada edificio antes de confirmar</p>
+    </div>
+    @if (summary(); as s) {
+      <div class="close-preview__stat">
+        <span class="label">Listos para cerrar</span>
+        <strong>{{ s.closeableCount ?? 0 }}<span class="muted">/{{ s.buildingCount ?? buildings().length }}</span></strong>
+      </div>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="close-preview__loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Calculando gastos, contratos y fondo de reserva…</p>
+    </div>
+  } @else if (loadError()) {
+    <p class="close-preview__error">{{ loadError() }}</p>
+  } @else {
+    <div class="close-preview__grid" mat-dialog-content>
+      @for (b of buildings(); track b.buildingId; let i = $index) {
+        <button
+          type="button"
+          class="preview-card"
+          [class.preview-card--ready]="b.canClose"
+          [class.preview-card--closed]="b.alreadyClosed"
+          [class.preview-card--blocked]="!b.canClose && !b.alreadyClosed"
+          [style.animation-delay.ms]="i * 55"
+          (click)="openBuildingDetail(b)">
+          <div class="preview-card__top">
+            <span class="preview-card__code">{{ b.buildingCode }}</span>
+            @if (b.canClose) {
+              <span class="preview-card__pill preview-card__pill--ok">Listo</span>
+            } @else if (b.alreadyClosed) {
+              <span class="preview-card__pill">Cerrado</span>
+            } @else {
+              <span class="preview-card__pill preview-card__pill--warn">No cierra</span>
+            }
+          </div>
+          <h3 class="preview-card__name">{{ b.buildingName }}</h3>
+          <p class="preview-card__total">${{ b.summary.totalToDistribute | number:'1.2-2' }}</p>
+          <p class="preview-card__meta">Total a distribuir · {{ b.summary.apartmentCount }} unidades</p>
+          @if (b.summary.hasReserveFund && b.summary.reserveFundAmount > 0) {
+            <p class="preview-card__reserve">
+              <mat-icon>savings</mat-icon>
+              RES_FUND {{ b.summary.reserveFundPercentage }}% · ${{ b.summary.reserveFundAmount | number:'1.2-2' }}
+            </p>
+          }
+          @if (b.blockReason && !b.canClose) {
+            <p class="preview-card__reason">{{ b.blockReason }}</p>
+          }
+          <span class="preview-card__cta">Ver relación de gastos <mat-icon>arrow_forward</mat-icon></span>
+        </button>
+      }
+    </div>
+  }
+
+  <footer class="close-preview__actions" mat-dialog-actions>
+    <button mat-stroked-button type="button" (click)="dialogRef.close(false)" [disabled]="submitting()">
+      Cancelar
+    </button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      (click)="confirmClose()"
+      [disabled]="loading() || submitting() || closeableBuildings().length === 0">
+      @if (submitting()) {
+        Procesando…
+      } @else if (data.isComplex) {
+        Cerrar {{ closeableBuildings().length }} edificio(s)
+      } @else {
+        Cerrar mes
+      }
+    </button>
+  </footer>
+</div>

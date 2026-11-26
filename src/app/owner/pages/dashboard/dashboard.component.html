@@ -1,170 +1,204 @@
 <div class="owner-page owner-dashboard space-y-6 max-w-[1200px] mx-auto pb-12 px-4 sm:px-6">
 
-    @if (loading()) {
-        <app-owner-data-loader message="Cargando tu panel…" submessage="Resumen financiero y accesos rápidos" />
-    } @else {
-    <div class="owner-page__content space-y-6">
+  @if (loading()) {
+    <app-owner-data-loader message="Cargando tu panel…" submessage="Finanzas, pagos y accesos del edificio" />
+  } @else {
+  <div class="owner-page__content space-y-6">
 
-    <div class="owner-hero-animate relative overflow-hidden rounded-3xl shadow-xl p-8 text-white"
-        [ngClass]="financialStatus().status === 'DEBT' ? 'bg-gradient-to-r from-rose-900 to-red-800' : 'bg-gradient-to-r from-emerald-900 to-green-800'">
+    <div class="owner-hero-animate owner-dashboard-hero rounded-3xl p-6 sm:p-8 text-white shadow-xl"
+      [class.owner-dashboard-hero--debt]="isInDebt()"
+      [class.owner-dashboard-hero--ok]="!isInDebt()">
+      <div class="owner-dashboard-hero__inner flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+        <div>
+          <p class="owner-dashboard-hero__kicker">Portal del propietario</p>
+          <h1 class="text-3xl sm:text-4xl font-black m-0 tracking-tight">
+            Hola, {{ owner()?.name }}
+          </h1>
+          <p class="owner-dashboard-hero__sub mt-3 mb-0">
+            {{ owner()?.building }} · Unidad <span class="font-mono font-bold">{{ owner()?.unit }}</span>
+          </p>
+          <div class="flex flex-wrap items-center gap-2 mt-4">
+            <span class="owner-dashboard-badge">
+              Alícuota {{ owner()?.aliquot | number:'1.2-4' }}%
+            </span>
+            @if (exchangeRate(); as rate) {
+              <span class="owner-dashboard-badge owner-dashboard-badge--rate">
+                BCV: Bs. {{ rate | number:'1.2-4' }}
+              </span>
+            }
+          </div>
+        </div>
 
-        <div class="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-white opacity-5 rounded-full blur-2xl"></div>
+        <div class="owner-dashboard-hero__debt-card">
+          @if (isInDebt()) {
+            <span class="owner-dashboard-hero__debt-label">Saldo pendiente</span>
+            <strong class="owner-dashboard-hero__debt-value">
+              {{ financialStatus().currentDebt | currency:'USD':'symbol':'1.2-2' }}
+            </strong>
+            <span class="owner-dashboard-hero__debt-hint">
+              ≈ Bs. {{ financialStatus().currentDebt * (exchangeRate() ?? 1) | number:'1.2-2' }} a tasa del día
+            </span>
+            <a mat-flat-button class="owner-dashboard-hero__cta" routerLink="/owner/payments">
+              Reportar pago
+            </a>
+          } @else {
+            <mat-icon class="owner-dashboard-hero__ok-icon">verified</mat-icon>
+            <strong class="owner-dashboard-hero__debt-value text-xl">Estás al día</strong>
+            <span class="owner-dashboard-hero__debt-hint">No tienes recibos pendientes por ahora</span>
+            <a mat-stroked-button class="owner-dashboard-hero__cta owner-dashboard-hero__cta--ghost" routerLink="/owner/paid-receipts">
+              Ver historial
+            </a>
+          }
+        </div>
+      </div>
+    </div>
 
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-                <p class="text-white/80 font-medium mb-1">Bienvenido, {{ owner()?.name }}</p>
-                <h1 class="text-3xl md:text-4xl font-black tracking-tight mb-2">
-                    {{ owner()?.building }} · Unidad {{ owner()?.unit }}
-                </h1>
-                <div class="flex items-center gap-2 mt-4">
-                    <span
-                        class="px-3 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                        Alícuota: {{ owner()?.aliquot }}%
-                    </span>
-                </div>
+    <div class="owner-stagger stat-cards-grid">
+      @for (card of statCards(); track card.id) {
+        <mat-card class="stat-card stat-card--{{ card.variant }}">
+          <div class="stat-card__top">
+            <div class="stat-card__icon"><mat-icon>{{ card.icon }}</mat-icon></div>
+            <span class="stat-card__chip">{{ card.chip }}</span>
+          </div>
+          <div class="stat-card__value">{{ card.value }}</div>
+          @if (card.sub) {
+            <div class="stat-card__sub">{{ card.sub }}</div>
+          }
+        </mat-card>
+      }
+    </div>
+
+    <div class="owner-dashboard-grid">
+      <div class="owner-dashboard-main space-y-6">
+
+        <mat-card class="panel-card">
+          <div class="panel-card__head">
+            <div class="flex items-center gap-3">
+              <div class="panel-card__icon panel-card__icon--indigo"><mat-icon>receipt_long</mat-icon></div>
+              <div>
+                <h2 class="m-0 font-bold text-gray-900">Tus recibos pendientes</h2>
+                <p class="m-0 mt-0.5 text-xs text-gray-500">Lo que debes liquidar ahora</p>
+              </div>
             </div>
+            <a mat-stroked-button routerLink="/owner/payments" class="!rounded-xl font-bold">Ir a pagos</a>
+          </div>
 
-            <div class="bg-white/10 backdrop-blur-md border border-white/20 p-6 rounded-2xl text-center min-w-[250px]">
-                <p class="text-white/80 text-sm font-bold uppercase tracking-wider mb-1">
-                    {{ financialStatus().status === 'DEBT' ? 'Saldo Pendiente' : 'Saldo a Favor' }}
-                </p>
-                <div class="text-4xl font-black mb-2">
-                    {{ financialStatus().currentDebt | currency:'$':'symbol':'1.2-2' }}
-                </div>
-                <button mat-flat-button color="accent" class="w-full rounded-xl font-bold mt-2"
-                    *ngIf="financialStatus().status === 'DEBT'" routerLink="/owner/payments">
-                    Reportar Pago
-                </button>
-                <p *ngIf="financialStatus().status === 'UP_TO_DATE'"
-                    class="text-sm font-medium text-emerald-200 flex items-center justify-center gap-1 mt-2">
-                    <mat-icon class="scale-75">check_circle</mat-icon> Estás al día
-                </p>
+          @if (pendingReceipts().length === 0) {
+            <div class="panel-empty panel-empty--ok">
+              <mat-icon>celebration</mat-icon>
+              <p class="m-0 font-bold">Sin recibos abiertos</p>
             </div>
-        </div>
+          } @else {
+            <ul class="pending-list">
+              @for (row of pendingPreview(); track row.id ?? row.fecha) {
+                <li class="pending-list__item">
+                  <span class="pending-list__period">{{ row.fecha }}</span>
+                  <span class="pending-list__amount">
+                    {{ receiptBalance(row) | currency:'USD':'symbol':'1.2-2' }}
+                  </span>
+                </li>
+              }
+            </ul>
+            @if (pendingReceipts().length > 4) {
+              <p class="panel-card__more m-0">
+                +{{ pendingReceipts().length - 4 }} recibo(s) más en pagos
+              </p>
+            }
+          }
+        </mat-card>
+
+        <mat-card class="panel-card">
+          <div class="panel-card__head">
+            <div class="flex items-center gap-3">
+              <div class="panel-card__icon panel-card__icon--emerald"><mat-icon>verified</mat-icon></div>
+              <div>
+                <h2 class="m-0 font-bold text-gray-900">Último pago verificado</h2>
+                <p class="m-0 mt-0.5 text-xs text-gray-500">Conciliado por administración</p>
+              </div>
+            </div>
+          </div>
+          <div class="last-pay-block">
+            @if (lastPayment().amount > 0) {
+              <strong>{{ lastPayment().amount | currency:'USD':'symbol':'1.2-2' }}</strong>
+              <span class="text-gray-500 text-sm">el {{ lastPayment().date }}</span>
+            } @else {
+              <span class="text-gray-500 text-sm">Aún no hay pagos verificados registrados.</span>
+            }
+          </div>
+
+          @if (latestPeriod(); as period) {
+            <div class="period-strip">
+              <div>
+                <span class="period-strip__label">Último recibo emitido</span>
+                <span class="period-strip__title">{{ period.label }}</span>
+              </div>
+              @if (period.amount != null) {
+                <span class="period-strip__amount">{{ period.amount | currency:'USD':'symbol':'1.2-2' }}</span>
+              }
+              <a mat-button color="primary" routerLink="/owner/condo-receipt" class="font-bold">Ver detalle</a>
+            </div>
+          }
+        </mat-card>
+
+        @if (recentReportsPreview().length > 0) {
+          <mat-card class="panel-card">
+            <div class="panel-card__head">
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="panel-card__icon panel-card__icon--amber"><mat-icon>history</mat-icon></div>
+                <div>
+                  <h2 class="m-0 font-bold text-gray-900">Reportes recientes</h2>
+                  <p class="m-0 mt-0.5 text-xs text-gray-500">Transferencias que enviaste</p>
+                </div>
+              </div>
+              <a mat-stroked-button routerLink="/owner/payments/reports" class="!rounded-xl font-bold shrink-0">
+                Ver todos
+              </a>
+            </div>
+            <ul class="reports-list">
+              @for (p of recentReportsPreview(); track p.id ?? p.reference) {
+                <li class="reports-list__item">
+                  <div>
+                    <span class="font-mono text-xs text-gray-500">Ref. {{ p.reference }}</span>
+                    <span class="block font-bold text-gray-800">{{ p.amount | currency:'USD':'symbol':'1.2-2' }}</span>
+                  </div>
+                  @let st = paymentStatusLabel(p.status);
+                  <span class="status-pill" [ngClass]="'status-pill--' + st.pill">{{ st.label }}</span>
+                </li>
+              }
+            </ul>
+          </mat-card>
+        }
+      </div>
+
+      <aside class="owner-dashboard-aside space-y-6">
+        <mat-card class="panel-card">
+          <h2 class="quick-links__title m-0">Accesos rápidos</h2>
+          <div class="quick-links">
+            @for (link of quickLinks; track link.route) {
+              <a [routerLink]="link.route" class="quick-link quick-link--{{ link.accent }}">
+                <mat-icon>{{ link.icon }}</mat-icon>
+                <span>{{ link.label }}</span>
+              </a>
+            }
+          </div>
+        </mat-card>
+
+        <mat-card class="panel-card panel-card--hint">
+          <mat-icon class="panel-hint__icon">lightbulb</mat-icon>
+          <p class="panel-hint__text m-0">
+            Consulta los <strong>gastos del edificio</strong> y el <strong>resumen de morosidad</strong> para entender
+            cómo se calcula tu cuota. Los pagos en bolívares usan la tasa BCV del día del reporte.
+          </p>
+          <a mat-button routerLink="/owner/profile" class="font-bold mt-2">Mis datos</a>
+        </mat-card>
+
+        <button mat-stroked-button type="button" class="w-full !rounded-xl font-bold" (click)="refresh()">
+          <mat-icon>refresh</mat-icon>
+          Actualizar panel
+        </button>
+      </aside>
     </div>
 
-    <div class="owner-stagger grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <div class="lg:col-span-2 space-y-6">
-
-            <mat-card class="premium-card">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><mat-icon>receipt_long</mat-icon></div>
-                        <div>
-                            <h2 class="text-lg font-black text-gray-800 m-0">Recibo Actual</h2>
-                            <p class="text-sm text-gray-500">{{ financialStatus().currentMonth }}</p>
-                        </div>
-                    </div>
-                    <button mat-stroked-button routerLink="/owner/condo-receipt" class="rounded-lg border-gray-200">
-                        Ver Detalle Completo
-                    </button>
-                </div>
-
-                <mat-divider class="mb-4"></mat-divider>
-
-                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <div class="flex items-center gap-3">
-                        <mat-icon class="text-emerald-500">verified</mat-icon>
-                        <div>
-                            <p class="text-xs text-gray-500 font-bold uppercase">Último Pago Registrado</p>
-                            <p class="font-medium text-gray-900">{{ lastPayment().amount | currency:'$':'symbol':'1.2-2'
-                                }} <span class="text-gray-400 font-normal">el {{ lastPayment().date }}</span></p>
-                        </div>
-                    </div>
-                    <mat-chip class="bg-emerald-100 text-emerald-700 font-bold">Verificado</mat-chip>
-                </div>
-            </mat-card>
-
-            <!-- <mat-card class="premium-card">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-lg font-black text-gray-800 m-0">Mis Incidencias</h2>
-                    <button mat-button color="primary" routerLink="/owner/incidents">Ver Todas</button>
-                </div>
-
-                <div class="space-y-3">
-                    <div *ngFor="let inc of incidents()"
-                        class="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50 transition-colors">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center"
-                                [ngClass]="inc.status === 'IN_PROGRESS' ? 'bg-amber-50 text-amber-500' : 'bg-gray-100 text-gray-400'">
-                                <mat-icon class="scale-75">{{ inc.status === 'IN_PROGRESS' ? 'build' : 'check'
-                                    }}</mat-icon>
-                            </div>
-                            <div>
-                                <p class="font-bold text-gray-800 text-sm">{{ inc.title }}</p>
-                                <p class="text-xs text-gray-500">{{ inc.id }} · {{ inc.date }}</p>
-                            </div>
-                        </div>
-                        <span class="text-[10px] font-black uppercase px-2 py-1 rounded-full"
-                            [ngClass]="inc.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700' : 'bg-gray-200 text-gray-600'">
-                            {{ inc.status === 'IN_PROGRESS' ? 'En Progreso' : 'Cerrado' }}
-                        </span>
-                    </div>
-                </div>
-            </mat-card> -->
-
-        </div>
-
-        <div class="space-y-6">
-
-            <mat-card class="premium-card">
-                <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Acciones Rápidas</h2>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <button routerLink="/owner/condo-receipt"
-                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-700 transition-colors">
-                        <mat-icon>receipt</mat-icon>
-                        <span class="text-xs font-bold text-center">Mi Recibo</span>
-                    </button>
-
-                    <button routerLink="/owner/paid-receipts"
-                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-700 transition-colors">
-                        <mat-icon>history</mat-icon>
-                        <span class="text-xs font-bold text-center">Historial</span>
-                    </button>
-
-                    <button routerLink="/owner/aliquots"
-                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 hover:text-indigo-700 transition-colors">
-                        <mat-icon>pie_chart</mat-icon>
-                        <span class="text-xs font-bold text-center">Alícuotas</span>
-                    </button>
-
-                    <!-- <button routerLink="/owner/incidents"
-                        class="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-rose-50 hover:border-rose-100 hover:text-rose-700 transition-colors text-gray-600">
-                        <mat-icon>campaign</mat-icon>
-                        <span class="text-xs font-bold text-center">Reportar</span>
-                    </button> -->
-                </div>
-            </mat-card>
-
-            <!-- <mat-card class="premium-card">
-                <div class="flex items-center gap-2 mb-4">
-                    <mat-icon class="text-indigo-600">notifications_active</mat-icon>
-                    <h2 class="text-sm font-bold text-indigo-500 uppercase tracking-wider m-0">Avisos del Edificio</h2>
-                </div>
-
-                <div class="space-y-3">
-                    <div *ngFor="let msg of announcements()"
-                        class="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors">
-
-                        <mat-icon class="scale-75 mt-0.5"
-                            [ngClass]="msg.type === 'warning' ? 'text-amber-500' : 'text-blue-500'">
-                            {{ msg.type === 'warning' ? 'warning' : 'info' }}
-                        </mat-icon>
-
-                        <div>
-                            <p class="font-bold text-sm text-gray-600">{{ msg.title }}</p>
-                            <p class="text-xs text-gray-500 mt-0.5">Programado para: <span class="font-medium">{{
-                                    msg.date }}</span></p>
-                        </div>
-                    </div>
-                </div>
-            </mat-card> -->
-
-        </div>
-    </div>
-
-    </div>
-    }
+  </div>
+  }
 </div>
