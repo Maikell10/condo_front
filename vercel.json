@@ -5,9 +5,18 @@
       "has": [{ "type": "host", "value": "condo-front-seven.vercel.app" }],
       "destination": "https://www.condominioaunclic.online/:path*",
       "permanent": true
+    },
+    {
+      "source": "/cierre-de-condominio.html",
+      "destination": "/cierre-de-condominio",
+      "permanent": true
     }
   ],
   "rewrites": [
+    {
+      "source": "/cierre-de-condominio",
+      "destination": "/cierre-de-condominio.html"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
